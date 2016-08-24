@@ -209,4 +209,23 @@ merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_o
   }
 ))
 
-rdr_regression_fit <- lm(formula=PAEE~cam_index_means, data=merged_output)
+###
+### Regression and splitting of the genders
+###
+merged_output_men <- subset(merged_output, sex==0)
+merged_output_women <- subset(merged_output, sex==1)
+
+rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=merged_output_men)
+rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=merged_output_women)
+
+lambda_men <- rdr_regression_fit_men$coefficients[2]
+lambda_women <- rdr_regression_fit_women$coefficients[2]
+
+
+###
+### Cox Regression bit
+###
+
+
+
+
