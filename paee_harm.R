@@ -25,6 +25,10 @@ library("survival")
 actiheart_summary <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_actiheart_summary.csv", header=T)
 epic <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_epic.csv", header=T)
 
+###############################################################################
+###############################################################################
+###############################################################################
+
 # Create a list where actiheart results are split into each participant
 act_sorted <- actiheart_summary[order(actiheart_summary$universal_id, actiheart_summary$visit), ]
 act_split <- split(x = act_sorted, f = act_sorted$universal_id)
@@ -116,9 +120,7 @@ output <- do.call(rbind,(lapply(act_split,function(x){
 ))
 row.names(output)<-NULL
 
-#########################################################################################
-## Prepare training data set
-#########################################################################################
+### merged_output creation
 # merge or perform a "natural join" on the trimmed epic table and 
 # cleaned actiheart table by universal id
 merged_output <- merge(output, epic, by = 'universal_id')
@@ -209,6 +211,10 @@ merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_o
   }
 ))
 
+###############################################################################################
+##################################### FIRST RUN THROUGH #######################################
+###############################################################################################
+
 ###
 ### Regression and splitting of the genders
 ###
@@ -220,6 +226,7 @@ rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=merged_output_
 
 lambda_men <- rdr_regression_fit_men$coefficients[2]
 lambda_women <- rdr_regression_fit_women$coefficients[2]
+
 
 ###
 ### Cox Regression bit
@@ -393,6 +400,13 @@ og_women <- subset(og_data, sex==1)
 cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
 cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women)
 
+beta_men <- cox_regression_men$coefficients
+beta_women <- cox_regression_women$coefficients
+
+
+###############################################################################################
+####################################  SAMPLING RUN THROUGH  ###################################
+###############################################################################################
 
 
 
