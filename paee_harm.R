@@ -25,6 +25,7 @@ library("survival")
 actiheart_summary <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_actiheart_summary.csv", header=T)
 epic <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_epic.csv", header=T)
 
+
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -400,12 +401,30 @@ og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIF
 og_men <- subset(og_data, sex==0)
 og_women <- subset(og_data, sex==1)
 
-## LINEAR MODEL
 cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
 cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women)
 
 beta_men <- cox_regression_men$coefficients
+beta_se_men <- summary(cox_regression_men)$coefficients[4]
+beta_sd_men <- beta_se_men * sqrt(length(og_men))
+
 beta_women <- cox_regression_women$coefficients
+beta_se_women <- summary(cox_regression_women)$coefficients[4]
+beta_sd_women <- beta_se_women * sqrt(length(og_women))
+
+# Confidence interval calc helper (default95%)
+confidence_interval_help_men <- 1.96*(beta_sd_men/sqrt(length(og_men)))
+confidence_interval_help_women <- 1.96*(beta_sd_women/sqrt(length(og_women)))
+
+upper_ci_men <- beta_men + confidence_interval_help_men
+lower_ci_men <- beta_men - confidence_interval_help_men
+upper_ci_women <- beta_women + confidence_interval_help_women
+lower_ci_women <- beta_women - confidence_interval_help_women
+
+upper_ci_list_men <- c(upper_ci_men)
+lower_ci_list_men <- c(lower_ci_men)
+upper_ci_list_women <- c(upper_ci_women)
+lower_ci_list_women <- c(lower_ci_women)
 
 # Store the lambda in a list for comparison
 beta_list_men <- c(beta_men)
@@ -621,10 +640,28 @@ for (i in 1:1000) {
   cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women)
 
   beta_men <- cox_regression_men$coefficients
+  beta_se_men <- summary(cox_regression_men)$coefficients[4]
+  beta_sd_men <- beta_se_men * sqrt(length(og_men))
+
   beta_women <- cox_regression_women$coefficients
+  beta_se_women <- summary(cox_regression_women)$coefficients[4]
+  beta_sd_women <- beta_se_women * sqrt(length(og_women))
+
+  # Confidence interval calc helper (default95%)
+  confidence_interval_help_men <- 1.96*(beta_sd_men/sqrt(length(og_men)))
+  confidence_interval_help_women <- 1.96*(beta_sd_women/sqrt(length(og_women)))
+
+  upper_ci_men <- beta_men + confidence_interval_help_men
+  lower_ci_men <- beta_men - confidence_interval_help_men
+  upper_ci_women <- beta_women + confidence_interval_help_women
+  lower_ci_women <- beta_women - confidence_interval_help_women
 
   beta_list_men <- c(beta_list_men, beta_men)
   beta_list_women <- c(beta_list_women, beta_women)
+  upper_ci_list_men <- c(upper_ci_list_men, upper_ci_men)
+  lower_ci_list_men <- c(lower_ci_list_men, lower_ci_men)
+  upper_ci_list_women <- c(upper_ci_list_women, upper_ci_women)
+  lower_ci_list_women <- c(lower_ci_list_women, lower_ci_women)
 
   # calculate the calibrated beta and store in list
   cali_beta_men <- beta_men/lambda_men
@@ -641,9 +678,18 @@ lambda_list_women <- unname(lambda_list_women)
 
 beta_list_men <- unname(beta_list_men)
 beta_list_women <- unname(beta_list_women)
+upper_ci_list_men <- unname(upper_ci_list_men)
+lower_ci_list_men <- unname(lower_ci_list_men)
+upper_ci_list_women <- unname(upper_ci_list_women)
+lower_ci_list_women <- unname(lower_ci_list_women)
 
 cali_beta_list_men <- unname(cali_beta_list_men)
 cali_beta_list_women <- unname(cali_beta_list_women)
 
+### Put everything in a nice data frame
+# men
+men_dataframe <- data.frame()
+# women
+women_dataframe <- data.frame()
 
 
