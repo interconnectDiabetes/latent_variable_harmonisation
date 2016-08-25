@@ -407,10 +407,12 @@ cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_ind
 beta_men <- cox_regression_men$coefficients
 beta_se_men <- summary(cox_regression_men)$coefficients[4]
 beta_sd_men <- beta_se_men * sqrt(length(og_men))
+#cal_beta_sd_men <- (beta_sd_men^2)/(lambda_men^2) + (beta_men/lambda_men^2)*lambda_men_var # formula 12
 
 beta_women <- cox_regression_women$coefficients
 beta_se_women <- summary(cox_regression_women)$coefficients[4]
 beta_sd_women <- beta_se_women * sqrt(length(og_women))
+#cal_beta_sd_women <- beta_se_women * sqrt(length(og_women)) # formula 12
 
 # Confidence interval calc helper (default95%)
 confidence_interval_help_men <- 1.96*(beta_sd_men/sqrt(length(og_men)))
@@ -532,7 +534,7 @@ cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
 ## First run through we set the mean to be the first thing we sample per category
 ## and calculate the lm many times
 
-for (i in 1:1000) {
+for (i in 1:10) {
   cat1_men_choice <- sample(cat1_men,1,replace=TRUE)
   cat2_men_choice <- sample(cat2_men,1,replace=TRUE)
   cat3_men_choice <- sample(cat3_men,1,replace=TRUE)
@@ -688,18 +690,11 @@ cali_beta_list_women <- unname(cali_beta_list_women)
 
 ### Put everything in a nice data frame
 # men
-men_dataframe <- data.frame()
-men_dataframe$lambda <- lambda_list_men
-men_dataframe$beta <- beta_list_men
-men_dataframe$lower95 <- lower_ci_list_men
-men_dataframe$upper95 <- upper_ci_list_men
-men_dataframe$calibratedBeta <- cali_beta_list_men
+men_dataframe <- data.frame(lambda = lambda_list_men, beta=beta_list_men, lower95=lower_ci_list_men, 
+  upper95=upper_ci_list_men, calibratedBeta=cali_beta_list_men)
+
 
 # women
-women_dataframe <- data.frame()
-women_dataframe$lambda <- lambda_list_women
-women_dataframe$beta <- beta_list_women
-women_dataframe$lower95 <- lower_ci_list_women
-women_dataframe$upper95 <- upper_ci_list_women
-women_dataframe$calibratedBeta <- cali_beta_list_women
+women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, lower95=lower_ci_list_women, 
+  upper95=upper_ci_list_women, calibratedBeta=cali_beta_list_women)
 
