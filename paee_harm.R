@@ -227,6 +227,10 @@ rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=merged_output_
 lambda_men <- rdr_regression_fit_men$coefficients[2]
 lambda_women <- rdr_regression_fit_women$coefficients[2]
 
+# Store the lambda in a list for comparison
+lambda_list_men <- list(lambda_men)
+lambda_list_women <- list(lambda_women)
+
 
 ###
 ### Cox Regression bit
@@ -408,5 +412,86 @@ beta_women <- cox_regression_women$coefficients
 ####################################  SAMPLING RUN THROUGH  ###################################
 ###############################################################################################
 
+## Set lists of values for each PA categorisation that will be used to draw random numbers for
+## the validation set's observed PAEE values
+
+cat1_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+  }) 
+cat1_men <- cat1_men[!sapply(cat1_men,is.na)]
 
 
+cat2_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+    }
+  return(output) 
+}) 
+cat2_men <- cat2_men[!sapply(cat2_men,is.na)]
+
+cat3_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
+  if (y == 3){
+    output = x
+  } else {
+    output = NA
+    } return(output) 
+})
+cat3_men <- cat3_men[!sapply(cat3_men,is.na)] 
+
+cat4_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
+  if (y == 4){
+    output = x
+  } else {
+    output = NA
+    }
+  return(output)
+})
+cat4_men <- cat4_men[!sapply(cat4_men,is.na)]
+
+cat1_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+    }
+  return(output)
+})
+cat1_women <- cat1_women[!sapply(cat1_women,is.na)]
+
+cat2_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+    }
+  return(output)
+}) 
+cat2_women <- cat2_women[!sapply(cat2_women,is.na)]
+
+cat3_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FUN=function(x,y){
+  if (y == 3){
+    output = x
+  } else {
+    output = NA
+    }
+  return(output)
+}) 
+cat3_women <- cat3_women[!sapply(cat3_women,is.na)]
+
+cat4_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FUN=function(x,y){
+  if (y == 4){
+    output = x
+  } else {
+    output = NA
+    }
+  return(output)
+}) 
+cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
+              
