@@ -221,10 +221,177 @@ rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=merged_output_
 lambda_men <- rdr_regression_fit_men$coefficients[2]
 lambda_women <- rdr_regression_fit_women$coefficients[2]
 
-
 ###
 ### Cox Regression bit
 ###
+
+### Setup the data necessary to calculate the cox regression on the prediction set.
+og_data <- read.csv("PHIA0000232016_IA88_25Jul/PHIA0000232016.csv")
+og_data$new_ltpa <- mapply(FUN=sum, og_data$m_walk, og_data$m_floors, 
+  og_data$m_cycl, og_data$m_sport, og_data$m_houswrk, og_data$m_vigpa,
+  og_data$m_gard, og_data$m_diy, na.rm=TRUE)
+og_data$bmi <- og_data$bmi_adj
+og_data$sex <- unlist(lapply(og_data$sex, FUN=function(x){
+  if (x == 1) {
+    out = 0
+  } else {
+    out = 1
+  }
+  return(out)
+  }))
+
+og_data$pa_workini <- unlist(lapply(og_data$pa_work, FUN=function(x){
+  if (x == 6){
+    out = 9
+  } else {
+    out = x
+  }
+  return (out)
+  }))
+
+og_data$pa_workini <- factor(og_data$pa_workini)
+
+## Calculating X_t, with X_t0
+tempfupdiff <- (og_data$fup_time/365.25)
+og_data$ageEnd <- og_data$age_recr_max + tempfupdiff
+
+og_data$age <- mapply(og_data$age_recr_max, og_data$ageEnd, FUN=function(x,y){
+  out = (x+y)/2
+  return(out)
+  })
+
+# Calculating X_d
+eventCens <- lapply(og_data$dmstatus_ver_outc, FUN=function(x){
+    if (x==1 || x==2){
+        x = 1
+    } else {
+        x = 0
+    }
+  })
+
+og_data$eventCens <- unlist(eventCens)
+
+# prentice weighted age starts
+og_data$age_recr_prentice <- og_data$age_recr_max
+for (i in 1:length(og_data$age_recr_max)){
+    if(og_data$dmstatus_ver_outc[i] == 2){
+        og_data$age_recr_prentice[i] = og_data$ageEnd[i] - 0.00001 
+    }
+  }
+
+## smoke, lschool, country factorization and leveling
+og_data$country <- factor(og_data$country, labels=c("FRANCE", "ITALY", 
+  "SPAIN", "UK", "NETHERLANDS", "GERMANY", "SWEDEN", "DENMARK"))
+
+og_data$smoke_stat <- factor(og_data$smoke_stat, labels=c("NEVER", "FORMER", 
+  "SMOKER", "UNKOWN"))
+
+og_data$l_school <- factor(og_data$l_school, labels=c("NONE", "PRIMARY", 
+  "TECHNICAL/PROFESSIONAL", "SECONDARY", "LONGER EDUCATION/UNI", "NOT SPECIFIED"))
+
+
+## Calculating own Cambridge Index
+og_data$cam_total <- c(rep(0,nrow(og_data)))
+for (i in 1:nrow(og_data)){
+    og_data$cam_total[i] = sum(og_data$m_cycl[i]/6, og_data$m_sport[i]/6, na.rm=TRUE)    
+}
+
+# camMets_ind for cam_matrix
+# totalMets_index calculation
+og_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=og_data$cam_total, FUN = function(x){
+    if(is.na(x)){
+        ind = NA
+    }
+    else if (x == 0){
+        ind = 1
+    }
+    else if (x <= 3.5) {
+        ind = 2
+    }
+    else if (x <= 7) {
+        ind = 3
+    }
+    else if (x > 7) {
+        ind = 4
+    } 
+    else {
+        ind = NA
+    }
+    return(ind)
+    })
+))
+
+
+# Create Cambridge index matrix
+cam_matrix = matrix(byrow = TRUE,
+    c(1, 2, 3, 4, 
+      2, 3, 4, 4, 
+      3, 4, 4, 4, 
+      4, 4, 4, 4,
+      1, 2, 3, 4), 
+    nrow=5, 
+    ncol=4)
+
+og_data$cam_index <- apply(X = og_data[,c('pa_work', 'camMets_ind')], MARGIN = 1, 
+    FUN = function(x){
+        if(x[1]==6){
+            x_ind = 5
+        } else {
+            x_ind = x[1]
+        }
+        output <- cam_matrix[x_ind, x[2]]
+        return(output)
+    }
+)
+
+og_data$camMets_ind <- as.factor(og_data$camMets_ind)
+og_data$cam_index <- as.factor(og_data$cam_index)
+
+## Cam index means
+og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+    if (y == 0) {
+      if (is.na(x)) {
+        output = NA
+      } else if (x == 1){
+        output = 35.6
+      } else if (x == 2) {
+        output = 43.7
+      } else if (x == 3) {
+        output = 49.0
+      } else if (x == 4) {
+        output = 56.2
+      } else {
+        output = NA
+      }
+    } else if (y == 1){
+      if (is.na(x)) {
+        output = NA
+      } else if (x == 1){
+        output = 36.5
+      } else if (x == 2) {
+        output = 39.8
+      } else if (x == 3) {
+        output = 43.6
+      } else if (x == 4) {
+        output = 48.2
+      } else {
+        output = NA
+      } 
+    } else {
+      output = NA
+    }
+    return(output)
+  }
+))
+
+# Predictions per model
+
+og_men <- subset(og_data, sex==0)
+og_women <- subset(og_data, sex==1)
+
+## LINEAR MODEL
+cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
+cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women)
 
 
 
