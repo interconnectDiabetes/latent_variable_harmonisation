@@ -689,7 +689,17 @@ cali_beta_list_women <- unname(cali_beta_list_women)
 ### Put everything in a nice data frame
 # men
 men_dataframe <- data.frame()
+men_dataframe$lambda <- lambda_list_men
+men_dataframe$beta <- beta_list_men
+men_dataframe$lower95 <- lower_ci_list_men
+men_dataframe$upper95 <- upper_ci_list_men
+men_dataframe$calibratedBeta <- cali_beta_list_men
+
 # women
 women_dataframe <- data.frame()
-
+women_dataframe$lambda <- lambda_list_women
+women_dataframe$beta <- beta_list_women
+women_dataframe$lower95 <- lower_ci_list_women
+women_dataframe$upper95 <- upper_ci_list_women
+women_dataframe$calibratedBeta <- cali_beta_list_women
 
