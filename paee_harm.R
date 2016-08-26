@@ -412,10 +412,10 @@ beta_se_men <- summary(cox_regression_men)$coefficients[4]
 beta_women <- cox_regression_women$coefficients
 beta_se_women <- summary(cox_regression_women)$coefficients[4]
 
-upper_ci_men <- cox_regression_men$conf.int[4]
-lower_ci_men <- cox_regression_men$conf.int[3]
-upper_ci_women <- cox_regression_women$conf.int[4]
-lower_ci_women <- cox_regression_women$conf.int[3]
+upper_ci_men <- summary(cox_regression_men)$conf.int[4]
+lower_ci_men <- summary(cox_regression_men)$conf.int[3]
+upper_ci_women <- summary(cox_regression_women)$conf.int[4]
+lower_ci_women <- summary(cox_regression_women)$conf.int[3]
 
 upper_ci_list_men <- c(upper_ci_men)
 lower_ci_list_men <- c(lower_ci_men)
@@ -660,10 +660,10 @@ for (i in 1:500) {
   beta_women <- cox_regression_women$coefficients
   beta_se_women <- summary(cox_regression_women)$coefficients[4]
 
-  upper_ci_men <- cox_regression_men$conf.int[4]
-  lower_ci_men <- cox_regression_men$conf.int[3]
-  upper_ci_women <- cox_regression_women$conf.int[4]
-  lower_ci_women <- cox_regression_women$conf.int[3]
+  upper_ci_men <- summary(cox_regression_men)$conf.int[4]
+  lower_ci_men <- summary(cox_regression_men)$conf.int[3]
+  upper_ci_women <- summary(cox_regression_women)$conf.int[4]
+  lower_ci_women <- summary(cox_regression_women)$conf.int[3]
 
   beta_list_men <- c(beta_list_men, beta_men)
   beta_list_women <- c(beta_list_women, beta_women)
