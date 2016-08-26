@@ -437,8 +437,8 @@ cali_beta_list_women <- c(cali_beta_women)
 cal_beta_sd_men <- (beta_se_men^2)/(lambda_men^2) + ((beta_men/lambda_men^2)^2)*lambda_men_var # formula 12
 cal_beta_sd_women <- (beta_se_women^2)/(lambda_women^2) + ((beta_women/lambda_women^2)^2)*lambda_women_var # formula 12
 
-cal_confidence_interval_help_men <- 1.96*(cal_beta_sd_men/sqrt(length(og_men)))
-cal_confidence_interval_help_women <- 1.96*(cal_beta_sd_women/sqrt(length(og_women)))
+cal_confidence_interval_help_men <- 1.96*sqrt(cal_beta_sd_men)
+cal_confidence_interval_help_women <- 1.96*sqrt(cali_beta_women)
 
 cal_upper_ci_men <- cali_beta_men + cal_confidence_interval_help_men
 cal_lower_ci_men <- cali_beta_men - cal_confidence_interval_help_men
@@ -683,8 +683,8 @@ for (i in 1:1000) {
   cal_beta_sd_men <- (beta_se_men^2)/(lambda_men^2) + ((beta_men/lambda_men^2)^2)*lambda_men_var # formula 12
   cal_beta_sd_women <- (beta_se_women^2)/(lambda_women^2) + ((beta_women/lambda_women^2)^2)*lambda_women_var # formula 12
 
-  cal_confidence_interval_help_men <- 1.96*(cal_beta_sd_men/sqrt(length(og_men)))
-  cal_confidence_interval_help_women <- 1.96*(cal_beta_sd_women/sqrt(length(og_women)))
+  cal_confidence_interval_help_men <- 1.96*sqrt(cal_beta_sd_men)
+  cal_confidence_interval_help_women <- 1.96*sqrt(cal_beta_sd_women)
 
   cal_upper_ci_men <- cali_beta_men + cal_confidence_interval_help_men
   cal_lower_ci_men <- cali_beta_men - cal_confidence_interval_help_men
