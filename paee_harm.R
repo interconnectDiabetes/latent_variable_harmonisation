@@ -225,11 +225,11 @@ merged_output_women <- subset(merged_output, sex==1)
 rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=merged_output_men)
 rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=merged_output_women)
 
-lambda_men <- rdr_regression_fit_men$coefficients[2]
-lambda_women <- rdr_regression_fit_women$coefficients[2]
+lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
+lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
 
-lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients[4])^2
-lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients[4])^2
+lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_means","Std. Error"])^2
+lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_means","Std. Error"])^2
 
 # Store the lambda in a list for comparison
 lambda_list_men <- c(lambda_men)
@@ -404,18 +404,18 @@ og_men <- subset(og_data, sex==0)
 og_women <- subset(og_data, sex==1)
 
 cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
-cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women)
+cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
 
 beta_men <- cox_regression_men$coefficients
-beta_se_men <- summary(cox_regression_men)$coefficients[4]
+beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
 
 beta_women <- cox_regression_women$coefficients
-beta_se_women <- summary(cox_regression_women)$coefficients[4]
+beta_se_women <- summary(cox_regression_women)$coefficients[,"robust se"]
 
-upper_ci_men <- summary(cox_regression_men)$conf.int[4]
-lower_ci_men <- summary(cox_regression_men)$conf.int[3]
-upper_ci_women <- summary(cox_regression_women)$conf.int[4]
-lower_ci_women <- summary(cox_regression_women)$conf.int[3]
+upper_ci_men <- log(summary(cox_regression_men)$conf.int[,"upper .95"])
+lower_ci_men <- log(summary(cox_regression_men)$conf.int[,"lower .95"])
+upper_ci_women <- log(summary(cox_regression_women)$conf.int[,"upper .95"])
+lower_ci_women <- log(summary(cox_regression_women)$conf.int[,"lower .95"])
 
 upper_ci_list_men <- c(upper_ci_men)
 lower_ci_list_men <- c(lower_ci_men)
@@ -438,7 +438,7 @@ cal_beta_sd_men <- (beta_se_men^2)/(lambda_men^2) + ((beta_men/lambda_men^2)^2)*
 cal_beta_sd_women <- (beta_se_women^2)/(lambda_women^2) + ((beta_women/lambda_women^2)^2)*lambda_women_var # formula 12
 
 cal_confidence_interval_help_men <- 1.96*sqrt(cal_beta_sd_men)
-cal_confidence_interval_help_women <- 1.96*sqrt(cali_beta_women)
+cal_confidence_interval_help_women <- 1.96*sqrt(cal_beta_sd_women)
 
 cal_upper_ci_men <- cali_beta_men + cal_confidence_interval_help_men
 cal_lower_ci_men <- cali_beta_men - cal_confidence_interval_help_men
@@ -544,7 +544,7 @@ cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
 ## First run through we set the mean to be the first thing we sample per category
 ## and calculate the lm many times
 
-for (i in 1:1000) {
+for (i in 1:500) {
   cat1_men_choice <- sample(cat1_men,1,replace=TRUE)
   cat2_men_choice <- sample(cat2_men,1,replace=TRUE)
   cat3_men_choice <- sample(cat3_men,1,replace=TRUE)
@@ -599,11 +599,11 @@ for (i in 1:1000) {
   rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=merged_output_men)
   rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=merged_output_women)
 
-  lambda_men <- rdr_regression_fit_men$coefficients[2]
-  lambda_women <- rdr_regression_fit_women$coefficients[2]
+  lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
+  lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
 
-  lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients[4])^2
-  lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients[4])^2
+  lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_means","Std. Error"])^2
+  lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_means","Std. Error"])^2
 
   # Store the lambda in a list for comparison
   lambda_list_men <- c(lambda_list_men, lambda_men)
@@ -652,18 +652,18 @@ for (i in 1:1000) {
   og_women <- subset(og_data, sex==1)
 
   cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
-  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women)
+  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
 
   beta_men <- cox_regression_men$coefficients
-  beta_se_men <- summary(cox_regression_men)$coefficients[4]
+  beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
 
   beta_women <- cox_regression_women$coefficients
-  beta_se_women <- summary(cox_regression_women)$coefficients[4]
+  beta_se_women <- summary(cox_regression_women)$coefficients[,"robust se"]
 
-  upper_ci_men <- summary(cox_regression_men)$conf.int[4]
-  lower_ci_men <- summary(cox_regression_men)$conf.int[3]
-  upper_ci_women <- summary(cox_regression_women)$conf.int[4]
-  lower_ci_women <- summary(cox_regression_women)$conf.int[3]
+  upper_ci_men <- log(summary(cox_regression_men)$conf.int[,"upper .95"])
+  lower_ci_men <- log(summary(cox_regression_men)$conf.int[,"lower .95"])
+  upper_ci_women <- log(summary(cox_regression_women)$conf.int[,"upper .95"])
+  lower_ci_women <- log(summary(cox_regression_women)$conf.int[,"lower .95"])
 
   beta_list_men <- c(beta_list_men, beta_men)
   beta_list_women <- c(beta_list_women, beta_women)
