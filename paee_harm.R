@@ -17,7 +17,7 @@
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
 ## WARNING THIS SCRIPT WILL ONLY RUN IF WORKING DIRECTORY IS SET TO THE RIGHT LOCATION
-## setwd("V:/Studies/InterConnect/Internal/Latent variable harmonisation")
+setwd("V:/Studies/InterConnect/Internal/Latent variable harmonisation")
 library("survival")
 
 # Read the actiheart and EPIC study data (sweden UMEA is missing in 
@@ -544,7 +544,7 @@ cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
 ## First run through we set the mean to be the first thing we sample per category
 ## and calculate the lm many times
 
-for (i in 1:500) {
+for (i in 1:1000) {
   cat1_men_choice <- sample(cat1_men,1,replace=TRUE)
   cat2_men_choice <- sample(cat2_men,1,replace=TRUE)
   cat3_men_choice <- sample(cat3_men,1,replace=TRUE)
@@ -726,3 +726,84 @@ women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, 
   upper95=upper_ci_list_women, calibratedBeta=cali_beta_list_women, calBetaLower95=cal_lower_ci_list_women,
   calBetaUpper95=cal_upper_ci_list_women)
 
+############################################################################################
+###########################  Results   #####################################################
+############################################################################################
+# first by index (by category) (without calibration) - we want the ci (no lambda)
+rdr_regression_fit_men <- lm(formula=PAEE~cam_index, data=merged_output_men)
+rdr_regression_fit_women <- lm(formula=PAEE~cam_index, data=merged_output_women)
+summary(rdr_regression_fit_men)
+summary(rdr_regression_fit_women)
+
+cox_regression_men_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = og_men, robust=TRUE)
+cox_regression_women_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = og_women, robust=TRUE)
+
+beta_inc_men <- sum(summary(cox_regression_men_index)$coef[,1])/4
+beta_inc_women <- sum(summary(cox_regression_women_index)$coef[,1])/4
+
+l95_inc_men <- sum(log(summary(cox_regression_men_index)$conf.int[,3]))/4
+l95_inc_women <- sum(log(summary(cox_regression_women_index)$conf.int[,3]))/4
+
+u95_inc_men <- sum(log(summary(cox_regression_men_index)$conf.int[,4]))/4
+u95_inc_women <- sum(log(summary(cox_regression_women_index)$conf.int[,4]))/4
+
+ex_beta_inc_men <- exp(sum(summary(cox_regression_men_index)$coef[,1])/4)
+ex_beta_inc_women <- exp(sum(summary(cox_regression_women_index)$coef[,1])/4)
+
+ex_l95_inc_men <-exp( sum(log(summary(cox_regression_men_index)$conf.int[,3]))/4)
+ex_l95_inc_women <- exp(sum(log(summary(cox_regression_women_index)$conf.int[,3]))/4)
+
+ex_u95_inc_men <-exp( sum(log(summary(cox_regression_men_index)$conf.int[,4]))/4)
+ex_u95_inc_women <- exp(sum(log(summary(cox_regression_women_index)$conf.int[,4]))/4)
+
+# then beta by means (without calibration)
+# then by means (with calibration)
+# this beta is pre calculated as the first row of the men/women_dataframe
+# The result for uncalibrated and calibrated are present in this dataframe 
+beta_by_means_table_men <- (as.numeric(men_dataframe[1,]))
+beta_by_means_table_women <- as.numeric(women_dataframe[1,])
+beta_by_means_table <- data.frame(rbind(beta_by_means_table_men,beta_by_means_table_women))
+rownames(beta_by_means_table) <- c("male", "female")
+colnames(beta_by_means_table) <- c("lambda", "beta", "betaLower95", "betaUpper95", "calibratedBeta", "calBetaLower95", "calBetaUpper95")
+exponentiated_by_means_table <- exp(beta_by_means_table)^6.8 
+
+# Full with MC and calibration
+men_beta_table <-  (exp(summary(men_dataframe$calibratedBeta))^6.8)
+men_beta_table <- data.frame(matrix(unlist(men_beta_table)), ncol = 5, byrow=TRUE)
+
+women_beta_table <- (exp(summary(women_dataframe$calibratedBeta))^6.8)
+women_beta_table <- data.frame(matrix(unlist(women_beta_table)), ncol = 5, byrow=TRUE)
+
+# Full Median Results with Confidence intervals
+# Because R makes summary dataframes into multinested char arrays (non ideal) we deal with each one seperately
+summary(men_dataframe$lambda)["Median"]
+summary(men_dataframe$beta)["Median"]  
+summary(men_dataframe$lower95)["Median"]
+summary(men_dataframe$upper95)["Median"]
+summary(men_dataframe$calibratedBeta)["Median"]
+summary(men_dataframe$calBetaLower95)["Median"]
+summary(men_dataframe$calBetaUpper95)["Median"]
+
+summary(women_dataframe$lambda)["Median"]
+summary(women_dataframe$beta)["Median"]  
+summary(women_dataframe$lower95)["Median"]
+summary(women_dataframe$upper95)["Median"]
+summary(women_dataframe$calibratedBeta)["Median"]
+summary(women_dataframe$calBetaLower95)["Median"]
+summary(women_dataframe$calBetaUpper95)["Median"]
+
+exp(summary(men_dataframe$lambda)["Median"])^6.8
+exp(summary(men_dataframe$beta)["Median"])^6.8  
+exp(summary(men_dataframe$lower95)["Median"])^6.8
+exp(summary(men_dataframe$upper95)["Median"])^6.8
+exp(summary(men_dataframe$calibratedBeta)["Median"])^6.8
+exp(summary(men_dataframe$calBetaLower95)["Median"])^6.8
+exp(summary(men_dataframe$calBetaUpper95)["Median"])^6.8
+
+exp(summary(women_dataframe$lambda)["Median"])^6.8
+exp(summary(women_dataframe$beta)["Median"])^6.8  
+exp(summary(women_dataframe$lower95)["Median"])^6.8
+exp(summary(women_dataframe$upper95)["Median"])^6.8
+exp(summary(women_dataframe$calibratedBeta)["Median"])^6.8
+exp(summary(women_dataframe$calBetaLower95)["Median"])^6.8
+exp(summary(women_dataframe$calBetaUpper95)["Median"])^6.8
