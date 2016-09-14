@@ -134,6 +134,15 @@ bmi_calc <- function(weight, height){
 }
 merged_output$bmi <- mapply(FUN=bmi_calc, merged_output$weight, merged_output$height)
 
+merged_output$sex <- unlist(lapply(merged_output$sex, FUN=function(x){
+  if (x == 1) {
+    out = 0
+  } else {
+    out = 1
+  }
+  return(out)
+}))
+
 # Make sure pa_workini is seen as a categorical variable and not a double
 merged_output$pa_workini <- as.factor(merged_output$pa_workini)
 merged_output$new_ltpa <- mapply(FUN=sum, merged_output$m_walk, merged_output$m_floors, 
@@ -172,22 +181,59 @@ merged_output$camMets_ind <- as.vector(do.call(rbind, lapply(X=merged_output$cam
 ))
 
 
-### 
-### Setting the 'observed' PAEE values by the mean
-###
-## Cam index means
+## 
+## Setting the 'observed' PAEE values by the mean
+##
+
+# merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+#   if (y == 0) {
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 35.6
+#     } else if (x == 2) {
+#       output = 43.7
+#     } else if (x == 3) {
+#       output = 49.0
+#     } else if (x == 4) {
+#       output = 56.2
+#     } else {
+#       output = NA
+#     }
+#   } else if (y == 1){
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 36.5
+#     } else if (x == 2) {
+#       output = 39.8
+#     } else if (x == 3) {
+#       output = 43.6
+#     } else if (x == 4) {
+#       output = 48.2
+#     } else {
+#       output = NA
+#     } 
+#   } else {
+#     output = NA
+#   }
+#   return(output)
+# }
+# ))
+
+
 merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
-      output = 35.6
+      output = 32.49748
     } else if (x == 2) {
-      output = 43.7
+      output = 42.040295
     } else if (x == 3) {
-      output = 49.0
+      output = 45.94756
     } else if (x == 4) {
-      output = 56.2
+      output = 55.79739
     } else {
       output = NA
     }
@@ -195,16 +241,16 @@ merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_o
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
-      output = 36.5
+      output = 35.41059
     } else if (x == 2) {
-      output = 39.8
+      output = 38.77947
     } else if (x == 3) {
-      output = 43.6
+      output = 42.77706
     } else if (x == 4) {
-      output = 48.2
+      output = 45.80403
     } else {
       output = NA
-    } 
+    }
   } else {
     output = NA
   }
@@ -246,6 +292,7 @@ og_data$new_ltpa <- mapply(FUN=sum, og_data$m_walk, og_data$m_floors,
                            og_data$m_cycl, og_data$m_sport, og_data$m_houswrk, og_data$m_vigpa,
                            og_data$m_gard, og_data$m_diy, na.rm=TRUE)
 og_data$bmi <- og_data$bmi_adj
+
 og_data$sex <- unlist(lapply(og_data$sex, FUN=function(x){
   if (x == 1) {
     out = 0
@@ -362,19 +409,55 @@ og_data$cam_index <- apply(X = og_data[,c('pa_work', 'camMets_ind')], MARGIN = 1
 og_data$camMets_ind <- as.factor(og_data$camMets_ind)
 og_data$cam_index <- as.factor(og_data$cam_index)
 
-## Cam index means
+
+# og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+#   if (y == 0) {
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 35.6
+#     } else if (x == 2) {
+#       output = 43.7
+#     } else if (x == 3) {
+#       output = 49.0
+#     } else if (x == 4) {
+#       output = 56.2
+#     } else {
+#       output = NA
+#     }
+#   } else if (y == 1){
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 36.5
+#     } else if (x == 2) {
+#       output = 39.8
+#     } else if (x == 3) {
+#       output = 43.6
+#     } else if (x == 4) {
+#       output = 48.2
+#     } else {
+#       output = NA
+#     } 
+#   } else {
+#     output = NA
+#   }
+#   return(output)
+# }
+# ))
+
 og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
-      output = 35.6
+      output = 32.49748
     } else if (x == 2) {
-      output = 43.7
+      output = 42.040295
     } else if (x == 3) {
-      output = 49.0
+      output = 45.94756
     } else if (x == 4) {
-      output = 56.2
+      output = 55.79739
     } else {
       output = NA
     }
@@ -382,23 +465,22 @@ og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIF
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
-      output = 36.5
+      output = 35.41059
     } else if (x == 2) {
-      output = 39.8
+      output = 38.77947
     } else if (x == 3) {
-      output = 43.6
+      output = 42.77706
     } else if (x == 4) {
-      output = 48.2
+      output = 45.80403
     } else {
       output = NA
-    } 
+    }
   } else {
     output = NA
   }
   return(output)
 }
 ))
-
 
 og_men <- subset(og_data, sex==0)
 og_women <- subset(og_data, sex==1)
@@ -766,13 +848,6 @@ beta_by_means_table <- data.frame(rbind(beta_by_means_table_men,beta_by_means_ta
 rownames(beta_by_means_table) <- c("male", "female")
 colnames(beta_by_means_table) <- c("lambda", "beta", "betaLower95", "betaUpper95", "calibratedBeta", "calBetaLower95", "calBetaUpper95")
 exponentiated_by_means_table <- exp(beta_by_means_table)^6.8 
-
-# Full with MC and calibration
-men_beta_table <-  (exp(summary(men_dataframe$calibratedBeta))^6.8)
-men_beta_table <- data.frame(matrix(unlist(men_beta_table)), ncol = 5, byrow=TRUE)
-
-women_beta_table <- (exp(summary(women_dataframe$calibratedBeta))^6.8)
-women_beta_table <- data.frame(matrix(unlist(women_beta_table)), ncol = 5, byrow=TRUE)
 
 # Full Median Results with Confidence intervals
 # Because R makes summary dataframes into multinested char arrays (non ideal) we deal with each one seperately
