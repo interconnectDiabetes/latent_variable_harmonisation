@@ -182,56 +182,19 @@ merged_output$camMets_ind <- as.vector(do.call(rbind, lapply(X=merged_output$cam
 
 
 
-## Setting the 'observed' PAEE values by the mean
-# merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-#   if (y == 0) {
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 35.6
-#     } else if (x == 2) {
-#       output = 43.7
-#     } else if (x == 3) {
-#       output = 49.0
-#     } else if (x == 4) {
-#       output = 56.2
-#     } else {
-#       output = NA
-#     }
-#   } else if (y == 1){
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 36.5
-#     } else if (x == 2) {
-#       output = 39.8
-#     } else if (x == 3) {
-#       output = 43.6
-#     } else if (x == 4) {
-#       output = 48.2
-#     } else {
-#       output = NA
-#     } 
-#   } else {
-#     output = NA
-#   }
-#   return(output)
-# }
-# ))
-
-
+# Setting the 'observed' PAEE values by the mean
 merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
-      output = 32.49748
+      output = 35.6
     } else if (x == 2) {
-      output = 42.040295
+      output = 43.7
     } else if (x == 3) {
-      output = 45.94756
+      output = 49.0
     } else if (x == 4) {
-      output = 55.79739
+      output = 56.2
     } else {
       output = NA
     }
@@ -239,22 +202,59 @@ merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_o
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
-      output = 35.41059
+      output = 36.5
     } else if (x == 2) {
-      output = 38.77947
+      output = 39.8
     } else if (x == 3) {
-      output = 42.77706
+      output = 43.6
     } else if (x == 4) {
-      output = 45.80403
+      output = 48.2
     } else {
       output = NA
-    }
+    } 
   } else {
     output = NA
   }
   return(output)
 }
 ))
+
+
+# merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+#   if (y == 0) {
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 32.49748
+#     } else if (x == 2) {
+#       output = 42.040295
+#     } else if (x == 3) {
+#       output = 45.94756
+#     } else if (x == 4) {
+#       output = 55.79739
+#     } else {
+#       output = NA
+#     }
+#   } else if (y == 1){
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 35.41059
+#     } else if (x == 2) {
+#       output = 38.77947
+#     } else if (x == 3) {
+#       output = 42.77706
+#     } else if (x == 4) {
+#       output = 45.80403
+#     } else {
+#       output = NA
+#     }
+#   } else {
+#     output = NA
+#   }
+#   return(output)
+# }
+# ))
 
 ###############################################################################################
 ##################################### FIRST RUN THROUGH #######################################
@@ -409,54 +409,18 @@ og_data$cam_index <- as.factor(og_data$cam_index)
 
 
 # Set the means for the casecohort data
-# og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-#   if (y == 0) {
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 35.6
-#     } else if (x == 2) {
-#       output = 43.7
-#     } else if (x == 3) {
-#       output = 49.0
-#     } else if (x == 4) {
-#       output = 56.2
-#     } else {
-#       output = NA
-#     }
-#   } else if (y == 1){
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 36.5
-#     } else if (x == 2) {
-#       output = 39.8
-#     } else if (x == 3) {
-#       output = 43.6
-#     } else if (x == 4) {
-#       output = 48.2
-#     } else {
-#       output = NA
-#     } 
-#   } else {
-#     output = NA
-#   }
-#   return(output)
-# }
-# ))
-
 og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
-      output = 32.49748
+      output = 35.6
     } else if (x == 2) {
-      output = 42.040295
+      output = 43.7
     } else if (x == 3) {
-      output = 45.94756
+      output = 49.0
     } else if (x == 4) {
-      output = 55.79739
+      output = 56.2
     } else {
       output = NA
     }
@@ -464,22 +428,58 @@ og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIF
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
-      output = 35.41059
+      output = 36.5
     } else if (x == 2) {
-      output = 38.77947
+      output = 39.8
     } else if (x == 3) {
-      output = 42.77706
+      output = 43.6
     } else if (x == 4) {
-      output = 45.80403
+      output = 48.2
     } else {
       output = NA
-    }
+    } 
   } else {
     output = NA
   }
   return(output)
 }
 ))
+
+# og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+#   if (y == 0) {
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 32.49748
+#     } else if (x == 2) {
+#       output = 42.040295
+#     } else if (x == 3) {
+#       output = 45.94756
+#     } else if (x == 4) {
+#       output = 55.79739
+#     } else {
+#       output = NA
+#     }
+#   } else if (y == 1){
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 35.41059
+#     } else if (x == 2) {
+#       output = 38.77947
+#     } else if (x == 3) {
+#       output = 42.77706
+#     } else if (x == 4) {
+#       output = 45.80403
+#     } else {
+#       output = NA
+#     }
+#   } else {
+#     output = NA
+#   }
+#   return(output)
+# }
+# ))
 
 og_men <- subset(og_data, sex==0)
 og_women <- subset(og_data, sex==1)
