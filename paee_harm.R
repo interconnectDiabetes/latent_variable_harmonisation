@@ -181,10 +181,8 @@ merged_output$camMets_ind <- as.vector(do.call(rbind, lapply(X=merged_output$cam
 ))
 
 
-## 
-## Setting the 'observed' PAEE values by the mean
-##
 
+## Setting the 'observed' PAEE values by the mean
 # merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
 #   if (y == 0) {
 #     if (is.na(x)) {
@@ -410,6 +408,7 @@ og_data$camMets_ind <- as.factor(og_data$camMets_ind)
 og_data$cam_index <- as.factor(og_data$cam_index)
 
 
+# Set the means for the casecohort data
 # og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
 #   if (y == 0) {
 #     if (is.na(x)) {
@@ -536,12 +535,11 @@ cal_lower_ci_list_women <- c(cal_lower_ci_women)
 ###############################################################################################
 ####################################  SAMPLING RUN THROUGH  ###################################
 ###############################################################################################
-# Set seed for random pull. 
+# Set seed for pseudo random selection. 
 set.seed(999)
 
 ## Set lists of values for each PA categorisation that will be used to draw random numbers for
 ## the validation set's observed PAEE values
-
 cat1_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
   if (y == 1){
     output = x
@@ -797,7 +795,8 @@ cal_lower_ci_list_men <- unname(cal_lower_ci_list_men)
 cal_upper_ci_list_women <- unname(cal_upper_ci_list_women)
 cal_lower_ci_list_women <- unname(cal_lower_ci_list_women)
 
-### Put everything in a nice data frame
+
+### Put everything in a data frame
 # men
 men_dataframe <- data.frame(lambda = lambda_list_men, beta=beta_list_men, lower95=lower_ci_list_men, 
   upper95=upper_ci_list_men, calibratedBeta=cali_beta_list_men, calBetaLower95=cal_lower_ci_list_men,
@@ -807,6 +806,7 @@ men_dataframe <- data.frame(lambda = lambda_list_men, beta=beta_list_men, lower9
 women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, lower95=lower_ci_list_women, 
   upper95=upper_ci_list_women, calibratedBeta=cali_beta_list_women, calBetaLower95=cal_lower_ci_list_women,
   calBetaUpper95=cal_upper_ci_list_women)
+
 
 ############################################################################################
 ###########################  Results   #####################################################
