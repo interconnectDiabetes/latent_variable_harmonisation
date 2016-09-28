@@ -38,10 +38,10 @@ paee_range_max <- 75
 ###############################################################################
 ############################# Functions #######################################
 ###############################################################################
-data_generator <- function(exposure, set_beta, constant, noise){
+data_generator <- function(exposure, beta=set_beta, constant=20, noise=2.5){
 	# returns a datapoint given an exposure
 	# relies on a set constant, gaussian noise component
-	fbeta <- (set_beta*exposure) + constant
+	fbeta <- (beta*exposure) + constant
 	data_point <- rnorm(1,fbeta,noise)
 	return (data_point)
 }
@@ -67,16 +67,11 @@ gaussian_index_sample <- function(x){
 	return (data_point)
 }
 
-index_s
 
-lambda_collector <- function(sample){
-	# returns the lambda calculated
+lambda_collector_cam_index <- function(data_set_outcome, data_set_exposure, data_set){
+	rdr_regression_fit <- lm(formula=data_set_outcome~data_set_exposure, data=data_set)
+	lambda <- rdr_regression_fit$coefficients["cam_index_means"]
 	return (lambda)
-}
-
-beta_collector <- function(sample){
-	# returns the beta calculated
-	return (beta)
 }
 
 calculate_index_from_paee <- function(paee){
@@ -105,4 +100,6 @@ test_data <- as.data.frame(c(1:20000))
 colnames(test_data) <- c("id")
 test_data$paee <- runif(20000, min=paee_range_min, max=paee_range_max)
 test_data$cam_index <- lapply(test_data$paee, calculate_index_from_paee)
+test_data$bmi <- lapply(test_data$paee, data_generator, beta=set_beta)
+
 
