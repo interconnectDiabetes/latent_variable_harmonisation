@@ -12,13 +12,13 @@
 ###############################################################################
 ## Libraries
 library("survival")
-
+library(graphics)
 ## Seed
 set.seed(66)
 
 ## Parameters
 # The linear correlation coefficient between exposure and outcome.
-set_beta <- 0.5 
+set_beta <- 0.5
 
 # Index properties (Assumption that they are Gaussian)
 # Format : (mean, stdev)
@@ -30,6 +30,8 @@ index_mean3 <- 49.0
 index_stdev3 <- 17.9
 index_mean4 <- 56.2
 index_stdev4 <- 18.4
+
+mean_paee_difference <- mean(c(index_mean1,index_mean2, index_mean3, index_mean4))
 
 # PAEE range
 paee_range_min <- 20
@@ -87,19 +89,39 @@ calculate_index_from_paee <- function(paee){
 
 	return (index_num)
 }
-
-## Creation of datasets
+####################################################################################################
+################################ Creation of datasets ##############################################
 # Data set of 1600 points for which we calculate the lambda, (validation)
-validation_data <- as.data.frame(c(rep(1,400),rep(2,400),rep(3,400),rep(4,400)))
+validation_data <- as.data.frame(c(rep(1,1000),rep(2,1000),rep(3,1000),rep(4,1000)))
 colnames(validation_data) <- c("cam_index")
-validation_data$paee <- lapply(validation_data$cam_index, gaussian_index_sample) 
-
+validation_data$cam_index <- as.factor(validation_data$cam_index)
+validation_data$cam_index <- validation_data$cam_index
+validation_data$paee <- unlist(lapply(validation_data$cam_index, gaussian_index_sample))
 
 # Data set of 20000 points for which we calculate the betas, (test)
-test_data <- as.data.frame(c(1:20000))
-colnames(test_data) <- c("id")
-test_data$paee <- runif(20000, min=paee_range_min, max=paee_range_max)
-test_data$cam_index <- lapply(test_data$paee, calculate_index_from_paee)
-test_data$bmi <- lapply(test_data$paee, data_generator, beta=set_beta)
+test_data <- as.data.frame(c(rep(1,5000),rep(2,5000),rep(3,5000),rep(4,5000)))
+colnames(test_data) <- c("cam_index")
+test_data$cam_index <- as.factor(test_data$cam_index)
+test_data$paee <- unlist(lapply(test_data$cam_index, gaussian_index_sample))
+test_data$cam_index_2 <- unlist(lapply(test_data$paee, calculate_index_from_paee)) # we know this proxy for it
+test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
 
+####################################################################################################
+################################ Attempt to recreate values ########################################
+# now we work backworks to see if we can use the calculated foo value to find beta
 
+# look at discrepancy in cambridge index assignment/correlation
+test_data_regression_paee_cam_index <- lm(formula=paee~cam_index, data=test_data)
+validation_data_regression_paee_cam_index <- lm(formula=paee~cam_index, data=validation_data)
+
+# # our lambda is the coefficient calculated from the validation data
+# lambda <- validation_data_regression_paee_cam_index$coefficients["cam_index"]
+
+# let us see if we can find the beta to foo from a proxy for paee (cam_index)
+regression_coefficient_foo <- lm(formula=foo~cam_index, data=test_data) # this is our beta of sorts
+coefficient_of_foo_to_cam_index <- regression_coefficient_foo$coefficients["cam_index"]
+
+# # and do the calibrated beta calculation
+# calibrated_beta <- beta/lambda
+
+# library(graphics)
