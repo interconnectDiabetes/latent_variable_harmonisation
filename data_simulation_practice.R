@@ -152,23 +152,23 @@ test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
 
 ## BASELINE with cam_index
 # validation data
-pc_val_data <- lm(formula=foo~cam_index, data=validation_data)
-cc_val_data <- pc_val_data$coefficients[-1]
+fc_val_data <- lm(formula=foo~cam_index, data=validation_data)
+cc_val_data <- fc_val_data$coefficients[-1]
 cc_val_data <- c(1,cc_val_data)
 mean_cc <- mean(cc_val_data)
 val_per_paee_cc <- mean_cc/mean_paee_difference
 
-stdError_cc_val_data <- (summary(pc_val_data)$coefficients[,"Std. Error"])[-1]
+stdError_cc_val_data <- (summary(fc_val_data)$coefficients[,"Std. Error"])[-1]
 mean_stdError_cc_val <- mean(stdError_cc_val_data)
 
 # test data
-pc_test_data <- lm(formula=foo~cam_index, data=test_data)
-cc_test_data <- pc_test_data$coefficients[-1]
+fc_test_data <- lm(formula=foo~cam_index, data=test_data)
+cc_test_data <- fc_test_data$coefficients[-1]
 cc_test_data <- c(1,cc_test_data)
 mean_cc <- mean(cc_test_data)
 test_per_paee_cc <- mean_cc/mean_paee_difference
 
-stdError_cc_test_data <- (summary(pc_test_data)$coefficients[,"Std. Error"])[-1]
+stdError_cc_test_data <- (summary(fc_test_data)$coefficients[,"Std. Error"])[-1]
 mean_stdError_cc_test <- mean(stdError_cc_test_data)
 
 
@@ -264,3 +264,4 @@ for (i in 1:1000) {
 	lambda_men_var <- (summary(regression_fit)$coefficients["cam_index_means_sample","Std. Error"])^2
 	test_per_paee_cc_list <- c(test_per_paee_cc_list, cc_test_data_sample)
 }
+mean_test_per_paee_cc <- mean(test_per_paee_cc_list)
