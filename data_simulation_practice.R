@@ -32,7 +32,7 @@ index_stdev3 <- 17.9
 index_mean4 <- 56.2
 index_stdev4 <- 18.4
 
-mean_paee_difference <- mean(c(index_mean1,index_mean2, index_mean3, index_mean4))
+mean_paee_difference <- abs(mean(c(index_mean1-index_mean2, index_mean2-index_mean3, index_mean3-index_mean4)))
 
 # PAEE range
 paee_range_min <- 20
@@ -98,37 +98,6 @@ colnames(validation_data) <- c("cam_index")
 validation_data$cam_index <- as.factor(validation_data$cam_index)
 validation_data$cam_index <- validation_data$cam_index
 validation_data$paee <- unlist(lapply(validation_data$cam_index, gaussian_index_sample))
-
-# Data set of 20000 points for which we calculate the betas, (test)
-test_data <- as.data.frame(c(rep(1,5000),rep(2,5000),rep(3,5000),rep(4,5000)))
-colnames(test_data) <- c("cam_index")
-test_data$cam_index <- as.factor(test_data$cam_index)
-test_data$paee <- unlist(lapply(test_data$cam_index, gaussian_index_sample))
-test_data$cam_index_2 <- unlist(lapply(test_data$paee, calculate_index_from_paee)) # we know this proxy for it
-test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
-
-####################################################################################################
-################################ Attempt to recreate values ########################################
-# now we work backworks to see if we can use the calculated foo value to find beta
-
-## BASELINE with cam_index
-pc_test_data <- lm(formula=paee~cam_index, data=test_data)
-pc_val_data <- lm(formula=paee~cam_index, data=validation_data)
-
-# validation data
-cc_val_data <- pc_val_data$coefficients[-1]
-cc_val_data <- c(1,cc_val_data)
-mean_cc <- mean(cc_val_data)
-val_per_paee_cc <- mean_cc/mean_paee_difference
-
-# test data
-cc_test_data <- pc_test_data$coefficients[-1]
-cc_test_data <- c(1,cc_test_data)
-mean_cc <- mean(cc_test_data)
-test_per_paee_cc <- mean_cc/mean_paee_difference
-
-## Replacing the cam_index with means
-# validation
 validation_data$cam_index_means <- unlist(mapply(validation_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
       output = NA
@@ -146,10 +115,16 @@ validation_data$cam_index_means <- unlist(mapply(validation_data$cam_index, SIMP
   	return(output)
 	}
 ))
+validation_data$foo <- unlist(lapply(validation_data$paee, data_generator, beta=set_beta))
 
 
 
-# test
+
+# Data set of 20000 points for which we calculate the betas, (test)
+test_data <- as.data.frame(c(rep(1,5000),rep(2,5000),rep(3,5000),rep(4,5000)))
+colnames(test_data) <- c("cam_index")
+test_data$cam_index <- as.factor(test_data$cam_index)
+test_data$paee <- unlist(lapply(test_data$cam_index, gaussian_index_sample))
 test_data$cam_index_means <- unlist(mapply(test_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
       output = NA
@@ -167,10 +142,125 @@ test_data$cam_index_means <- unlist(mapply(test_data$cam_index, SIMPLIFY = FALSE
   	return(output)
 	}
 ))
+test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
+
+####################################################################################################
+################################ Attempt to recreate values ########################################
+# now we work backworks to see if we can use the calculated foo value to find beta
 
 
 
-# let us see if we can find the beta to foo from a proxy for paee (cam_index)
-regression_coefficient_foo <- lm(formula=foo~cam_index, data=test_data) # this is our beta of sorts
-coefficient_of_foo_to_cam_index <- regression_coefficient_foo$coefficients["cam_index"]
+## BASELINE with cam_index
+# validation data
+pc_val_data <- lm(formula=foo~cam_index, data=validation_data)
+cc_val_data <- pc_val_data$coefficients[-1]
+cc_val_data <- c(1,cc_val_data)
+mean_cc <- mean(cc_val_data)
+val_per_paee_cc <- mean_cc/mean_paee_difference
 
+stdError_cc_val_data <- (summary(pc_val_data)$coefficients[,"Std. Error"])[-1]
+mean_stdError_cc_val <- mean(stdError_cc_val_data)
+
+# test data
+pc_test_data <- lm(formula=foo~cam_index, data=test_data)
+cc_test_data <- pc_test_data$coefficients[-1]
+cc_test_data <- c(1,cc_test_data)
+mean_cc <- mean(cc_test_data)
+test_per_paee_cc <- mean_cc/mean_paee_difference
+
+stdError_cc_test_data <- (summary(pc_test_data)$coefficients[,"Std. Error"])[-1]
+mean_stdError_cc_test <- mean(stdError_cc_test_data)
+
+
+## Replacing the cam_index with means
+# validation
+pc_val_data_means <- lm(formula=foo~cam_index_means, data=validation_data)
+cc_val_data_means <- pc_val_data_means$coefficients["cam_index_means"]
+
+stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
+mean_stdError_cc_val_means <- mean(stdError_cc_val_data_means)
+
+# test
+pc_test_data_means <- lm(formula=foo~cam_index_means, data=test_data)
+cc_test_data_means <- pc_test_data_means$coefficients["cam_index_means"]
+
+stdError_cc_test_data_means <- (summary(pc_test_data_means)$coefficients[,"Std. Error"])[-1]
+mean_stdError_cc_test_means <- mean(stdError_cc_test_data_means)
+
+
+## Replacing the cam_index with number chosen for it at random and then monte carloing everything.
+
+## Set lists of values for each PA categorization that will be used to draw random numbers for
+#validation
+cat1 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat1 <- cat1[!sapply(cat1,is.na)]
+
+cat2 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat2 <- cat2[!sapply(cat2,is.na)]
+
+cat3 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
+  if (y == 3){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat3 <- cat3[!sapply(cat3,is.na)]
+
+cat4 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
+  if (y == 4){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+})
+cat4 <- cat4[!sapply(cat4,is.na)]
+
+test_per_paee_cc_list <- c(test_per_paee_cc)
+
+for (i in 1:1000) {
+	cat1_choice <- sample(cat1,1,replace=TRUE)
+	cat2_choice <- sample(cat2,1,replace=TRUE)
+	cat3_choice <- sample(cat3,1,replace=TRUE)
+	cat4_choice <- sample(cat4,1,replace=TRUE)
+
+	test_data$cam_index_means_sample <- unlist(mapply(test_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+	    if (is.na(x)) {
+	      output = NA
+	    } else if (x == 1){
+	      output = cat1_choice
+	    } else if (x == 2) {
+	      output = cat2_choice
+	    } else if (x == 3) {
+	      output = cat3_choice
+	    } else if (x == 4) {
+	      output = cat4_choice
+	    } else {
+	      output = NA
+	  	}
+	  	return(output)
+		}
+	))
+
+	regression_fit <- lm(formula=foo~cam_index_means_sample, data=test_data)
+	cc_test_data_sample <- regression_fit$coefficients["cam_index_means_sample"]
+
+	lambda_men_var <- (summary(regression_fit)$coefficients["cam_index_means_sample","Std. Error"])^2
+	test_per_paee_cc_list <- c(test_per_paee_cc_list, cc_test_data_sample)
+}
