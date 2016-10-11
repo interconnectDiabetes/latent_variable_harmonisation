@@ -1,7 +1,7 @@
 ###### Simulation Practice for Latent Variable Harmonisation ########
 
 # The main objective of this program is to explore different data generation
-# distributions and their relationship with regression calibration.
+# distributions and their relationship with regression calibrat+ion.
 
 
 ## Author: Paul Scherer
@@ -13,6 +13,7 @@
 ## Libraries
 library("survival")
 library(graphics)
+
 ## Seed
 set.seed(66)
 
@@ -110,18 +111,66 @@ test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
 ################################ Attempt to recreate values ########################################
 # now we work backworks to see if we can use the calculated foo value to find beta
 
-# look at discrepancy in cambridge index assignment/correlation
-test_data_regression_paee_cam_index <- lm(formula=paee~cam_index, data=test_data)
-validation_data_regression_paee_cam_index <- lm(formula=paee~cam_index, data=validation_data)
+## BASELINE with cam_index
+pc_test_data <- lm(formula=paee~cam_index, data=test_data)
+pc_val_data <- lm(formula=paee~cam_index, data=validation_data)
 
-# # our lambda is the coefficient calculated from the validation data
-# lambda <- validation_data_regression_paee_cam_index$coefficients["cam_index"]
+# validation data
+cc_val_data <- pc_val_data$coefficients[-1]
+cc_val_data <- c(1,cc_val_data)
+mean_cc <- mean(cc_val_data)
+val_per_paee_cc <- mean_cc/mean_paee_difference
+
+# test data
+cc_test_data <- pc_test_data$coefficients[-1]
+cc_test_data <- c(1,cc_test_data)
+mean_cc <- mean(cc_test_data)
+test_per_paee_cc <- mean_cc/mean_paee_difference
+
+## Replacing the cam_index with means
+# validation
+validation_data$cam_index_means <- unlist(mapply(validation_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = index_mean1
+    } else if (x == 2) {
+      output = index_mean2
+    } else if (x == 3) {
+      output = index_mean3
+    } else if (x == 4) {
+      output = index_mean4
+    } else {
+      output = NA
+  	}
+  	return(output)
+	}
+))
+
+
+
+# test
+test_data$cam_index_means <- unlist(mapply(test_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = index_mean1
+    } else if (x == 2) {
+      output = index_mean2
+    } else if (x == 3) {
+      output = index_mean3
+    } else if (x == 4) {
+      output = index_mean4
+    } else {
+      output = NA
+  	}
+  	return(output)
+	}
+))
+
+
 
 # let us see if we can find the beta to foo from a proxy for paee (cam_index)
 regression_coefficient_foo <- lm(formula=foo~cam_index, data=test_data) # this is our beta of sorts
 coefficient_of_foo_to_cam_index <- regression_coefficient_foo$coefficients["cam_index"]
 
-# # and do the calibrated beta calculation
-# calibrated_beta <- beta/lambda
-
-# library(graphics)
