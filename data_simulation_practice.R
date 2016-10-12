@@ -147,14 +147,29 @@ test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
 ####################################################################################################
 ################################ Attempt to find true beta  ########################################
 
-# Here we attempt different methods to find the true correlation coefficient between paee and some trait
+# Here we attempt different methods to find the true correlation coefficient between paee and some condition
 # called foo given the information we have. For this case we know what the true correlation between foo~paee
 # is and we attempt to see how close different measurement devices (cam_index, cam_index_means, sampling) 
 # can get to the real relationship. 
 
 # Interestingly we have an idea of the relationship between paee and the measurement device used to approximate
-# this. Thus we can possibly approximate the amount of measurement error created by the measurement device 
-# and attenuate its effects in the calculation of the correlation between foo~measurement device. 
+# this. We expect a fair amount of bias to be introduced each time a measurement device is used, and this is the
+# measurement error. Measurement error typically results in biased estimates of exposure disease associations, the
+# severity and nature of the bias depending on the form of of the error.
+
+# We can possibly approximate the amount of measurement error bias created by the measurement device 
+# and attenuate its effects in the estimate of the exposure-foo association towards the "real" association of
+# paee-foo.
+
+# Classically the univariate measurement error relationship can be written as X = O + e where X is the true (latent variable)
+# and O the observed (measured/measurement device) and the e as "error" of course there is systematic and random error
+# so this relationship is better described as X=O+es+er. 
+
+# To correct for the effects of measurement error, information additional to the main study data is required. Ideally 
+# this is a validation sample (which we have) in which the "real" exposure (paee) is observed. We use regression calibration
+# to perform the error correction.
+
+# Fortunately our problem is univariate
 
 
 ## BASELINE with cam_index
