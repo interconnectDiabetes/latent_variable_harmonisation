@@ -145,14 +145,35 @@ test_data$cam_index_means <- unlist(mapply(test_data$cam_index, SIMPLIFY = FALSE
 test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
 
 ####################################################################################################
-################################ Attempt to recreate values ########################################
-# now we work backworks to see if we can use the calculated foo value to find beta
+################################ Attempt to find true beta  ########################################
 
+# Here we attempt different methods to find the true correlation coefficient between paee and some trait
+# called foo given the information we have. For this case we know what the true correlation between foo~paee
+# is and we attempt to see how close different measurement devices (cam_index, cam_index_means, sampling) 
+# can get to the real relationship. 
+
+# Interestingly we have an idea of the relationship between paee and the measurement device used to approximate
+# this. Thus we can possibly approximate the amount of measurement error created by the measurement device 
+# and attenuate its effects in the calculation of the correlation between foo~measurement device. 
 
 
 ## BASELINE with cam_index
-# validation data
-fc_val_data <- lm(formula=foo~cam_index, data=validation_data)
+# test data
+# calculation of correlation between foo and the cam_index as measurement
+fc_test_data <- lm(formula=foo~cam_index, data=test_data)
+cc_test_data <- fc_test_data$coefficients[-1]
+cc_test_data <- c(1,cc_test_data)
+mean_cc <- mean(cc_test_data)
+test_per_paee_cc <- mean_cc/mean_paee_difference # rough translation to per paee increase
+
+# stdError
+stdError_cc_test_data <- (summary(fc_test_data)$coefficients[,"Std. Error"])[-1]
+mean_stdError_cc_test <- mean(stdError_cc_test_data)
+
+
+
+# validation
+fc_val_data <- lm(formula=paee~cam_index, data=validation_data)
 cc_val_data <- fc_val_data$coefficients[-1]
 cc_val_data <- c(1,cc_val_data)
 mean_cc <- mean(cc_val_data)
@@ -161,20 +182,17 @@ val_per_paee_cc <- mean_cc/mean_paee_difference
 stdError_cc_val_data <- (summary(fc_val_data)$coefficients[,"Std. Error"])[-1]
 mean_stdError_cc_val <- mean(stdError_cc_val_data)
 
-# test data
-fc_test_data <- lm(formula=foo~cam_index, data=test_data)
-cc_test_data <- fc_test_data$coefficients[-1]
-cc_test_data <- c(1,cc_test_data)
-mean_cc <- mean(cc_test_data)
-test_per_paee_cc <- mean_cc/mean_paee_difference
 
-stdError_cc_test_data <- (summary(fc_test_data)$coefficients[,"Std. Error"])[-1]
-mean_stdError_cc_test <- mean(stdError_cc_test_data)
+
+
+
+
+
 
 
 ## Replacing the cam_index with means
 # validation
-pc_val_data_means <- lm(formula=foo~cam_index_means, data=validation_data)
+pc_val_data_means <- lm(formula=paee~cam_index_means, data=validation_data)
 cc_val_data_means <- pc_val_data_means$coefficients["cam_index_means"]
 
 stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
@@ -188,8 +206,9 @@ stdError_cc_test_data_means <- (summary(pc_test_data_means)$coefficients[,"Std. 
 mean_stdError_cc_test_means <- mean(stdError_cc_test_data_means)
 
 
-## Replacing the cam_index with number chosen for it at random and then monte carloing everything.
 
+
+## Replacing the cam_index with number chosen for it at random and then monte carloing everything.
 ## Set lists of values for each PA categorization that will be used to draw random numbers for
 #validation
 cat1 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
@@ -265,3 +284,4 @@ for (i in 1:1000) {
 	test_per_paee_cc_list <- c(test_per_paee_cc_list, cc_test_data_sample)
 }
 mean_test_per_paee_cc <- mean(test_per_paee_cc_list)
+
