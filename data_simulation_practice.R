@@ -115,17 +115,15 @@ validation_data$cam_index_means <- unlist(mapply(validation_data$cam_index, SIMP
   	return(output)
 	}
 ))
-validation_data$foo <- unlist(lapply(validation_data$paee, data_generator, beta=set_beta))
-
-
 
 
 # Data set of 20000 points for which we calculate the betas, (test)
-test_data <- as.data.frame(c(rep(1,5000),rep(2,5000),rep(3,5000),rep(4,5000)))
-colnames(test_data) <- c("cam_index")
-test_data$cam_index <- as.factor(test_data$cam_index)
-test_data$paee <- unlist(lapply(test_data$cam_index, gaussian_index_sample))
-test_data$cam_index_means <- unlist(mapply(test_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+study_data <- as.data.frame(c(rep(1,5000),rep(2,5000),rep(3,5000),rep(4,5000)))
+colnames(study_data) <- c("cam_index")
+study_data$cam_index <- as.factor(study_data$cam_index)
+study_data$paee <- unlist(lapply(study_data$cam_index, gaussian_index_sample))
+study_data$foo <- unlist(lapply(study_data$paee, data_generator, beta=set_beta))
+study_data$cam_index_means <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
@@ -142,7 +140,6 @@ test_data$cam_index_means <- unlist(mapply(test_data$cam_index, SIMPLIFY = FALSE
   	return(output)
 	}
 ))
-test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
 
 ####################################################################################################
 ################################ Attempt to find true beta  ########################################
@@ -178,61 +175,65 @@ test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
 
 # To find E(X|W,Z) we use the RC model X = mu + lambda(W) + gamma(Z) + e (based of the classical measurement error model) 
 # By using the RC model: E(X|W,Z) = mu^ + lambda^(W) + gamma^(Z) which is then used to estimate beta, beta^
-# This is actually equivalent to beta^ = beta^*/lambda^ which is much easier to calculate and can be done with our data.
+# This is actually equivalent to beta^ = beta^*/lambda^ which is much easier to calculate and can be done with our data, the
+# lambda is called the regression dilution factor (RDR)
 
 # So in this work we will first look at the different measured exposures we have instead of our latent true exposure
 # naively just to see which one does best. Then we will use the regression calibration method for error correction
 # and move our beta^ towards an unbiased estimate of beta.
 
-
-
-# Lets start with naive approach to estimating beta
-
-## BASELINE with cam_index
-# test data
+################################### BASELINE with cam_index ###################################################
 # calculation of correlation between foo and the cam_index as measurement
-fc_test_data <- lm(formula=foo~cam_index, data=test_data)
-cc_test_data <- fc_test_data$coefficients[-1]
-cc_test_data <- c(1,cc_test_data)
-mean_cc <- mean(cc_test_data)
-test_per_paee_cc <- mean_cc/mean_paee_difference # rough translation to per paee increase
+foo_cam_study <- lm(formula=foo~cam_index, data=study_data)
+coef_foo_cam_study <- foo_cam_study$coefficients[-1]
+coef_foo_cam_study <- c(1,coef_foo_cam_study)
+mean_coef <- mean(coef_foo_cam_study)
+study_per_paee_estimate_cam_index <- mean_coef/mean_paee_difference # rough translation to per paee increase
 
-# stdError
-stdError_cc_test_data <- (summary(fc_test_data)$coefficients[,"Std. Error"])[-1]
-mean_stdError_cc_test <- mean(stdError_cc_test_data)
-
+# stdError_cc_study_data <- (summary(foo_cam_study)$coefficients[,"Std. Error"])[-1]
+# mean_stdError_coef_study <- mean(stdError_cc_study_data)
 
 
-# validation
-fc_val_data <- lm(formula=paee~cam_index, data=validation_data)
-cc_val_data <- fc_val_data$coefficients[-1]
-cc_val_data <- c(1,cc_val_data)
-mean_cc <- mean(cc_val_data)
-val_per_paee_cc <- mean_cc/mean_paee_difference
+# error measurement
+paee_cam_val <- lm(formula=paee~cam_index, data=validation_data)
+coef_paee_cam_val <- paee_cam_val$coefficients[-1]
+coef_paee_cam_val <- c(1,coef_paee_cam_val)
+mean_coef <- mean(coef_paee_cam_val)
+val_per_paee_coef <- mean_coef/mean_paee_difference
 
-stdError_cc_val_data <- (summary(fc_val_data)$coefficients[,"Std. Error"])[-1]
-mean_stdError_cc_val <- mean(stdError_cc_val_data)
+# stdError_cc_val_data <- (summary(paee_cam_val)$coefficients[,"Std. Error"])[-1]
+# mean_stdError_cc_val <- mean(stdError_cc_val_data)
 
+# RC 
+beta_hat_star <- study_per_paee_estimate_cam_index
+lambda_hat <- val_per_paee_coef
+beta_hat <- beta_hat_star/lambda_hat
 
-
+###############################################################################################################
+################################## WITH CAM_INDEX_MEANS #######################################################
 
 ## Replacing the cam_index with means
-# validation
+# test
+pc_study_data_means <- lm(formula=foo~cam_index_means, data=study_data)
+cc_study_data_means <- pc_study_data_means$coefficients["cam_index_means"]
+
+# stdError_cc_study_data_means <- (summary(pc_study_data_means)$coefficients[,"Std. Error"])[-1]
+# mean_stdError_cc_test_means <- mean(stdError_cc_study_data_means)
+
+# Error measurement
 pc_val_data_means <- lm(formula=paee~cam_index_means, data=validation_data)
 cc_val_data_means <- pc_val_data_means$coefficients["cam_index_means"]
 
-stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
-mean_stdError_cc_val_means <- mean(stdError_cc_val_data_means)
+# stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
+# mean_stdError_cc_val_means <- mean(stdError_cc_val_data_means)
 
-# test
-pc_test_data_means <- lm(formula=foo~cam_index_means, data=test_data)
-cc_test_data_means <- pc_test_data_means$coefficients["cam_index_means"]
-
-stdError_cc_test_data_means <- (summary(pc_test_data_means)$coefficients[,"Std. Error"])[-1]
-mean_stdError_cc_test_means <- mean(stdError_cc_test_data_means)
+# RC 
+beta_hat_star_means <- cc_study_data_means
+lambda_hat_means <- cc_val_data_means
+beta_hat_means <- beta_hat_star_means/lambda_hat_means
 
 
-
+###############################################################################################################
 
 ## Replacing the cam_index with number chosen for it at random and then monte carloing everything.
 ## Set lists of values for each PA categorization that will be used to draw random numbers for
@@ -277,7 +278,7 @@ cat4 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y
 })
 cat4 <- cat4[!sapply(cat4,is.na)]
 
-test_per_paee_cc_list <- c(test_per_paee_cc)
+beta_hat_star_list <- c(study_per_paee_estimate)
 
 for (i in 1:1000) {
 	cat1_choice <- sample(cat1,1,replace=TRUE)
@@ -285,7 +286,7 @@ for (i in 1:1000) {
 	cat3_choice <- sample(cat3,1,replace=TRUE)
 	cat4_choice <- sample(cat4,1,replace=TRUE)
 
-	test_data$cam_index_means_sample <- unlist(mapply(test_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+	study_data$cam_index_means_sample <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
 	    if (is.na(x)) {
 	      output = NA
 	    } else if (x == 1){
@@ -303,13 +304,12 @@ for (i in 1:1000) {
 		}
 	))
 
-	regression_fit <- lm(formula=foo~cam_index_means_sample, data=test_data)
-	cc_test_data_sample <- regression_fit$coefficients["cam_index_means_sample"]
-
-	lambda_men_var <- (summary(regression_fit)$coefficients["cam_index_means_sample","Std. Error"])^2
-	test_per_paee_cc_list <- c(test_per_paee_cc_list, cc_test_data_sample)
+	regression_fit <- lm(formula=foo~cam_index_means_sample, data=study_data)
+	beta_hat_star <- regression_fit$coefficients["cam_index_means_sample"]
+	beta_hat_star_list <- c(beta_hat_star_list, beta_hat_star)
 }
-mean_test_per_paee_cc <- mean(test_per_paee_cc_list)
+
+mean_beta_hat_star <- mean(beta_hat_star_list[-1])
 
 
 
