@@ -184,30 +184,37 @@ study_data$cam_index_means <- unlist(mapply(study_data$cam_index, SIMPLIFY = FAL
 
 ################################### BASELINE with cam_index ###################################################
 # calculation of correlation between foo and the cam_index as measurement
+# coef = beta
 foo_cam_study <- lm(formula=foo~cam_index, data=study_data)
 coef_foo_cam_study <- foo_cam_study$coefficients[-1]
 coef_foo_cam_study <- c(1,coef_foo_cam_study)
 mean_coef <- mean(coef_foo_cam_study)
 study_per_paee_estimate_cam_index <- mean_coef/mean_paee_difference # rough translation to per paee increase
 
-# stdError_cc_study_data <- (summary(foo_cam_study)$coefficients[,"Std. Error"])[-1]
-# mean_stdError_coef_study <- mean(stdError_cc_study_data)
+stdError_cc_study_data <- (summary(foo_cam_study)$coefficients[,"Std. Error"])[-1]
+mean_stdError_coef_study <- mean(stdError_cc_study_data)
+mean_stdError_coef_study <- mean_stdError_coef_study/mean_paee_difference
+mean_variance_coef_study <- mean_stdError_coef_study^2
 
-
-# error measurement
+# error measurement coef = lambda
 paee_cam_val <- lm(formula=paee~cam_index, data=validation_data)
 coef_paee_cam_val <- paee_cam_val$coefficients[-1]
 coef_paee_cam_val <- c(1,coef_paee_cam_val)
 mean_coef <- mean(coef_paee_cam_val)
 val_per_paee_coef <- mean_coef/mean_paee_difference
 
-# stdError_cc_val_data <- (summary(paee_cam_val)$coefficients[,"Std. Error"])[-1]
-# mean_stdError_cc_val <- mean(stdError_cc_val_data)
+stdError_cc_val_data <- (summary(paee_cam_val)$coefficients[,"Std. Error"])[-1]
+mean_stdError_cc_val <- mean(stdError_cc_val_data)
+mean_variance_cc_val <- mean_stdError_cc_val^2
+
+
+# question are the standard errors even comparable?
 
 # RC 
 beta_hat_star <- study_per_paee_estimate_cam_index
 lambda_hat <- val_per_paee_coef
 beta_hat <- beta_hat_star/lambda_hat
+var_beta <- 
 
 ###############################################################################################################
 ################################## WITH CAM_INDEX_MEANS #######################################################
@@ -217,15 +224,15 @@ beta_hat <- beta_hat_star/lambda_hat
 pc_study_data_means <- lm(formula=foo~cam_index_means, data=study_data)
 cc_study_data_means <- pc_study_data_means$coefficients["cam_index_means"]
 
-# stdError_cc_study_data_means <- (summary(pc_study_data_means)$coefficients[,"Std. Error"])[-1]
-# mean_stdError_cc_test_means <- mean(stdError_cc_study_data_means)
+stdError_cc_study_data_means <- (summary(pc_study_data_means)$coefficients[,"Std. Error"])[-1]
+mean_stdError_cc_test_means <- mean(stdError_cc_study_data_means)
 
 # Error measurement
 pc_val_data_means <- lm(formula=paee~cam_index_means, data=validation_data)
 cc_val_data_means <- pc_val_data_means$coefficients["cam_index_means"]
 
-# stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
-# mean_stdError_cc_val_means <- mean(stdError_cc_val_data_means)
+stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
+mean_stdError_cc_val_means <- mean(stdError_cc_val_data_means)
 
 # RC 
 beta_hat_star_means <- cc_study_data_means
@@ -278,7 +285,7 @@ cat4 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y
 })
 cat4 <- cat4[!sapply(cat4,is.na)]
 
-beta_hat_star_list <- c(study_per_paee_estimate)
+beta_hat_star_list <- c(cc_study_data_means)
 
 for (i in 1:1000) {
 	cat1_choice <- sample(cat1,1,replace=TRUE)
