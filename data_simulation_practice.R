@@ -207,14 +207,13 @@ stdError_cc_val_data <- (summary(paee_cam_val)$coefficients[,"Std. Error"])[-1]
 mean_stdError_cc_val <- mean(stdError_cc_val_data)
 mean_variance_cc_val <- mean_stdError_cc_val^2
 
-
 # question are the standard errors even comparable?
 
 # RC 
 beta_hat_star <- study_per_paee_estimate_cam_index
 lambda_hat <- val_per_paee_coef
 beta_hat <- beta_hat_star/lambda_hat
-var_beta <- 
+var_beta <- mean_variance_coef_study/(lambda_hat^2) + (beta_hat_star/lambda_hat^2)^2*mean_variance_cc_val
 
 ###############################################################################################################
 ################################## WITH CAM_INDEX_MEANS #######################################################
@@ -238,7 +237,7 @@ mean_stdError_cc_val_means <- mean(stdError_cc_val_data_means)
 beta_hat_star_means <- cc_study_data_means
 lambda_hat_means <- cc_val_data_means
 beta_hat_means <- beta_hat_star_means/lambda_hat_means
-
+var_beta_means <- mean_stdError_cc_test_means/(lambda_hat_means^2) + (beta_hat_star_means/lambda_hat_means^2)^2*mean_stdError_cc_val_means
 
 ###############################################################################################################
 
