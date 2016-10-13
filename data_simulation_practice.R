@@ -147,30 +147,46 @@ test_data$foo <- unlist(lapply(test_data$paee, data_generator, beta=set_beta))
 ####################################################################################################
 ################################ Attempt to find true beta  ########################################
 
-# Here we attempt different methods to find the true correlation coefficient between paee and some condition
-# called foo given the information we have. For this case we know what the true correlation between foo~paee
-# is and we attempt to see how close different measurement devices (cam_index, cam_index_means, sampling) 
-# can get to the real relationship. 
+# In this code snippet we attempt different methods to find the true association between paee and some condition
+# called foo given the information we have generated. For this simulation we know what the true association between foo~paee
+# (beta) is and we attempt to see how close different measurement devices used instead of paee (cam_index, 
+# cam_index_means, sampling) can get to the real relationship.
 
-# Interestingly we have an idea of the relationship between paee and the measurement device used to approximate
-# this. We expect a fair amount of bias to be introduced each time a measurement device is used, and this is the
-# measurement error. Measurement error typically results in biased estimates of exposure disease associations, the
-# severity and nature of the bias depending on the form of of the error.
+# Due to the nature of our measurement devices for paee, we expect a fair amount of error or bias to be 
+# introduced each time a measurement device is used, and this is the measurement error. Measurement error 
+# typically results in biased estimates of exposure disease associations, the severity and nature
+# of the bias depending on the form of the error.
 
-# We can possibly approximate the amount of measurement error bias created by the measurement device 
-# and attenuate its effects in the estimate of the exposure-foo association towards the "real" association of
-# paee-foo.
+# We can attenuate the effects of measurement error in the estimate of the foo-exposure association 
+# towards the "real" association of foo~paee through error correction. To do this we have a validation study where
+# the paee is observed as well as our measurement devices allowing for this error correction to occur. Furthermore 
+# fortunately for us we assume a classical measurement error model, and the condition-exposure association here is 
+# linear (which is easy to interpret and also extends approximately to the proportional hazards model) as a result 
+# error correction can be performed through regression calibration.
 
-# Classically the univariate measurement error relationship can be written as X = O + e where X is the true (latent variable)
-# and O the observed (measured/measurement device) and the e as "error" of course there is systematic and random error
-# so this relationship is better described as X=O+es+er. 
+# summary
+# - foo ~ beta^(paee) + e, where e is noise; beta is the real association, beta^ is the fitted estimate
+# - there are restrictions to getting paee so we use foo ~ beta^*(W), where W is the measured exposure, this typically results in a biased estimate of the foo ~ paee association through measurement error
+# - We can attenuate the effects of the measurement error in beta^* towards beta^ through error correction, in part.
+# - Assuming the classical error model, and because of our univariate linear relationship we can use the regression calibration method for error correction.
+# - We can extend the error correction methods to incorporate other suspected forms of measurement error such as systematic error or differential error (but we wont, this needs a bit more discussion)
 
-# To correct for the effects of measurement error, information additional to the main study data is required. Ideally 
-# this is a validation sample (which we have) in which the "real" exposure (paee) is observed. We use regression calibration
-# to perform the error correction.
+# The overall aim with our regression calibration (RC) is to obtain an unbiased estimate of the parameter beta.
+# Under RC beta is estimated by using the expectation of the true exposure X given measured exposures W and adjustment
+# values Z; E(X|W,Z) in place of X in the real association. We know or assume that conditionally on X , W provides no
+# no information about the condition, W's error is not differential. 
 
-# Fortunately our problem is univariate
+# To find E(X|W,Z) we use the RC model X = mu + lambda(W) + gamma(Z) + e (based of the classical measurement error model) 
+# By using the RC model: E(X|W,Z) = mu^ + lambda^(W) + gamma^(Z) which is then used to estimate beta, beta^
+# This is actually equivalent to beta^ = beta^*/lambda^ which is much easier to calculate and can be done with our data.
 
+# So in this work we will first look at the different measured exposures we have instead of our latent true exposure
+# naively just to see which one does best. Then we will use the regression calibration method for error correction
+# and move our beta^ towards an unbiased estimate of beta.
+
+
+
+# Lets start with naive approach to estimating beta
 
 ## BASELINE with cam_index
 # test data
@@ -196,11 +212,6 @@ val_per_paee_cc <- mean_cc/mean_paee_difference
 
 stdError_cc_val_data <- (summary(fc_val_data)$coefficients[,"Std. Error"])[-1]
 mean_stdError_cc_val <- mean(stdError_cc_val_data)
-
-
-
-
-
 
 
 
@@ -299,4 +310,6 @@ for (i in 1:1000) {
 	test_per_paee_cc_list <- c(test_per_paee_cc_list, cc_test_data_sample)
 }
 mean_test_per_paee_cc <- mean(test_per_paee_cc_list)
+
+
 
