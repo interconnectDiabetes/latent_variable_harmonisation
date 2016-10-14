@@ -190,60 +190,77 @@ coef_foo_cam_study <- foo_cam_study$coefficients[-1]
 coef_foo_cam_study <- c(1,coef_foo_cam_study)
 mean_coef <- mean(coef_foo_cam_study)
 study_per_paee_estimate_cam_index <- mean_coef/mean_paee_difference # rough translation to per paee increase
-
+## std error and variance
 stdError_cc_study_data <- (summary(foo_cam_study)$coefficients[,"Std. Error"])[-1]
 mean_stdError_coef_study <- mean(stdError_cc_study_data)
 mean_stdError_coef_study <- mean_stdError_coef_study/mean_paee_difference
 mean_variance_coef_study <- mean_stdError_coef_study^2
+# confidence intervals
+lci_beta_hat_star <- study_per_paee_estimate_cam_index - 1.96*mean_stdError_coef_study
+uci_beta_hat_star <- study_per_paee_estimate_cam_index + 1.96*mean_stdError_coef_study
 
-# error measurement coef = lambda
+
+## coef = lambda
 paee_cam_val <- lm(formula=paee~cam_index, data=validation_data)
 coef_paee_cam_val <- paee_cam_val$coefficients[-1]
 coef_paee_cam_val <- c(1,coef_paee_cam_val)
 mean_coef <- mean(coef_paee_cam_val)
 val_per_paee_coef <- mean_coef/mean_paee_difference
-
+## std error and variance
 stdError_cc_val_data <- (summary(paee_cam_val)$coefficients[,"Std. Error"])[-1]
 mean_stdError_cc_val <- mean(stdError_cc_val_data)
 mean_variance_cc_val <- mean_stdError_cc_val^2
+# confidence intervals
+lci_lambda_hat <- val_per_paee_coef - 1.96*mean_stdError_cc_val
+uci_lambda_hat <- val_per_paee_coef + 1.96*mean_stdError_cc_val
 
-# question are the standard errors even comparable?
 
-# RC 
+## RC 
 beta_hat_star <- study_per_paee_estimate_cam_index
 lambda_hat <- val_per_paee_coef
 beta_hat <- beta_hat_star/lambda_hat
 var_beta <- mean_variance_coef_study/(lambda_hat^2) + (beta_hat_star/lambda_hat^2)^2*mean_variance_cc_val
+# confidence intervals
+lci_beta_hat <- beta_hat - 1.96*sqrt(var_beta)  
+uci_beta_hat <- beta_hat + 1.96*sqrt(var_beta)   
+
 
 ###############################################################################################################
 ################################## WITH CAM_INDEX_MEANS #######################################################
-
-## Replacing the cam_index with means
-# test
+## coef = beta
 pc_study_data_means <- lm(formula=foo~cam_index_means, data=study_data)
 cc_study_data_means <- pc_study_data_means$coefficients["cam_index_means"]
-
+# stdError
 stdError_cc_study_data_means <- (summary(pc_study_data_means)$coefficients[,"Std. Error"])[-1]
 mean_stdError_cc_test_means <- mean(stdError_cc_study_data_means)
+# confidence intervals
+lci_beta_hat_star_means <- cc_study_data_means - 1.96*mean_stdError_cc_test_means
+uci_beta_hat_star_means <- cc_study_data_means + 1.96*mean_stdError_cc_test_means
 
-# Error measurement
+
+## coef = lambda
 pc_val_data_means <- lm(formula=paee~cam_index_means, data=validation_data)
 cc_val_data_means <- pc_val_data_means$coefficients["cam_index_means"]
-
+# stdError
 stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
 mean_stdError_cc_val_means <- mean(stdError_cc_val_data_means)
+# confidence intervals
+lci_lambda_hat_means <- cc_val_data_means - 1.96(mean_stdError_cc_val_means)
+uci_lambda_hat_means <- cc_val_data_means + 1.96(mean_stdError_cc_val_means)
+
 
 # RC 
 beta_hat_star_means <- cc_study_data_means
 lambda_hat_means <- cc_val_data_means
 beta_hat_means <- beta_hat_star_means/lambda_hat_means
 var_beta_means <- mean_stdError_cc_test_means/(lambda_hat_means^2) + (beta_hat_star_means/lambda_hat_means^2)^2*mean_stdError_cc_val_means
-
+# confidence intervals
+uci_beta_hat_means <- beta_hat_means - 1.96*sqrt(var_beta_means)
+lci_beta_hat_means <- beta_hat_means + 1.96*sqrt(var_beta_means)
 ###############################################################################################################
-
-## Replacing the cam_index with number chosen for it at random and then monte carloing everything.
-## Set lists of values for each PA categorization that will be used to draw random numbers for
-#validation
+################################## WITH SAMPLED PAEE VALS #####################################################
+# Set lists of values for each PA categorization that will be used to draw random numbers for
+# validation
 cat1 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
   if (y == 1){
     output = x
@@ -346,10 +363,10 @@ for (i in 1:1000) {
 	#var_beta_sample <- mean_stdError_cc_test_means/(lambda_hat_sample^2) + (beta_hat_star_means/lambda_hat_sample^2)^2*mean_stdError_cc_val_means
 
 }
-
 mean_beta_hat_star <- mean(beta_hat_star_list)
 mean_lambda_hat <- mean(lambda_hat_list)
 mean_beta_hat_sample_list <- mean(beta_hat_sample_list)
+
 
 
 
