@@ -232,10 +232,9 @@ pc_study_data_means <- lm(formula=foo~cam_index_means, data=study_data)
 cc_study_data_means <- pc_study_data_means$coefficients["cam_index_means"]
 # stdError
 stdError_cc_study_data_means <- (summary(pc_study_data_means)$coefficients[,"Std. Error"])[-1]
-mean_stdError_cc_test_means <- mean(stdError_cc_study_data_means)
 # confidence intervals
-lci_beta_hat_star_means <- cc_study_data_means - 1.96*mean_stdError_cc_test_means
-uci_beta_hat_star_means <- cc_study_data_means + 1.96*mean_stdError_cc_test_means
+lci_beta_hat_star_means <- cc_study_data_means - 1.96*stdError_cc_study_data_means
+uci_beta_hat_star_means <- cc_study_data_means + 1.96*stdError_cc_study_data_means
 
 
 ## coef = lambda
@@ -243,20 +242,20 @@ pc_val_data_means <- lm(formula=paee~cam_index_means, data=validation_data)
 cc_val_data_means <- pc_val_data_means$coefficients["cam_index_means"]
 # stdError
 stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
-mean_stdError_cc_val_means <- mean(stdError_cc_val_data_means)
 # confidence intervals
-lci_lambda_hat_means <- cc_val_data_means - 1.96(mean_stdError_cc_val_means)
-uci_lambda_hat_means <- cc_val_data_means + 1.96(mean_stdError_cc_val_means)
+lci_lambda_hat_means <- cc_val_data_means - 1.96(stdError_cc_val_data_means)
+uci_lambda_hat_means <- cc_val_data_means + 1.96(stdError_cc_val_data_means)
 
 
 # RC 
 beta_hat_star_means <- cc_study_data_means
 lambda_hat_means <- cc_val_data_means
 beta_hat_means <- beta_hat_star_means/lambda_hat_means
-var_beta_means <- mean_stdError_cc_test_means/(lambda_hat_means^2) + (beta_hat_star_means/lambda_hat_means^2)^2*mean_stdError_cc_val_means
+var_beta_means <- stdError_cc_study_data_means/(lambda_hat_means^2) + (beta_hat_star_means/lambda_hat_means^2)^2*stdError_cc_val_data_means
 # confidence intervals
 uci_beta_hat_means <- beta_hat_means - 1.96*sqrt(var_beta_means)
 lci_beta_hat_means <- beta_hat_means + 1.96*sqrt(var_beta_means)
+
 ###############################################################################################################
 ################################## WITH SAMPLED PAEE VALS #####################################################
 # Set lists of values for each PA categorization that will be used to draw random numbers for
@@ -301,9 +300,17 @@ cat4 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y
 })
 cat4 <- cat4[!sapply(cat4,is.na)]
 
-beta_hat_star_list <- vector('numeric')
-lambda_hat_list <- vector('numeric')
+
+# empty list initialization
+beta_hat_star_sample_list <- vector('numeric')
+lambda_hat_sample_list <- vector('numeric')
 beta_hat_sample_list <- vector('numeric')
+uci_beta_hat_star_sample_list <- vector('numeric')
+lci_beta_hat_star_sample_list <- vector('numeric')
+uci_lambda_hat_sample_list <- vector('numeric')
+lci_lambda_hat_sample_list <- vector('numeric')
+uci_beta_hat_sample_list <- vector('numeric')
+lci_beta_hat_sample_list <- vector('numeric')
 
 for (i in 1:1000) {
 	cat1_choice <- sample(cat1,1,replace=TRUE)
@@ -348,24 +355,47 @@ for (i in 1:1000) {
 	))
 
 	# calculation of beta hat star
-	regression_fit <- lm(formula=foo~cam_index_means_sample, data=study_data)
-	beta_hat_star_sample <- regression_fit$coefficients["cam_index_means_sample"]
-	beta_hat_star_list <- c(beta_hat_star_list, beta_hat_star_sample)
+	regression_study <- lm(formula=foo~cam_index_means_sample, data=study_data)
+	beta_hat_star_sample <- regression_study$coefficients["cam_index_means_sample"]
+	beta_hat_sample_list <- c(beta_hat_sample_list, beta_hat_star_sample)
+	#stdError and confidence intervals
+	stdError_beta_hat_star_sample <- (summary(regression_study)$coefficients[,"Std. Error"])[-1]
+	uci_beta_hat_star_sample <- beta_hat_star_sample - 1.96*stdError_beta_hat_star_sample
+	lci_beta_hat_star_sample <- beta_hat_star_sample + 1.96*stdError_beta_hat_star_sample
+	uci_beta_hat_star_sample_list <- c(uci_beta_hat_star_sample_list, uci_beta_hat_star_sample)
+	lci_beta_hat_star_sample_list <- c(lci_beta_hat_star_sample_list, lci_beta_hat_star_sample)
 
 	# calculation of lambda hat
 	regression_lambda <- lm(formula=paee~cam_index_means_sample, data=validation_data)
 	lambda_hat_sample <- regression_lambda$coefficients["cam_index_means_sample"]
-	lambda_hat_list <- c(lambda_hat_list, lambda_hat_sample)
+	lambda_hat_sample_list <- c(lambda_hat_sample_list, lambda_hat_sample)
+	#stdError and confidence intervals
+	stdError_lambda_hat_sample <- (summary(regression_lambda)$coefficients[,"Std. Error"])[-1]
+	uci_lambda_hat_sample <- lambda_hat_sample + 1.96*(stdError_lambda_hat_sample)
+	lci_lambda_hat_sample <- lambda_hat_sample + 1.96*(stdError_lambda_hat_sample)
+	uci_lambda_hat_sample_list <- c(uci_lambda_hat_sample_list, uci_lambda_hat_sample)
+	lci_lambda_hat_sample_list <- c(lci_lambda_hat_sample_list, lci_lambda_hat_sample)
 
 	# calculation of calibrated beta
 	beta_hat_sample <- beta_hat_star_sample/lambda_hat_sample
 	beta_hat_sample_list <- c(beta_hat_sample_list,beta_hat_sample)
-	#var_beta_sample <- mean_stdError_cc_test_means/(lambda_hat_sample^2) + (beta_hat_star_means/lambda_hat_sample^2)^2*mean_stdError_cc_val_means
-
+	#stdError and confidence intervals
+	var_beta_sample <- stdError_beta_hat_star_sample/(lambda_hat_sample^2) + (beta_hat_star_sample/lambda_hat_sample^2)^2*stdError_lambda_hat_sample
+	uci_beta_hat_sample <- beta_hat_sample - 1.96*sqrt(var_beta_sample)
+	lci_beta_hat_sample <- beta_hat_sample + 1.96*sqrt(var_beta_sample)
+	uci_beta_hat_sample_list <- c(uci_beta_hat_sample_list, uci_beta_hat_sample)
+	lci_beta_hat_sample_list <- c(lci_beta_hat_sample_list, lci_beta_hat_sample)
 }
-mean_beta_hat_star <- mean(beta_hat_star_list)
-mean_lambda_hat <- mean(lambda_hat_list)
-mean_beta_hat_sample_list <- mean(beta_hat_sample_list)
+
+mean_beta_hat_star_sample <- mean(beta_hat_star_sample_list)
+mean_lambda_hat_sample <- mean(lambda_hat_sample_list)
+mean_beta_hat_sample <- mean(beta_hat_sample_list)
+mean_uci_beta_hat_star_sample <- mean(uci_beta_hat_star_sample_list)
+mean_lci_beta_hat_star_sample <- mean(lci_beta_hat_star_sample_list)
+mean_uci_lambda_hat_sample <- mean(uci_lambda_hat_sample_list)
+mean_lci_lambda_hat_sample <- mean(lci_lambda_hat_sample_list)
+mean_uci_beta_hat_sample <- mean(uci_beta_hat_sample_list)
+mean_lci_beta_hat_sample <- mean(lci_beta_hat_sample_list)
 
 
 
