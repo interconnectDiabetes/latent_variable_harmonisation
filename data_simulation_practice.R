@@ -357,7 +357,7 @@ for (i in 1:1000) {
 	# calculation of beta hat star
 	regression_study <- lm(formula=foo~cam_index_means_sample, data=study_data)
 	beta_hat_star_sample <- regression_study$coefficients["cam_index_means_sample"]
-	beta_hat_sample_list <- c(beta_hat_sample_list, beta_hat_star_sample)
+	beta_hat_star_sample_list <- c(beta_hat_star_sample_list, beta_hat_star_sample)
 	#stdError and confidence intervals
 	stdError_beta_hat_star_sample <- (summary(regression_study)$coefficients[,"Std. Error"])[-1]
 	uci_beta_hat_star_sample <- beta_hat_star_sample - 1.96*stdError_beta_hat_star_sample
