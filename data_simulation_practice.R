@@ -284,7 +284,9 @@ cat4 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y
 })
 cat4 <- cat4[!sapply(cat4,is.na)]
 
-beta_hat_star_list <- c(cc_study_data_means)
+beta_hat_star_list <- vector('numeric')
+lambda_hat_list <- vector('numeric')
+beta_hat_sample_list <- vector('numeric')
 
 for (i in 1:1000) {
 	cat1_choice <- sample(cat1,1,replace=TRUE)
@@ -310,12 +312,45 @@ for (i in 1:1000) {
 		}
 	))
 
+	validation_data$cam_index_means_sample <- unlist(mapply(validation_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+	    if (is.na(x)) {
+	      output = NA
+	    } else if (x == 1){
+	      output = cat1_choice
+	    } else if (x == 2) {
+	      output = cat2_choice
+	    } else if (x == 3) {
+	      output = cat3_choice
+	    } else if (x == 4) {
+	      output = cat4_choice
+	    } else {
+	      output = NA
+	  	}
+	  	return(output)
+		}
+	))
+
+	# calculation of beta hat star
 	regression_fit <- lm(formula=foo~cam_index_means_sample, data=study_data)
-	beta_hat_star <- regression_fit$coefficients["cam_index_means_sample"]
-	beta_hat_star_list <- c(beta_hat_star_list, beta_hat_star)
+	beta_hat_star_sample <- regression_fit$coefficients["cam_index_means_sample"]
+	beta_hat_star_list <- c(beta_hat_star_list, beta_hat_star_sample)
+
+	# calculation of lambda hat
+	regression_lambda <- lm(formula=paee~cam_index_means_sample, data=validation_data)
+	lambda_hat_sample <- regression_lambda$coefficients["cam_index_means_sample"]
+	lambda_hat_list <- c(lambda_hat_list, lambda_hat_sample)
+
+	# calculation of calibrated beta
+	beta_hat_sample <- beta_hat_star_sample/lambda_hat_sample
+	beta_hat_sample_list <- c(beta_hat_sample_list,beta_hat_sample)
+	#var_beta_sample <- mean_stdError_cc_test_means/(lambda_hat_sample^2) + (beta_hat_star_means/lambda_hat_sample^2)^2*mean_stdError_cc_val_means
+
 }
 
-mean_beta_hat_star <- mean(beta_hat_star_list[-1])
+mean_beta_hat_star <- mean(beta_hat_star_list)
+mean_lambda_hat <- mean(lambda_hat_list)
+mean_beta_hat_sample_list <- mean(beta_hat_sample_list)
+
 
 
 
