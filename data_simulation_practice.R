@@ -243,8 +243,8 @@ cc_val_data_means <- pc_val_data_means$coefficients["cam_index_means"]
 # stdError
 stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
 # confidence intervals
-lci_lambda_hat_means <- cc_val_data_means - 1.96(stdError_cc_val_data_means)
-uci_lambda_hat_means <- cc_val_data_means + 1.96(stdError_cc_val_data_means)
+lci_lambda_hat_means <- cc_val_data_means - 1.96*(stdError_cc_val_data_means)
+uci_lambda_hat_means <- cc_val_data_means + 1.96*(stdError_cc_val_data_means)
 
 
 # RC 
@@ -253,8 +253,8 @@ lambda_hat_means <- cc_val_data_means
 beta_hat_means <- beta_hat_star_means/lambda_hat_means
 var_beta_means <- stdError_cc_study_data_means/(lambda_hat_means^2) + (beta_hat_star_means/lambda_hat_means^2)^2*stdError_cc_val_data_means
 # confidence intervals
-uci_beta_hat_means <- beta_hat_means - 1.96*sqrt(var_beta_means)
-lci_beta_hat_means <- beta_hat_means + 1.96*sqrt(var_beta_means)
+lci_beta_hat_means <- beta_hat_means - 1.96*sqrt(var_beta_means)
+uci_beta_hat_means <- beta_hat_means + 1.96*sqrt(var_beta_means)
 
 ###############################################################################################################
 ################################## WITH SAMPLED PAEE VALS #####################################################
@@ -381,10 +381,10 @@ for (i in 1:1000) {
 	beta_hat_sample_list <- c(beta_hat_sample_list,beta_hat_sample)
 	#stdError and confidence intervals
 	var_beta_sample <- stdError_beta_hat_star_sample/(lambda_hat_sample^2) + (beta_hat_star_sample/lambda_hat_sample^2)^2*stdError_lambda_hat_sample
-	uci_beta_hat_sample <- beta_hat_sample - 1.96*sqrt(var_beta_sample)
-	lci_beta_hat_sample <- beta_hat_sample + 1.96*sqrt(var_beta_sample)
-	uci_beta_hat_sample_list <- c(uci_beta_hat_sample_list, uci_beta_hat_sample)
-	lci_beta_hat_sample_list <- c(lci_beta_hat_sample_list, lci_beta_hat_sample)
+	lci_beta_hat_sample <- beta_hat_sample - 1.96*sqrt(var_beta_sample)
+	uci_beta_hat_sample <- beta_hat_sample + 1.96*sqrt(var_beta_sample)
+	lci_beta_hat_sample_list <- c(uci_beta_hat_sample_list, uci_beta_hat_sample)
+	uci_beta_hat_sample_list <- c(lci_beta_hat_sample_list, lci_beta_hat_sample)
 }
 
 mean_beta_hat_star_sample <- mean(beta_hat_star_sample_list)
@@ -398,6 +398,44 @@ mean_uci_beta_hat_sample <- mean(uci_beta_hat_sample_list)
 mean_lci_beta_hat_sample <- mean(lci_beta_hat_sample_list)
 
 
+results_summary <- matrix(nrow = 9, ncol = 3)
 
+#Using Cam index (question validity of error correction in this case - not same units?)
+results_summary[1,1] <- study_per_paee_estimate_cam_index
+results_summary[1,2] <- lci_beta_hat_star
+results_summary[1,3] <- uci_beta_hat_star
+results_summary[2,1] <- val_per_paee_coef
+results_summary[2,2] <- lci_lambda_hat
+results_summary[2,3] <- uci_lambda_hat
+results_summary[3,1] <- beta_hat
+results_summary[3,2] <- lci_beta_hat
+results_summary[3,3] <- uci_beta_hat
 
+#Using Cam index means
+results_summary[4,1] <- cc_study_data_means
+results_summary[4,2] <- lci_beta_hat_star_means
+results_summary[4,3] <- uci_beta_hat_star_means
+results_summary[5,1] <- cc_val_data_means
+results_summary[5,2] <- lci_lambda_hat_means
+results_summary[5,3] <- uci_lambda_hat_means
+results_summary[6,1] <- beta_hat_means
+results_summary[6,2] <- lci_beta_hat_means
+results_summary[6,3] <- uci_beta_hat_means
 
+#Using sample means - or should it be medians?
+results_summary[7,1] <- mean_beta_hat_star_sample
+results_summary[7,2] <- mean_lci_beta_hat_star_sample
+results_summary[7,3] <- mean_uci_beta_hat_star_sample
+results_summary[8,1] <- mean_lambda_hat_sample
+results_summary[8,2] <- mean_lci_lambda_hat_sample
+results_summary[8,3] <- mean_uci_lambda_hat_sample
+results_summary[9,1] <- mean_beta_hat_sample
+results_summary[9,2] <- mean_lci_beta_hat_sample
+results_summary[9,3] <- mean_uci_beta_hat_sample
+
+results_summary_df <- data.frame(results_summary, row.names=c('raw cam index beta^*','raw cam index lambda','raw cam index beta^'
+                                                              
+                                                              , 'cam index means beta^*', 'cam index lambda', 'cam index means beta^'
+                                                              , 'mean of sampled beta^*', 'mean of sampled lambda', 'mean of sampled beta^')
+                                 )
+colnames(results_summary_df) = c('estimate', 'lower_ci', 'upper_ci')
