@@ -117,6 +117,7 @@ row.names(output)<-NULL
 
 # Merging of actiheart and epic set by natural join to create the validation dataset
 val_data <- merge(output, epic, by = 'universal_id')
+remove(list = c('epic', 'act_sorted', 'actiheart_summary', 'output')) #remove unnecessary dataframes
 val_data$bmi <- mapply(FUN=bmi_calc, val_data$weight, val_data$height)
 val_data$sex <- unlist(lapply(val_data$sex, FUN=function(x){
   if (x == 1) {
@@ -945,8 +946,21 @@ women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, 
   upper95=upper_ci_list_women, calibratedBeta=cal_beta_list_women, calBetaLower95=cal_lower_ci_list_women,
   calBetaUpper95=cal_upper_ci_list_women)
 
+# ___  ___ _____ _____ _   _ ___________   _____ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ |____ |
+# | .  . || |__   | | | |_| | | | | | | |     / /
+# | |\/| ||  __|  | | |  _  | | | | | | |     \ \
+# | |  | || |___  | | | | | \ \_/ / |/ /  .___/ /
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \____/     
 
 
+# ___  ___ _____ _____ _   _ ___________     ___ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \   /   |
+# | .  . || |__   | | | |_| | | | | | | |  / /| |
+# | |\/| ||  __|  | | |  _  | | | | | | | / /_| |
+# | |  | || |___  | | | | | \ \_/ / |/ /  \___  |
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/       |_/
+#                                                
 
 ############################################################################################
 ############################ Pretty Printing Results #######################################
