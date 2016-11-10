@@ -19,7 +19,6 @@ setwd("V:/Studies/InterConnect/Internal/Latent variable harmonisation")
 library("survival")
 library("graphics")
 
-
 ###############################################################################
 ############################### FUNCTIONS #####################################
 ###############################################################################
@@ -27,7 +26,6 @@ bmi_calc <- function(weight, height){
   bmi = (weight/height)/height
   return(bmi)
 }
-
 
 ###############################################################################
 ################################# DATA ########################################
@@ -118,10 +116,10 @@ row.names(output)<-NULL
 
 # merge or perform a "natural join" on the trimmed epic table and 
 # cleaned actiheart table by universal id
-merged_output <- merge(output, epic, by = 'universal_id')
+val_data <- merge(output, epic, by = 'universal_id')
 
-merged_output$bmi <- mapply(FUN=bmi_calc, merged_output$weight, merged_output$height)
-merged_output$sex <- unlist(lapply(merged_output$sex, FUN=function(x){
+val_data$bmi <- mapply(FUN=bmi_calc, val_data$weight, val_data$height)
+val_data$sex <- unlist(lapply(val_data$sex, FUN=function(x){
   if (x == 1) {
     out = 0
   } else {
@@ -131,19 +129,19 @@ merged_output$sex <- unlist(lapply(merged_output$sex, FUN=function(x){
 }))
 
 # Make sure pa_workini is seen as a categorical variable and not a double
-merged_output$pa_workini <- as.factor(merged_output$pa_workini)
-merged_output$new_ltpa <- mapply(FUN=sum, merged_output$m_walk, merged_output$m_floors, 
-                                 merged_output$m_cycl, merged_output$m_sport, merged_output$m_houswk, merged_output$m_vigpa, 
-                                 merged_output$m_gard, merged_output$m_diy)
+val_data$pa_workini <- as.factor(val_data$pa_workini)
+val_data$new_ltpa <- mapply(FUN=sum, val_data$m_walk, val_data$m_floors, 
+                                 val_data$m_cycl, val_data$m_sport, val_data$m_houswk, val_data$m_vigpa, 
+                                 val_data$m_gard, val_data$m_diy)
 
 ## Calculating own Cambridge Index
-merged_output$cam_total <- c(rep(0,nrow(merged_output)))
-for (i in 1:nrow(merged_output)){
-  merged_output$cam_total[i] = sum(merged_output$m_cycl[i]/6, merged_output$m_sport[i]/6, na.rm=TRUE)    
+val_data$cam_total <- c(rep(0,nrow(val_data)))
+for (i in 1:nrow(val_data)){
+  val_data$cam_total[i] = sum(val_data$m_cycl[i]/6, val_data$m_sport[i]/6, na.rm=TRUE)    
 }
 
 # camMets_ind for cam_matrix
-merged_output$camMets_ind <- as.vector(do.call(rbind, lapply(X=merged_output$cam_total, FUN = function(x){
+val_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=val_data$cam_total, FUN = function(x){
   if(is.na(x)){
     ind = NA
   }
@@ -167,7 +165,7 @@ merged_output$camMets_ind <- as.vector(do.call(rbind, lapply(X=merged_output$cam
 ))
 
 # Setting the 'observed' PAEE values by the mean
-merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
@@ -203,7 +201,7 @@ merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_o
 }
 ))
 
-# merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+# val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
 #   if (y == 0) {
 #     if (is.na(x)) {
 #       output = NA
@@ -245,11 +243,11 @@ merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_o
 ###############################################################################################
 
 ### Regression and splitting of the genders
-merged_output_men <- subset(merged_output, sex==0)
-merged_output_women <- subset(merged_output, sex==1)
+val_data_men <- subset(val_data, sex==0)
+val_data_women <- subset(val_data, sex==1)
 
-rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=merged_output_men)
-rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=merged_output_women)
+rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=val_data_men)
+rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=val_data_women)
 
 lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
 lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
@@ -515,7 +513,7 @@ set.seed(999)
 
 ## Set lists of values for each PA categorisation that will be used to draw random numbers for
 ## the validation set's observed PAEE values
-cat1_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
+cat1_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
   if (y == 1){
     output = x
   } else {
@@ -526,7 +524,7 @@ cat1_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=func
 cat1_men <- cat1_men[!sapply(cat1_men,is.na)]
 
 
-cat2_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
+cat2_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
   if (y == 2){
     output = x
   } else {
@@ -536,7 +534,7 @@ cat2_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=func
 }) 
 cat2_men <- cat2_men[!sapply(cat2_men,is.na)]
 
-cat3_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
+cat3_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
   if (y == 3){
     output = x
   } else {
@@ -546,7 +544,7 @@ cat3_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=func
 }) 
 cat3_men <- cat3_men[!sapply(cat3_men,is.na)]
 
-cat4_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=function(x,y){
+cat4_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
   if (y == 4){
     output = x
   } else {
@@ -556,7 +554,7 @@ cat4_men <- mapply(merged_output_men$PAEE, merged_output_men$cam_index, FUN=func
 })
 cat4_men <- cat4_men[!sapply(cat4_men,is.na)]
 
-cat1_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FUN=function(x,y){
+cat1_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
   if (y == 1){
     output = x
   } else {
@@ -566,7 +564,7 @@ cat1_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FU
 })
 cat1_women <- cat1_women[!sapply(cat1_women,is.na)]
 
-cat2_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FUN=function(x,y){
+cat2_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
   if (y == 2){
     output = x
   } else {
@@ -576,7 +574,7 @@ cat2_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FU
 }) 
 cat2_women <- cat2_women[!sapply(cat2_women,is.na)]
 
-cat3_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FUN=function(x,y){
+cat3_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
   if (y == 3){
     output = x
   } else {
@@ -586,7 +584,7 @@ cat3_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FU
 }) 
 cat3_women <- cat3_women[!sapply(cat3_women,is.na)]
 
-cat4_women <- mapply(merged_output_women$PAEE, merged_output_women$cam_index, FUN=function(x,y){
+cat4_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
   if (y == 4){
     output = x
   } else {
@@ -609,7 +607,7 @@ for (i in 1:1000) {
   cat3_women_choice <- sample(cat3_women,1,replace=TRUE)
   cat4_women_choice <- sample(cat4_women,1,replace=TRUE)
 
-  merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
@@ -648,11 +646,11 @@ for (i in 1:1000) {
   ###
   ### Regression and splitting of the genders
   ###
-  merged_output_men <- subset(merged_output, sex==0)
-  merged_output_women <- subset(merged_output, sex==1)
+  val_data_men <- subset(val_data, sex==0)
+  val_data_women <- subset(val_data, sex==1)
 
-  rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=merged_output_men)
-  rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=merged_output_women)
+  rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=val_data_men)
+  rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=val_data_women)
 
   lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
   lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
@@ -787,8 +785,8 @@ women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, 
 ###########################  Results   #####################################################
 ############################################################################################
 # first by index (by category) (without calibration) - we want the ci (no lambda)
-rdr_regression_fit_men <- lm(formula=PAEE~cam_index, data=merged_output_men)
-rdr_regression_fit_women <- lm(formula=PAEE~cam_index, data=merged_output_women)
+rdr_regression_fit_men <- lm(formula=PAEE~cam_index, data=val_data_men)
+rdr_regression_fit_women <- lm(formula=PAEE~cam_index, data=val_data_women)
 summary(rdr_regression_fit_men)
 summary(rdr_regression_fit_women)
 
