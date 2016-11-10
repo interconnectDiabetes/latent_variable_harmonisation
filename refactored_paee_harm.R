@@ -210,13 +210,13 @@ val_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=val_data$cam_total, FU
 # \____/  \__| \__,_| \__,_| \__, | |___/  \__,_| \__|\__,_|
 #                             __/ |                         
 #                            |___/                          
-og_data <- read.csv("PHIA0000232016_IA88_25Jul/PHIA0000232016.csv")
-og_data$new_ltpa <- mapply(FUN=sum, og_data$m_walk, og_data$m_floors, 
-                           og_data$m_cycl, og_data$m_sport, og_data$m_houswrk, og_data$m_vigpa,
-                           og_data$m_gard, og_data$m_diy, na.rm=TRUE)
-og_data$bmi <- og_data$bmi_adj
+study_data <- read.csv("PHIA0000232016_IA88_25Jul/PHIA0000232016.csv")
+study_data$new_ltpa <- mapply(FUN=sum, study_data$m_walk, study_data$m_floors, 
+                           study_data$m_cycl, study_data$m_sport, study_data$m_houswrk, study_data$m_vigpa,
+                           study_data$m_gard, study_data$m_diy, na.rm=TRUE)
+study_data$bmi <- study_data$bmi_adj
 
-og_data$sex <- unlist(lapply(og_data$sex, FUN=function(x){
+study_data$sex <- unlist(lapply(study_data$sex, FUN=function(x){
   if (x == 1) {
     out = 0
   } else {
@@ -225,7 +225,7 @@ og_data$sex <- unlist(lapply(og_data$sex, FUN=function(x){
   return(out)
 }))
 
-og_data$pa_workini <- unlist(lapply(og_data$pa_work, FUN=function(x){
+study_data$pa_workini <- unlist(lapply(study_data$pa_work, FUN=function(x){
   if (x == 6){
     out = 9
   } else {
@@ -234,52 +234,52 @@ og_data$pa_workini <- unlist(lapply(og_data$pa_work, FUN=function(x){
   return (out)
 }))
 
-og_data$pa_workini <- factor(og_data$pa_workini)
+study_data$pa_workini <- factor(study_data$pa_workini)
 
 ## Calculating X_t, with X_t0
-tempfupdiff <- (og_data$fup_time/365.25)
-og_data$ageEnd <- og_data$age_recr_max + tempfupdiff
+tempfupdiff <- (study_data$fup_time/365.25)
+study_data$ageEnd <- study_data$age_recr_max + tempfupdiff
 
-og_data$age <- mapply(og_data$age_recr_max, og_data$ageEnd, FUN=function(x,y){
+study_data$age <- mapply(study_data$age_recr_max, study_data$ageEnd, FUN=function(x,y){
   out = (x+y)/2
   return(out)
 })
 
 # Calculating X_d
-eventCens <- lapply(og_data$dmstatus_ver_outc, FUN=function(x){
+eventCens <- lapply(study_data$dmstatus_ver_outc, FUN=function(x){
   if (x==1 || x==2){
     x = 1
   } else {
     x = 0
   }
 })
-og_data$eventCens <- unlist(eventCens)
+study_data$eventCens <- unlist(eventCens)
 
 # prentice weighted age starts
-og_data$age_recr_prentice <- og_data$age_recr_max
-for (i in 1:length(og_data$age_recr_max)){
-  if(og_data$dmstatus_ver_outc[i] == 2){
-    og_data$age_recr_prentice[i] = og_data$ageEnd[i] - 0.00001 
+study_data$age_recr_prentice <- study_data$age_recr_max
+for (i in 1:length(study_data$age_recr_max)){
+  if(study_data$dmstatus_ver_outc[i] == 2){
+    study_data$age_recr_prentice[i] = study_data$ageEnd[i] - 0.00001 
   }
 }
 
 ## smoke, lschool, country factorization and leveling
-og_data$country <- factor(og_data$country, labels=c("FRANCE", "ITALY", 
+study_data$country <- factor(study_data$country, labels=c("FRANCE", "ITALY", 
                                                     "SPAIN", "UK", "NETHERLANDS", "GERMANY", "SWEDEN", "DENMARK"))
-og_data$smoke_stat <- factor(og_data$smoke_stat, labels=c("NEVER", "FORMER", 
+study_data$smoke_stat <- factor(study_data$smoke_stat, labels=c("NEVER", "FORMER", 
                                                           "SMOKER", "UNKOWN"))
-og_data$l_school <- factor(og_data$l_school, labels=c("NONE", "PRIMARY", 
+study_data$l_school <- factor(study_data$l_school, labels=c("NONE", "PRIMARY", 
                                                       "TECHNICAL/PROFESSIONAL", "SECONDARY", "LONGER EDUCATION/UNI", "NOT SPECIFIED"))
 
 ## Calculating own Cambridge Index
-og_data$cam_total <- c(rep(0,nrow(og_data)))
-for (i in 1:nrow(og_data)){
-  og_data$cam_total[i] = sum(og_data$m_cycl[i]/6, og_data$m_sport[i]/6, na.rm=TRUE)    
+study_data$cam_total <- c(rep(0,nrow(study_data)))
+for (i in 1:nrow(study_data)){
+  study_data$cam_total[i] = sum(study_data$m_cycl[i]/6, study_data$m_sport[i]/6, na.rm=TRUE)    
 }
 
 # camMets_ind for cam_matrix
 # totalMets_index calculation
-og_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=og_data$cam_total, FUN = function(x){
+study_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=study_data$cam_total, FUN = function(x){
   if(is.na(x)){
     ind = NA
   }
@@ -312,7 +312,7 @@ cam_matrix = matrix(byrow = TRUE,
                     nrow=5, 
                     ncol=4)
 
-og_data$cam_index <- apply(X = og_data[,c('pa_work', 'camMets_ind')], MARGIN = 1, 
+study_data$cam_index <- apply(X = study_data[,c('pa_work', 'camMets_ind')], MARGIN = 1, 
                            FUN = function(x){
                              if(x[1]==6){
                                x_ind = 5
@@ -324,8 +324,8 @@ og_data$cam_index <- apply(X = og_data[,c('pa_work', 'camMets_ind')], MARGIN = 1
                            }
 )
 
-og_data$camMets_ind <- as.factor(og_data$camMets_ind)
-og_data$cam_index <- as.factor(og_data$cam_index)
+study_data$camMets_ind <- as.factor(study_data$camMets_ind)
+study_data$cam_index <- as.factor(study_data$cam_index)
 
 ###############################################################################
 ################################# METHODS #####################################
@@ -414,7 +414,7 @@ val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMP
 # ))
 
 # Set the means for the study data
-og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
@@ -450,7 +450,7 @@ og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIF
 }
 ))
 
-# og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+# study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
 #   if (y == 0) {
 #     if (is.na(x)) {
 #       output = NA
@@ -504,8 +504,8 @@ lambda_list_men <- c(lambda_men)
 lambda_list_women <- c(lambda_women)
 
 ## Beta Calculation
-og_men <- subset(og_data, sex==0)
-og_women <- subset(og_data, sex==1)
+og_men <- subset(study_data, sex==0)
+og_women <- subset(study_data, sex==1)
 
 cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
 cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
@@ -721,7 +721,7 @@ for (i in 1:10) {
   lambda_list_women <- c(lambda_list_women, lambda_women)
 
   ## Cam index means
-  og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
@@ -758,8 +758,8 @@ for (i in 1:10) {
   ))
 
   # Predictions per model
-  og_men <- subset(og_data, sex==0)
-  og_women <- subset(og_data, sex==1)
+  og_men <- subset(study_data, sex==0)
+  og_women <- subset(study_data, sex==1)
 
   cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
   cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
@@ -868,7 +868,7 @@ for (i in 1:10) {
   ##
   ## Beta Calculation
   ##
-  og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
@@ -905,8 +905,8 @@ for (i in 1:10) {
   ))
 
   # Predictions per model
-  og_men <- subset(og_data, sex==0)
-  og_women <- subset(og_data, sex==1)
+  og_men <- subset(study_data, sex==0)
+  og_women <- subset(study_data, sex==1)
 
   cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
   cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
