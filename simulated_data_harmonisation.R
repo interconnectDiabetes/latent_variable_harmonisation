@@ -208,8 +208,8 @@ cc_val_data_means <- pc_val_data_means$coefficients["cam_index_means"]
 # stdError
 stdError_cc_val_data_means <- (summary(pc_val_data_means)$coefficients[,"Std. Error"])[-1]
 # confidence intervals
-lci_lambda_hat_means <- cc_val_data_means - 1.96(stdError_cc_val_data_means)
-uci_lambda_hat_means <- cc_val_data_means + 1.96(stdError_cc_val_data_means)
+lci_lambda_hat_means <- cc_val_data_means - 1.96*(stdError_cc_val_data_means)
+uci_lambda_hat_means <- cc_val_data_means + 1.96*(stdError_cc_val_data_means)
 
 
 # RC 
@@ -283,7 +283,7 @@ lci_lambda_hat_sample_list <- vector('numeric')
 uci_beta_hat_sample_list <- vector('numeric')
 lci_beta_hat_sample_list <- vector('numeric')
 
-for (i in 1:1000) {
+for (i in 1:10) {
 	cat1_choice <- sample(cat1,1,replace=TRUE)
 	cat2_choice <- sample(cat2,1,replace=TRUE)
 	cat3_choice <- sample(cat3,1,replace=TRUE)
@@ -426,13 +426,14 @@ cat4 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y
 })
 cat4 <- cat4[!sapply(cat4,is.na)]
 
-# fitting of distributions 
+
+# fitting of distributions via MLE
 library(fitdistrplus)
 # normal distributions
-dist1 <- fitdistr(cat1, "normal", method='mle')
-dist2 <- fitdistr(cat2, "normal", method='mle')
-dist3 <- fitdistr(cat3, "normal", method='mle')
-dist4 <- fitdistr(cat4, "normal", method='mle')
+dist1 <- fitdist(cat1, "norm", method='mle')
+dist2 <- fitdist(cat2, "norm", method='mle')
+dist3 <- fitdist(cat3, "norm", method='mle')
+dist4 <- fitdist(cat4, "norm", method='mle')
 
 # take the sufficient statistics to recreate the distributions from which we can sample
 # Index properties (Assumption that they are Gaussian)
@@ -447,9 +448,52 @@ index_mean4 <- dist4[[1]][1]
 index_stdev4 <- dist4[[1]][2]
 mean_paee_difference <- abs(mean(c(index_mean1-index_mean2, index_mean2-index_mean3, index_mean3-index_mean4)))
 
+validation_data$cam_index_dfit <- unlist(mapply(validation_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x)
+  	}
+  	return(output)
+	}
+))
 
-# Density estimation for each index 
+study_data$cam_index_dfit <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x)
+  	}
+  	return(output)
+	}
+))
 
+## coef = beta
+pc_study_data_dfit <- lm(formula=foo~cam_index_dfit, data=study_data)
+cc_study_data_dfit <- pc_study_data_dfit$coefficients["cam_index_dfit"]
+# stdError
+stdError_cc_study_data_dfit <- (summary(pc_study_data_dfit)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_beta_hat_star_dfit <- cc_study_data_dfit - 1.96*stdError_cc_study_data_dfit
+uci_beta_hat_star_dfit <- cc_study_data_dfit + 1.96*stdError_cc_study_data_dfit
+
+## coef = lambda
+pc_val_data_dfit <- lm(formula=paee~cam_index_dfit, data=validation_data)
+cc_val_data_dfit <- pc_val_data_dfit$coefficients["cam_index_dfit"]
+# stdError
+stdError_cc_val_data_dfit <- (summary(pc_val_data_dfit)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_lambda_hat_dfit <- cc_val_data_dfit - 1.96*(stdError_cc_val_data_dfit)
+uci_lambda_hat_dfit <- cc_val_data_dfit + 1.96*(stdError_cc_val_data_dfit)
+
+# RC 
+beta_hat_star_dfit <- cc_study_data_dfit
+lambda_hat_dfit <- cc_val_data_dfit
+beta_hat_dfit <- beta_hat_star_dfit/lambda_hat_dfit
+var_beta_dfit <- stdError_cc_study_data_dfit/(lambda_hat_dfit^2) + (beta_hat_star_dfit/lambda_hat_dfit^2)^2*stdError_cc_val_data_means
+# confidence intervals
+uci_beta_hat_dfit <- beta_hat_dfit - 1.96*sqrt(var_beta_dfit)
+lci_beta_hat_dfit <- beta_hat_dfit + 1.96*sqrt(var_beta_dfit)
 
 # ___  ___ _____ _____ _   _ ___________     ___ 
 # |  \/  ||  ___|_   _| | | |  _  |  _  \   /   |
@@ -458,3 +502,4 @@ mean_paee_difference <- abs(mean(c(index_mean1-index_mean2, index_mean2-index_me
 # | |  | || |___  | | | | | \ \_/ / |/ /  \___  |
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/       |_/
 #                                                
+# Density estimation for each index 

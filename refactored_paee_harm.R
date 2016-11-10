@@ -1012,7 +1012,6 @@ exponentiated_by_means_table <- exp(beta_by_means_table)^6.8
 ##
 ## Method 2 (A or B)
 ##
-
 # Because R makes summary dataframes into multinested char arrays (non ideal) we deal with each one seperately
 summary(men_dataframe$lambda)["Median"]
 summary(men_dataframe$beta)["Median"]  
