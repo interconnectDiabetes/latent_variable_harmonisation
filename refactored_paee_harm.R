@@ -27,6 +27,44 @@ bmi_calc <- function(weight, height){
   return(bmi)
 }
 
+gaussian_index_sample <- function(x,gender){
+  # returns a datapoint sampled from the index distribution
+  # This can be seen as an exposure to be used in the data_generator
+  # :param: index = cambridge index
+  if (gender == 0){
+    if (x == 1){
+      index_mean <- index_mean1_men
+      index_stdev <- index_stdev1_men
+    } else if (x == 2){
+      index_mean <- index_mean2_men
+      index_stdev <- index_stdev2_men
+    } else if (x == 3){
+      index_mean <- index_mean3_men
+      index_stdev <- index_stdev3_men
+    } else {
+      index_mean <- index_mean4_men
+      index_stdev <- index_stdev4_men
+    }
+  } else {
+    if (x == 1){
+      index_mean <- index_mean1_women
+      index_stdev <- index_stdev1_women
+    } else if (x == 2){
+      index_mean <- index_mean2_women
+      index_stdev <- index_stdev2_women
+    } else if (x == 3){
+      index_mean <- index_mean3_women
+      index_stdev <- index_stdev3_women
+    } else {
+      index_mean <- index_mean4_women
+      index_stdev <- index_stdev4_women
+    }
+  }
+  data_point <- rnorm(1, index_mean, index_stdev)
+  return (data_point)
+}
+
+
 ###############################################################################
 ################################# DATA ########################################
 ###############################################################################
@@ -952,6 +990,81 @@ women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, 
 # | |\/| ||  __|  | | |  _  | | | | | | |     \ \
 # | |  | || |___  | | | | | \ \_/ / |/ /  .___/ /
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/   \____/     
+# We fit distributions to the validation data and then generate samples from these for the study data
+
+# fitting of distributions via MLE
+library(fitdistrplus)
+# normal distributions
+dist1_men <- fitdist(cat1_men, "norm", method='mle')
+dist2_men <- fitdist(cat2_men, "norm", method='mle')
+dist3_men <- fitdist(cat3_men, "norm", method='mle')
+dist4_men <- fitdist(cat4_men, "norm", method='mle')
+
+dist1_women <- fitdist(cat1_women, "norm", method='mle')
+dist2_women <- fitdist(cat2_women, "norm", method='mle')
+dist3_women <- fitdist(cat3_women, "norm", method='mle')
+dist4_women <- fitdist(cat4_women, "norm", method='mle')
+
+index_mean1_men <- dist1_men[[1]][1]
+index_stdev1_men <- dist1_men[[1]][2]
+index_mean2_men <- dist2_men[[1]][1]
+index_stdev2_men <- dist2_men[[1]][2]
+index_mean3_men <- dist3_men[[1]][1]
+index_stdev3_men <- dist3_men[[1]][2]
+index_mean4_men <- dist4_men[[1]][1]
+index_stdev4_men <- dist4_men[[1]][2]
+mean_paee_difference_men <- abs(mean(c(index_mean1_men-index_mean2_men, index_mean2_men-index_mean3_men, index_mean3_men-index_mean4_men)))
+
+index_mean1_women <- dist1_women[[1]][1]
+index_stdev1_women <- dist1_women[[1]][2]
+index_mean2_women <- dist2_women[[1]][1]
+index_stdev2_women <- dist2_women[[1]][2]
+index_mean3_women <- dist3_women[[1]][1]
+index_stdev3_women <- dist3_women[[1]][2]
+index_mean4_women <- dist4_women[[1]][1]
+index_stdev4_women <- dist4_women[[1]][2]
+mean_paee_difference_women <- abs(mean(c(index_mean1_women-index_mean2_women, index_mean2_women-index_mean3_women, index_mean3_women-index_mean4_women)))
+
+
+val_data_men$cam_index_dfit <- unlist(mapply(val_data_men$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x,gender=0)
+    }
+    return(output)
+  }
+))
+
+study_data_men$cam_index_dfit <- unlist(mapply(study_data_men$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x,gender=0)
+    }
+    return(output)
+  }
+))
+
+val_data_women$cam_index_dfit <- unlist(mapply(val_data_women$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x,gender=1)
+    }
+    return(output)
+  }
+))
+
+study_data_women$cam_index_dfit <- unlist(mapply(study_data_women$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x,gender=1)
+    }
+    return(output)
+  }
+))
 
 
 # ___  ___ _____ _____ _   _ ___________     ___ 
