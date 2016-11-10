@@ -288,6 +288,10 @@ og_data$cam_index <- apply(X = og_data[,c('pa_work', 'camMets_ind')], MARGIN = 1
 og_data$camMets_ind <- as.factor(og_data$camMets_ind)
 og_data$cam_index <- as.factor(og_data$cam_index)
 
+###############################################################################
+################################# METHODS #####################################
+###############################################################################
+
 # ___  ___ _____ _____ _   _ ___________   __  
 # |  \/  ||  ___|_   _| | | |  _  |  _  \ /  | 
 # | .  . || |__   | | | |_| | | | | | | | `| | 
@@ -443,7 +447,7 @@ og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIF
 # }
 # ))
 
-### Regression and splitting of the genders
+## Lambda Calculation
 val_data_men <- subset(val_data, sex==0)
 val_data_women <- subset(val_data, sex==1)
 
@@ -460,9 +464,7 @@ lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_m
 lambda_list_men <- c(lambda_men)
 lambda_list_women <- c(lambda_women)
 
-
-
-
+## Beta Calculation
 og_men <- subset(og_data, sex==0)
 og_women <- subset(og_data, sex==1)
 
@@ -485,16 +487,16 @@ lower_ci_list_men <- c(lower_ci_men)
 upper_ci_list_women <- c(upper_ci_women)
 lower_ci_list_women <- c(lower_ci_women)
 
-# Store the lambda in a list for comparison
+# Store the beta in a list for comparison
 beta_list_men <- c(beta_men)
 beta_list_women <- c(beta_women)
 
 # calculate the calibrated beta and store in list
-cali_beta_men <- beta_men/lambda_men
-cali_beta_women <- beta_women/lambda_women
+cal_beta_men <- beta_men/lambda_men
+cal_beta_women <- beta_women/lambda_women
 
-cali_beta_list_men <- c(cali_beta_men)
-cali_beta_list_women <- c(cali_beta_women)
+cal_beta_list_men <- c(cal_beta_men)
+cal_beta_list_women <- c(cal_beta_women)
 
 # Calibrated Confidence Interval calc helper
 cal_beta_sd_men <- (beta_se_men^2)/(lambda_men^2) + ((beta_men/lambda_men^2)^2)*lambda_men_var # formula 12
@@ -503,19 +505,24 @@ cal_beta_sd_women <- (beta_se_women^2)/(lambda_women^2) + ((beta_women/lambda_wo
 cal_confidence_interval_help_men <- 1.96*sqrt(cal_beta_sd_men)
 cal_confidence_interval_help_women <- 1.96*sqrt(cal_beta_sd_women)
 
-cal_upper_ci_men <- cali_beta_men + cal_confidence_interval_help_men
-cal_lower_ci_men <- cali_beta_men - cal_confidence_interval_help_men
-cal_upper_ci_women <- cali_beta_women + cal_confidence_interval_help_women
-cal_lower_ci_women <- cali_beta_women - cal_confidence_interval_help_women
+cal_upper_ci_men <- cal_beta_men + cal_confidence_interval_help_men
+cal_lower_ci_men <- cal_beta_men - cal_confidence_interval_help_men
+cal_upper_ci_women <- cal_beta_women + cal_confidence_interval_help_women
+cal_lower_ci_women <- cal_beta_women - cal_confidence_interval_help_women
 
 cal_upper_ci_list_men <- c(cal_upper_ci_men)
 cal_lower_ci_list_men <- c(cal_lower_ci_men)
 cal_upper_ci_list_women <- c(cal_upper_ci_women)
 cal_lower_ci_list_women <- c(cal_lower_ci_women)
 
-###############################################################################################
-####################################  SAMPLING RUN THROUGH  ###################################
-###############################################################################################
+# ___  ___ _____ _____ _   _ ___________   _____   ___  
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \ / _ \ 
+# | .  . || |__   | | | |_| | | | | | | | `' / /'/ /_\ \
+# | |\/| ||  __|  | | |  _  | | | | | | |   / /  |  _  |
+# | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| | | |
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\_| |_/                                     
+###############################################################################################################
+################################## WITH SAMPLED PAEE VALS #####################################################
 # Set seed for pseudo random selection. 
 set.seed(999)
 
@@ -734,11 +741,11 @@ for (i in 1:1000) {
   lower_ci_list_women <- c(lower_ci_list_women, lower_ci_women)
 
   # calculate the calibrated beta and store in list
-  cali_beta_men <- beta_men/lambda_men
-  cali_beta_women <- beta_women/lambda_women
+  cal_beta_men <- beta_men/lambda_men
+  cal_beta_women <- beta_women/lambda_women
 
-  cali_beta_list_men <- c(cali_beta_list_men, cali_beta_men)
-  cali_beta_list_women <- c(cali_beta_list_women, cali_beta_women)
+  cal_beta_list_men <- c(cal_beta_list_men, cal_beta_men)
+  cal_beta_list_women <- c(cal_beta_list_women, cal_beta_women)
 
   # Calibrated Confidence Interval calc helper
   cal_beta_sd_men <- (beta_se_men^2)/(lambda_men^2) + ((beta_men/lambda_men^2)^2)*lambda_men_var # formula 12
@@ -747,10 +754,10 @@ for (i in 1:1000) {
   cal_confidence_interval_help_men <- 1.96*sqrt(cal_beta_sd_men)
   cal_confidence_interval_help_women <- 1.96*sqrt(cal_beta_sd_women)
 
-  cal_upper_ci_men <- cali_beta_men + cal_confidence_interval_help_men
-  cal_lower_ci_men <- cali_beta_men - cal_confidence_interval_help_men
-  cal_upper_ci_women <- cali_beta_women + cal_confidence_interval_help_women
-  cal_lower_ci_women <- cali_beta_women - cal_confidence_interval_help_women
+  cal_upper_ci_men <- cal_beta_men + cal_confidence_interval_help_men
+  cal_lower_ci_men <- cal_beta_men - cal_confidence_interval_help_men
+  cal_upper_ci_women <- cal_beta_women + cal_confidence_interval_help_women
+  cal_lower_ci_women <- cal_beta_women - cal_confidence_interval_help_women
 
   cal_upper_ci_list_men <- c(cal_upper_ci_list_men,cal_upper_ci_men)
   cal_lower_ci_list_men <- c(cal_lower_ci_list_men,cal_lower_ci_men)
@@ -769,8 +776,8 @@ lower_ci_list_men <- unname(lower_ci_list_men)
 upper_ci_list_women <- unname(upper_ci_list_women)
 lower_ci_list_women <- unname(lower_ci_list_women)
 
-cali_beta_list_men <- unname(cali_beta_list_men)
-cali_beta_list_women <- unname(cali_beta_list_women)
+cal_beta_list_men <- unname(cal_beta_list_men)
+cal_beta_list_women <- unname(cal_beta_list_women)
 cal_upper_ci_list_men <- unname(cal_upper_ci_list_men)
 cal_lower_ci_list_men <- unname(cal_lower_ci_list_men)
 cal_upper_ci_list_women <- unname(cal_upper_ci_list_women)
@@ -780,12 +787,12 @@ cal_lower_ci_list_women <- unname(cal_lower_ci_list_women)
 ### Put everything in a data frame
 # men
 men_dataframe <- data.frame(lambda = lambda_list_men, beta=beta_list_men, lower95=lower_ci_list_men, 
-  upper95=upper_ci_list_men, calibratedBeta=cali_beta_list_men, calBetaLower95=cal_lower_ci_list_men,
+  upper95=upper_ci_list_men, calibratedBeta=cal_beta_list_men, calBetaLower95=cal_lower_ci_list_men,
   calBetaUpper95=cal_upper_ci_list_men)
 
 # women
 women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, lower95=lower_ci_list_women, 
-  upper95=upper_ci_list_women, calibratedBeta=cali_beta_list_women, calBetaLower95=cal_lower_ci_list_women,
+  upper95=upper_ci_list_women, calibratedBeta=cal_beta_list_women, calBetaLower95=cal_lower_ci_list_women,
   calBetaUpper95=cal_upper_ci_list_women)
 
 
@@ -863,4 +870,3 @@ exp(summary(women_dataframe$upper95)["Median"])^6.8
 exp(summary(women_dataframe$calibratedBeta)["Median"])^6.8
 exp(summary(women_dataframe$calBetaLower95)["Median"])^6.8
 exp(summary(women_dataframe$calBetaUpper95)["Median"])^6.8
-
