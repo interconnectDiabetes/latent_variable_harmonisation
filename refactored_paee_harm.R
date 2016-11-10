@@ -515,6 +515,9 @@ cal_lower_ci_list_men <- c(cal_lower_ci_men)
 cal_upper_ci_list_women <- c(cal_upper_ci_women)
 cal_lower_ci_list_women <- c(cal_lower_ci_women)
 
+
+
+
 # ___  ___ _____ _____ _   _ ___________   _____   ___  
 # |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \ / _ \ 
 # | .  . || |__   | | | |_| | | | | | | | `' / /'/ /_\ \
@@ -609,10 +612,11 @@ cat4_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function
 }) 
 cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
 
+##
 ## First run through we set the mean to be the first thing we sample per category
 ## and calculate the lm many times
-
-for (i in 1:1000) {
+##
+for (i in 1:10) {
   cat1_men_choice <- sample(cat1_men,1,replace=TRUE)
   cat2_men_choice <- sample(cat2_men,1,replace=TRUE)
   cat3_men_choice <- sample(cat3_men,1,replace=TRUE)
@@ -715,7 +719,6 @@ for (i in 1:1000) {
   ))
 
   # Predictions per model
-
   og_men <- subset(og_data, sex==0)
   og_women <- subset(og_data, sex==1)
 
@@ -796,18 +799,170 @@ women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, 
   calBetaUpper95=cal_upper_ci_list_women)
 
 
+# ___  ___ _____ _____ _   _ ___________   _____ ______ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \| ___ \
+# | .  . || |__   | | | |_| | | | | | | | `' / /'| |_/ /
+# | |\/| ||  __|  | | |  _  | | | | | | |   / /  | ___ \
+# | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| |_/ /
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\____/ 
+
+for (i in 1:10) {
+  ###
+  ### Lambda Calculation
+  ###
+  val_data_men <- subset(val_data, sex==0)
+  val_data_women <- subset(val_data, sex==1)
+
+  rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=val_data_men)
+  rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=val_data_women)
+
+  lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
+  lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
+
+  lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_means","Std. Error"])^2
+  lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_means","Std. Error"])^2
+
+  # Store the lambda in a list for comparison
+  lambda_list_men <- c(lambda_list_men, lambda_men)
+  lambda_list_women <- c(lambda_list_women, lambda_women)
+
+  ##
+  ## Beta Calculation
+  ##
+  og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  if (y == 0) {
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = sample(cat1_men,1,replace=TRUE)
+    } else if (x == 2) {
+      output = sample(cat2_men,1,replace=TRUE)
+    } else if (x == 3) {
+      output = sample(cat3_men,1,replace=TRUE)
+    } else if (x == 4) {
+      output = sample(cat4_men,1,replace=TRUE)
+    } else {
+      output = NA
+    }
+  } else if (y == 1){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = sample(cat1_women,1,replace=TRUE)
+    } else if (x == 2) {
+      output = sample(cat2_women,1,replace=TRUE)
+    } else if (x == 3) {
+      output = sample(cat3_women,1,replace=TRUE)
+    } else if (x == 4) {
+      output = sample(cat4_women,1,replace=TRUE)
+    } else {
+      output = NA
+    } 
+  } else {
+    output = NA
+  }
+  return(output)
+  }
+  ))
+
+  # Predictions per model
+  og_men <- subset(og_data, sex==0)
+  og_women <- subset(og_data, sex==1)
+
+  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
+  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
+
+  beta_men <- cox_regression_men$coefficients
+  beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
+
+  beta_women <- cox_regression_women$coefficients
+  beta_se_women <- summary(cox_regression_women)$coefficients[,"robust se"]
+
+  upper_ci_men <- log(summary(cox_regression_men)$conf.int[,"upper .95"])
+  lower_ci_men <- log(summary(cox_regression_men)$conf.int[,"lower .95"])
+  upper_ci_women <- log(summary(cox_regression_women)$conf.int[,"upper .95"])
+  lower_ci_women <- log(summary(cox_regression_women)$conf.int[,"lower .95"])
+
+  beta_list_men <- c(beta_list_men, beta_men)
+  beta_list_women <- c(beta_list_women, beta_women)
+  upper_ci_list_men <- c(upper_ci_list_men, upper_ci_men)
+  lower_ci_list_men <- c(lower_ci_list_men, lower_ci_men)
+  upper_ci_list_women <- c(upper_ci_list_women, upper_ci_women)
+  lower_ci_list_women <- c(lower_ci_list_women, lower_ci_women)
+
+  # calculate the calibrated beta and store in list
+  cal_beta_men <- beta_men/lambda_men
+  cal_beta_women <- beta_women/lambda_women
+
+  cal_beta_list_men <- c(cal_beta_list_men, cal_beta_men)
+  cal_beta_list_women <- c(cal_beta_list_women, cal_beta_women)
+
+  # Calibrated Confidence Interval calc helper
+  cal_beta_sd_men <- (beta_se_men^2)/(lambda_men^2) + ((beta_men/lambda_men^2)^2)*lambda_men_var # formula 12
+  cal_beta_sd_women <- (beta_se_women^2)/(lambda_women^2) + ((beta_women/lambda_women^2)^2)*lambda_women_var # formula 12
+
+  cal_confidence_interval_help_men <- 1.96*sqrt(cal_beta_sd_men)
+  cal_confidence_interval_help_women <- 1.96*sqrt(cal_beta_sd_women)
+
+  cal_upper_ci_men <- cal_beta_men + cal_confidence_interval_help_men
+  cal_lower_ci_men <- cal_beta_men - cal_confidence_interval_help_men
+  cal_upper_ci_women <- cal_beta_women + cal_confidence_interval_help_women
+  cal_lower_ci_women <- cal_beta_women - cal_confidence_interval_help_women
+
+  cal_upper_ci_list_men <- c(cal_upper_ci_list_men,cal_upper_ci_men)
+  cal_lower_ci_list_men <- c(cal_lower_ci_list_men,cal_lower_ci_men)
+  cal_upper_ci_list_women <- c(cal_upper_ci_list_women,cal_upper_ci_women)
+  cal_lower_ci_list_women <- c(cal_lower_ci_list_women,cal_lower_ci_women)
+}
+
+# get rid of the silly names r puts on everything
+lambda_list_men <- unname(lambda_list_men)
+lambda_list_women <- unname(lambda_list_women)
+
+beta_list_men <- unname(beta_list_men)
+beta_list_women <- unname(beta_list_women)
+upper_ci_list_men <- unname(upper_ci_list_men)
+lower_ci_list_men <- unname(lower_ci_list_men)
+upper_ci_list_women <- unname(upper_ci_list_women)
+lower_ci_list_women <- unname(lower_ci_list_women)
+
+cal_beta_list_men <- unname(cal_beta_list_men)
+cal_beta_list_women <- unname(cal_beta_list_women)
+cal_upper_ci_list_men <- unname(cal_upper_ci_list_men)
+cal_lower_ci_list_men <- unname(cal_lower_ci_list_men)
+cal_upper_ci_list_women <- unname(cal_upper_ci_list_women)
+cal_lower_ci_list_women <- unname(cal_lower_ci_list_women)
+
+
+### Put everything in a data frame
+# men
+men_dataframe <- data.frame(lambda = lambda_list_men, beta=beta_list_men, lower95=lower_ci_list_men, 
+  upper95=upper_ci_list_men, calibratedBeta=cal_beta_list_men, calBetaLower95=cal_lower_ci_list_men,
+  calBetaUpper95=cal_upper_ci_list_men)
+
+# women
+women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, lower95=lower_ci_list_women, 
+  upper95=upper_ci_list_women, calibratedBeta=cal_beta_list_women, calBetaLower95=cal_lower_ci_list_women,
+  calBetaUpper95=cal_upper_ci_list_women)
+
+
+
+
 ############################################################################################
-###########################  Results   #####################################################
+############################ Pretty Printing Results #######################################
 ############################################################################################
-# first by index (by category) (without calibration) - we want the ci (no lambda)
+
+##
+## By index (by category) (without calibration) - we want the ci (no lambda)
+##
 rdr_regression_fit_men <- lm(formula=PAEE~cam_index, data=val_data_men)
 rdr_regression_fit_women <- lm(formula=PAEE~cam_index, data=val_data_women)
 summary(rdr_regression_fit_men)
 summary(rdr_regression_fit_women)
 
+# Beta
 cox_regression_men_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = og_men, robust=TRUE)
 cox_regression_women_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = og_women, robust=TRUE)
-
 beta_inc_men <- sum(summary(cox_regression_men_index)$coef[,1])/4
 beta_inc_women <- sum(summary(cox_regression_women_index)$coef[,1])/4
 
@@ -826,7 +981,10 @@ ex_l95_inc_women <- exp(sum(log(summary(cox_regression_women_index)$conf.int[,3]
 ex_u95_inc_men <-exp( sum(log(summary(cox_regression_men_index)$conf.int[,4]))/4)
 ex_u95_inc_women <- exp(sum(log(summary(cox_regression_women_index)$conf.int[,4]))/4)
 
-# then beta by means (without calibration)
+##
+## Method 1
+##
+
 # then by means (with calibration)
 # this beta is pre calculated as the first row of the men/women_dataframe
 # The result for uncalibrated and calibrated are present in this dataframe 
@@ -837,7 +995,10 @@ rownames(beta_by_means_table) <- c("male", "female")
 colnames(beta_by_means_table) <- c("lambda", "beta", "betaLower95", "betaUpper95", "calibratedBeta", "calBetaLower95", "calBetaUpper95")
 exponentiated_by_means_table <- exp(beta_by_means_table)^6.8 
 
-# Full Median Results with Confidence intervals
+##
+## Method 2 (A or B)
+##
+
 # Because R makes summary dataframes into multinested char arrays (non ideal) we deal with each one seperately
 summary(men_dataframe$lambda)["Median"]
 summary(men_dataframe$beta)["Median"]  
