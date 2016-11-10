@@ -288,91 +288,16 @@ og_data$cam_index <- apply(X = og_data[,c('pa_work', 'camMets_ind')], MARGIN = 1
 og_data$camMets_ind <- as.factor(og_data$camMets_ind)
 og_data$cam_index <- as.factor(og_data$cam_index)
 
-
-# Set the means for the casecohort data
-og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-  if (y == 0) {
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = 35.6
-    } else if (x == 2) {
-      output = 43.7
-    } else if (x == 3) {
-      output = 49.0
-    } else if (x == 4) {
-      output = 56.2
-    } else {
-      output = NA
-    }
-  } else if (y == 1){
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = 36.5
-    } else if (x == 2) {
-      output = 39.8
-    } else if (x == 3) {
-      output = 43.6
-    } else if (x == 4) {
-      output = 48.2
-    } else {
-      output = NA
-    } 
-  } else {
-    output = NA
-  }
-  return(output)
-}
-))
-
-# og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-#   if (y == 0) {
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 32.49748
-#     } else if (x == 2) {
-#       output = 42.040295
-#     } else if (x == 3) {
-#       output = 45.94756
-#     } else if (x == 4) {
-#       output = 55.79739
-#     } else {
-#       output = NA
-#     }
-#   } else if (y == 1){
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 35.41059
-#     } else if (x == 2) {
-#       output = 38.77947
-#     } else if (x == 3) {
-#       output = 42.77706
-#     } else if (x == 4) {
-#       output = 45.80403
-#     } else {
-#       output = NA
-#     }
-#   } else {
-#     output = NA
-#   }
-#   return(output)
-# }
-# ))
-
-
 # ___  ___ _____ _____ _   _ ___________   __  
 # |  \/  ||  ___|_   _| | | |  _  |  _  \ /  | 
 # | .  . || |__   | | | |_| | | | | | | | `| | 
 # | |\/| ||  __|  | | |  _  | | | | | | |  | | 
 # | |  | || |___  | | | | | \ \_/ / |/ /  _| |_
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/   \___/
-###############################################################################################################
-################################## WITH CAM_INDEX_MEANS #######################################################
 
-# Setting the 'observed' PAEE values by the mean
+# Harmonisation using the paee means from each of the cambridge indices.
+
+# Setting the means for the validation data
 val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
@@ -445,7 +370,78 @@ val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMP
 # }
 # ))
 
+# Set the means for the study data
+og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  if (y == 0) {
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = 35.6
+    } else if (x == 2) {
+      output = 43.7
+    } else if (x == 3) {
+      output = 49.0
+    } else if (x == 4) {
+      output = 56.2
+    } else {
+      output = NA
+    }
+  } else if (y == 1){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = 36.5
+    } else if (x == 2) {
+      output = 39.8
+    } else if (x == 3) {
+      output = 43.6
+    } else if (x == 4) {
+      output = 48.2
+    } else {
+      output = NA
+    } 
+  } else {
+    output = NA
+  }
+  return(output)
+}
+))
 
+# og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+#   if (y == 0) {
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 32.49748
+#     } else if (x == 2) {
+#       output = 42.040295
+#     } else if (x == 3) {
+#       output = 45.94756
+#     } else if (x == 4) {
+#       output = 55.79739
+#     } else {
+#       output = NA
+#     }
+#   } else if (y == 1){
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 35.41059
+#     } else if (x == 2) {
+#       output = 38.77947
+#     } else if (x == 3) {
+#       output = 42.77706
+#     } else if (x == 4) {
+#       output = 45.80403
+#     } else {
+#       output = NA
+#     }
+#   } else {
+#     output = NA
+#   }
+#   return(output)
+# }
+# ))
 
 ### Regression and splitting of the genders
 val_data_men <- subset(val_data, sex==0)
@@ -463,8 +459,6 @@ lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_m
 # Store the lambda in a list for comparison
 lambda_list_men <- c(lambda_men)
 lambda_list_women <- c(lambda_women)
-
-
 
 
 
