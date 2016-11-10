@@ -31,17 +31,18 @@ bmi_calc <- function(weight, height){
 ################################# DATA ########################################
 ###############################################################################
 
+#  _   _         _  _      _         _    _                ______        _         
+# | | | |       | |(_)    | |       | |  (_)               |  _  \      | |        
+# | | | |  __ _ | | _   __| |  __ _ | |_  _   ___   _ __   | | | | __ _ | |_  __ _ 
+# | | | | / _` || || | / _` | / _` || __|| | / _ \ | '_ \  | | | |/ _` || __|/ _` |
+# \ \_/ /| (_| || || || (_| || (_| || |_ | || (_) || | | | | |/ /| (_| || |_| (_| |
+#  \___/  \__,_||_||_| \__,_| \__,_| \__||_| \___/ |_| |_| |___/  \__,_| \__|\__,_|
 # Read the actiheart and EPIC study data (sweden UMEA is missing in 
 # main file, needs to be loaded seperately)
 actiheart_summary <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_actiheart_summary.csv", header=T)
 epic <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_epic.csv", header=T)
-
-# Create a list where actiheart results are split into each participant
 act_sorted <- actiheart_summary[order(actiheart_summary$universal_id, actiheart_summary$visit), ]
 act_split <- split(x = act_sorted, f = act_sorted$universal_id)
-
-# create the TRUE PAEE values column
-## Create a new data frame using the act_split list with PAEE values
 output <- do.call(rbind,(lapply(act_split,function(x){
   # PAEE logic is to use Branch4 and then Branch7
   # Only use values where they have worn it for more than 3 days
@@ -114,10 +115,8 @@ output <- do.call(rbind,(lapply(act_split,function(x){
 ))
 row.names(output)<-NULL
 
-# merge or perform a "natural join" on the trimmed epic table and 
-# cleaned actiheart table by universal id
+# Merging of actiheart and epic set by natural join to create the validation dataset
 val_data <- merge(output, epic, by = 'universal_id')
-
 val_data$bmi <- mapply(FUN=bmi_calc, val_data$weight, val_data$height)
 val_data$sex <- unlist(lapply(val_data$sex, FUN=function(x){
   if (x == 1) {
@@ -140,7 +139,7 @@ for (i in 1:nrow(val_data)){
   val_data$cam_total[i] = sum(val_data$m_cycl[i]/6, val_data$m_sport[i]/6, na.rm=TRUE)    
 }
 
-# camMets_ind for cam_matrix
+# In House Calculation of Cambridge Index (camMets_ind for cam_matrix)
 val_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=val_data$cam_total, FUN = function(x){
   if(is.na(x)){
     ind = NA
@@ -164,106 +163,14 @@ val_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=val_data$cam_total, FU
 })
 ))
 
-# Setting the 'observed' PAEE values by the mean
-val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-  if (y == 0) {
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = 35.6
-    } else if (x == 2) {
-      output = 43.7
-    } else if (x == 3) {
-      output = 49.0
-    } else if (x == 4) {
-      output = 56.2
-    } else {
-      output = NA
-    }
-  } else if (y == 1){
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = 36.5
-    } else if (x == 2) {
-      output = 39.8
-    } else if (x == 3) {
-      output = 43.6
-    } else if (x == 4) {
-      output = 48.2
-    } else {
-      output = NA
-    } 
-  } else {
-    output = NA
-  }
-  return(output)
-}
-))
-
-# val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-#   if (y == 0) {
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 32.49748
-#     } else if (x == 2) {
-#       output = 42.040295
-#     } else if (x == 3) {
-#       output = 45.94756
-#     } else if (x == 4) {
-#       output = 55.79739
-#     } else {
-#       output = NA
-#     }
-#   } else if (y == 1){
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 35.41059
-#     } else if (x == 2) {
-#       output = 38.77947
-#     } else if (x == 3) {
-#       output = 42.77706
-#     } else if (x == 4) {
-#       output = 45.80403
-#     } else {
-#       output = NA
-#     }
-#   } else {
-#     output = NA
-#   }
-#   return(output)
-# }
-# ))
-
-
-###############################################################################################
-##################################### FIRST RUN THROUGH #######################################
-###############################################################################################
-
-### Regression and splitting of the genders
-val_data_men <- subset(val_data, sex==0)
-val_data_women <- subset(val_data, sex==1)
-
-rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=val_data_men)
-rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=val_data_women)
-
-lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
-lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
-
-lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_means","Std. Error"])^2
-lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_means","Std. Error"])^2
-
-# Store the lambda in a list for comparison
-lambda_list_men <- c(lambda_men)
-lambda_list_women <- c(lambda_women)
-
-
-###
-### Cox Regression bit
-###
-### Setup the data necessary to calculate the cox regression on the prediction set.
+#  _____  _               _         ______        _         
+# /  ___|| |             | |        |  _  \      | |        
+# \ `--. | |_  _   _   __| | _   _  | | | | __ _ | |_  __ _ 
+#  `--. \| __|| | | | / _` || | | | | | | |/ _` || __|/ _` |
+# /\__/ /| |_ | |_| || (_| || |_| | | |/ /| (_| || |_| (_| |
+# \____/  \__| \__,_| \__,_| \__, | |___/  \__,_| \__|\__,_|
+#                             __/ |                         
+#                            |___/                          
 og_data <- read.csv("PHIA0000232016_IA88_25Jul/PHIA0000232016.csv")
 og_data$new_ltpa <- mapply(FUN=sum, og_data$m_walk, og_data$m_floors, 
                            og_data$m_cycl, og_data$m_sport, og_data$m_houswrk, og_data$m_vigpa,
@@ -454,6 +361,113 @@ og_data$cam_index_means <- unlist(mapply(og_data$cam_index, og_data$sex, SIMPLIF
 #   return(output)
 # }
 # ))
+
+
+# ___  ___ _____ _____ _   _ ___________   __  
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ /  | 
+# | .  . || |__   | | | |_| | | | | | | | `| | 
+# | |\/| ||  __|  | | |  _  | | | | | | |  | | 
+# | |  | || |___  | | | | | \ \_/ / |/ /  _| |_
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \___/
+###############################################################################################################
+################################## WITH CAM_INDEX_MEANS #######################################################
+
+# Setting the 'observed' PAEE values by the mean
+val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  if (y == 0) {
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = 35.6
+    } else if (x == 2) {
+      output = 43.7
+    } else if (x == 3) {
+      output = 49.0
+    } else if (x == 4) {
+      output = 56.2
+    } else {
+      output = NA
+    }
+  } else if (y == 1){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = 36.5
+    } else if (x == 2) {
+      output = 39.8
+    } else if (x == 3) {
+      output = 43.6
+    } else if (x == 4) {
+      output = 48.2
+    } else {
+      output = NA
+    } 
+  } else {
+    output = NA
+  }
+  return(output)
+}
+))
+
+# val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+#   if (y == 0) {
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 32.49748
+#     } else if (x == 2) {
+#       output = 42.040295
+#     } else if (x == 3) {
+#       output = 45.94756
+#     } else if (x == 4) {
+#       output = 55.79739
+#     } else {
+#       output = NA
+#     }
+#   } else if (y == 1){
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 35.41059
+#     } else if (x == 2) {
+#       output = 38.77947
+#     } else if (x == 3) {
+#       output = 42.77706
+#     } else if (x == 4) {
+#       output = 45.80403
+#     } else {
+#       output = NA
+#     }
+#   } else {
+#     output = NA
+#   }
+#   return(output)
+# }
+# ))
+
+
+
+### Regression and splitting of the genders
+val_data_men <- subset(val_data, sex==0)
+val_data_women <- subset(val_data, sex==1)
+
+rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=val_data_men)
+rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=val_data_women)
+
+lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
+lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
+
+lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_means","Std. Error"])^2
+lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_means","Std. Error"])^2
+
+# Store the lambda in a list for comparison
+lambda_list_men <- c(lambda_men)
+lambda_list_women <- c(lambda_women)
+
+
+
+
+
 
 og_men <- subset(og_data, sex==0)
 og_women <- subset(og_data, sex==1)
