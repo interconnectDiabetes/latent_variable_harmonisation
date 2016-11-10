@@ -1,8 +1,7 @@
 ###### Simulation Practice for Latent Variable Harmonisation ########
 
 # The main objective of this program is to explore different data generation
-# distributions and their relationship with regression calibrat+ion.
-
+# distributions and their relationship with regression calibration.
 
 ## Author: Paul Scherer
 ## Date: 27/09/2016
