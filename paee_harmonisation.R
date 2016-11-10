@@ -25,11 +25,6 @@ library("survival")
 actiheart_summary <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_actiheart_summary.csv", header=T)
 epic <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_epic.csv", header=T)
 
-
-###############################################################################
-###############################################################################
-###############################################################################
-
 # Create a list where actiheart results are split into each participant
 act_sorted <- actiheart_summary[order(actiheart_summary$universal_id, actiheart_summary$visit), ]
 act_split <- split(x = act_sorted, f = act_sorted$universal_id)
@@ -58,7 +53,7 @@ output <- do.call(rbind,(lapply(act_split,function(x){
   else {
     PAEE_1 <- x$PAEE_Branch4[1]
   }
-  
+
   if (is.na(x$PAEE_Branch4[2])) {
     if (is.na(x$PAEE_Branch7[2])){
       PAEE_2 <- 0
@@ -70,38 +65,27 @@ output <- do.call(rbind,(lapply(act_split,function(x){
   else {
     PAEE_2 <- x$PAEE_Branch4[2]
   }
-  
   Pwear_1 <- x$Pwear[1]
   Pwear_2 <- x$Pwear[2]
   
   if (!is.na(Pwear_1) && !is.na(Pwear_2)) {
     if (Pwear_1 >= 96 && Pwear_2 >= 96){
-      
       PAEE <- (PAEE_1  + PAEE_2) / 2
-      
     } else if (Pwear_1 >= 24 & Pwear_2 >= 24) {
-      
       PAEE <- (PAEE_1 * Pwear_1 + PAEE_2 * Pwear_2)/(Pwear_1 + Pwear_2)
-      
     } else if (Pwear_1 >= 24 & Pwear_2 < 24) {
-      
       PAEE <- PAEE_1
-      
     } else if (Pwear_2 >= 24 & Pwear_1 < 24) {
-      
       PAEE <- PAEE_2
     } else {
       PAEE <- NA
     }
-    
   } else if (!is.na(Pwear_1)) {
-    
     if (Pwear_1 >= 24) {
       PAEE <- PAEE_1
     } else {
       PAEE <- NA
     }
-    
   } else if (!is.na(Pwear_2)) {
     
     if (Pwear_2 >= 24) {
@@ -109,11 +93,9 @@ output <- do.call(rbind,(lapply(act_split,function(x){
     } else {
       PAEE <- NA
     }
-    
   } else {
     PAEE <- NA
   }
-  
   
   out <- data.frame(universal_id, country, height, weight, sex, age, PAEE, Pwear_1, Pwear_2, PAEE_1, PAEE_2)
   return(out)
@@ -121,19 +103,15 @@ output <- do.call(rbind,(lapply(act_split,function(x){
 ))
 row.names(output)<-NULL
 
-### merged_output creation
 # merge or perform a "natural join" on the trimmed epic table and 
 # cleaned actiheart table by universal id
 merged_output <- merge(output, epic, by = 'universal_id')
 
-# calculate the BMI using the weight and height and include this in the table to make
-# a model for PAEE
 bmi_calc <- function(weight, height){
   bmi = (weight/height)/height
   return(bmi)
 }
 merged_output$bmi <- mapply(FUN=bmi_calc, merged_output$weight, merged_output$height)
-
 merged_output$sex <- unlist(lapply(merged_output$sex, FUN=function(x){
   if (x == 1) {
     out = 0
@@ -156,7 +134,6 @@ for (i in 1:nrow(merged_output)){
 }
 
 # camMets_ind for cam_matrix
-# totalMets_index calculation
 merged_output$camMets_ind <- as.vector(do.call(rbind, lapply(X=merged_output$cam_total, FUN = function(x){
   if(is.na(x)){
     ind = NA
@@ -179,8 +156,6 @@ merged_output$camMets_ind <- as.vector(do.call(rbind, lapply(X=merged_output$cam
   return(ind)
 })
 ))
-
-
 
 # Setting the 'observed' PAEE values by the mean
 merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
@@ -219,7 +194,6 @@ merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_o
 }
 ))
 
-
 # merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_output$sex, SIMPLIFY = FALSE, FUN=function(x,y){
 #   if (y == 0) {
 #     if (is.na(x)) {
@@ -256,13 +230,12 @@ merged_output$cam_index_means <- unlist(mapply(merged_output$cam_index, merged_o
 # }
 # ))
 
+
 ###############################################################################################
 ##################################### FIRST RUN THROUGH #######################################
 ###############################################################################################
 
-###
 ### Regression and splitting of the genders
-###
 merged_output_men <- subset(merged_output, sex==0)
 merged_output_women <- subset(merged_output, sex==1)
 
@@ -283,7 +256,6 @@ lambda_list_women <- c(lambda_women)
 ###
 ### Cox Regression bit
 ###
-
 ### Setup the data necessary to calculate the cox regression on the prediction set.
 og_data <- read.csv("PHIA0000232016_IA88_25Jul/PHIA0000232016.csv")
 og_data$new_ltpa <- mapply(FUN=sum, og_data$m_walk, og_data$m_floors, 
@@ -328,7 +300,6 @@ eventCens <- lapply(og_data$dmstatus_ver_outc, FUN=function(x){
     x = 0
   }
 })
-
 og_data$eventCens <- unlist(eventCens)
 
 # prentice weighted age starts
@@ -342,13 +313,10 @@ for (i in 1:length(og_data$age_recr_max)){
 ## smoke, lschool, country factorization and leveling
 og_data$country <- factor(og_data$country, labels=c("FRANCE", "ITALY", 
                                                     "SPAIN", "UK", "NETHERLANDS", "GERMANY", "SWEDEN", "DENMARK"))
-
 og_data$smoke_stat <- factor(og_data$smoke_stat, labels=c("NEVER", "FORMER", 
                                                           "SMOKER", "UNKOWN"))
-
 og_data$l_school <- factor(og_data$l_school, labels=c("NONE", "PRIMARY", 
                                                       "TECHNICAL/PROFESSIONAL", "SECONDARY", "LONGER EDUCATION/UNI", "NOT SPECIFIED"))
-
 
 ## Calculating own Cambridge Index
 og_data$cam_total <- c(rep(0,nrow(og_data)))
@@ -380,7 +348,6 @@ og_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=og_data$cam_total, FUN 
   return(ind)
 })
 ))
-
 
 # Create Cambridge index matrix
 cam_matrix = matrix(byrow = TRUE,
@@ -530,7 +497,6 @@ cal_upper_ci_list_men <- c(cal_upper_ci_men)
 cal_lower_ci_list_men <- c(cal_lower_ci_men)
 cal_upper_ci_list_women <- c(cal_upper_ci_women)
 cal_lower_ci_list_women <- c(cal_lower_ci_women)
-
 
 ###############################################################################################
 ####################################  SAMPLING RUN THROUGH  ###################################
@@ -882,3 +848,4 @@ exp(summary(women_dataframe$upper95)["Median"])^6.8
 exp(summary(women_dataframe$calibratedBeta)["Median"])^6.8
 exp(summary(women_dataframe$calBetaLower95)["Median"])^6.8
 exp(summary(women_dataframe$calBetaUpper95)["Median"])^6.8
+
