@@ -92,6 +92,7 @@ calculate_index_from_paee <- function(paee){
 }
 ####################################################################################################
 ################################ Creation of datasets ##############################################
+####################################################################################################
 # Data set of 1600 points for which we calculate the lambda, (validation)
 validation_data <- as.data.frame(c(rep(1,1000),rep(2,1000),rep(3,1000),rep(4,1000)))
 colnames(validation_data) <- c("cam_index")
@@ -141,47 +142,6 @@ study_data$cam_index_means <- unlist(mapply(study_data$cam_index, SIMPLIFY = FAL
 	}
 ))
 
-####################################################################################################
-################################ Attempt to find true beta  ########################################
-
-# In this code snippet we attempt different methods to find the true association between paee and some condition
-# called foo given the information we have generated. For this simulation we know what the true association between foo~paee
-# (beta) is and we attempt to see how close different measurement devices used instead of paee (cam_index, 
-# cam_index_means, sampling) can get to the real relationship.
-
-# Due to the nature of our measurement devices for paee, we expect a fair amount of error or bias to be 
-# introduced each time a measurement device is used, and this is the measurement error. Measurement error 
-# typically results in biased estimates of exposure disease associations, the severity and nature
-# of the bias depending on the form of the error.
-
-# We can attenuate the effects of measurement error in the estimate of the foo-exposure association 
-# towards the "real" association of foo~paee through error correction. To do this we have a validation study where
-# the paee is observed as well as our measurement devices allowing for this error correction to occur. Furthermore 
-# fortunately for us we assume a classical measurement error model, and the condition-exposure association here is 
-# linear (which is easy to interpret and also extends approximately to the proportional hazards model) as a result 
-# error correction can be performed through regression calibration.
-
-# summary
-# - foo ~ beta^(paee) + e, where e is noise; beta is the real association, beta^ is the fitted estimate
-# - there are restrictions to getting paee so we use foo ~ beta^*(W), where W is the measured exposure, this typically results in a biased estimate of the foo ~ paee association through measurement error
-# - We can attenuate the effects of the measurement error in beta^* towards beta^ through error correction, in part.
-# - Assuming the classical error model, and because of our univariate linear relationship we can use the regression calibration method for error correction.
-# - We can extend the error correction methods to incorporate other suspected forms of measurement error such as systematic error or differential error (but we wont, this needs a bit more discussion)
-
-# The overall aim with our regression calibration (RC) is to obtain an unbiased estimate of the parameter beta.
-# Under RC beta is estimated by using the expectation of the true exposure X given measured exposures W and adjustment
-# values Z; E(X|W,Z) in place of X in the real association. We know or assume that conditionally on X , W provides no
-# no information about the condition, W's error is not differential. 
-
-# To find E(X|W,Z) we use the RC model X = mu + lambda(W) + gamma(Z) + e (based of the classical measurement error model) 
-# By using the RC model: E(X|W,Z) = mu^ + lambda^(W) + gamma^(Z) which is then used to estimate beta, beta^
-# This is actually equivalent to beta^ = beta^*/lambda^ which is much easier to calculate and can be done with our data, the
-# lambda is called the regression dilution factor (RDR)
-
-# So in this work we will first look at the different measured exposures we have instead of our latent true exposure
-# naively just to see which one does best. Then we will use the regression calibration method for error correction
-# and move our beta^ towards an unbiased estimate of beta.
-
 ################################### BASELINE with cam_index ###################################################
 # calculation of correlation between foo and the cam_index as measurement
 # coef = beta
@@ -225,6 +185,12 @@ lci_beta_hat <- beta_hat - 1.96*sqrt(var_beta)
 uci_beta_hat <- beta_hat + 1.96*sqrt(var_beta)   
 
 
+# ___  ___ _____ _____ _   _ ___________   __  
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ /  | 
+# | .  . || |__   | | | |_| | | | | | | | `| | 
+# | |\/| ||  __|  | | |  _  | | | | | | |  | | 
+# | |  | || |___  | | | | | \ \_/ / |/ /  _| |_
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \___/
 ###############################################################################################################
 ################################## WITH CAM_INDEX_MEANS #######################################################
 ## coef = beta
@@ -256,6 +222,12 @@ var_beta_means <- stdError_cc_study_data_means/(lambda_hat_means^2) + (beta_hat_
 uci_beta_hat_means <- beta_hat_means - 1.96*sqrt(var_beta_means)
 lci_beta_hat_means <- beta_hat_means + 1.96*sqrt(var_beta_means)
 
+# ___  ___ _____ _____ _   _ ___________   _____   ___  
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \ / _ \ 
+# | .  . || |__   | | | |_| | | | | | | | `' / /'/ /_\ \
+# | |\/| ||  __|  | | |  _  | | | | | | |   / /  |  _  |
+# | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| | | |
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\_| |_/                                     
 ###############################################################################################################
 ################################## WITH SAMPLED PAEE VALS #####################################################
 # Set lists of values for each PA categorization that will be used to draw random numbers for
@@ -397,7 +369,93 @@ mean_lci_lambda_hat_sample <- mean(lci_lambda_hat_sample_list)
 mean_uci_beta_hat_sample <- mean(uci_beta_hat_sample_list)
 mean_lci_beta_hat_sample <- mean(lci_beta_hat_sample_list)
 
+# ___  ___ _____ _____ _   _ ___________   _____ ______ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \| ___ \
+# | .  . || |__   | | | |_| | | | | | | | `' / /'| |_/ /
+# | |\/| ||  __|  | | |  _  | | | | | | |   / /  | ___ \
+# | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| |_/ /
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\____/ 
+                                                      
+
+# ___  ___ _____ _____ _   _ ___________   _____ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ |____ |
+# | .  . || |__   | | | |_| | | | | | | |     / /
+# | |\/| ||  __|  | | |  _  | | | | | | |     \ \
+# | |  | || |___  | | | | | \ \_/ / |/ /  .___/ /
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \____/                                   
+# Generating samples from fitted distributions based on maximum likelihood. Similar to the smapling method but
+# we arent so reliant on the data distributions. 
+# A distribution of paee values is fit for each index. Samples generated from this distribution are applied 
+# to members of the study data
+cat1 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat1 <- cat1[!sapply(cat1,is.na)]
+
+cat2 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat2 <- cat2[!sapply(cat2,is.na)]
+
+cat3 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
+  if (y == 3){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat3 <- cat3[!sapply(cat3,is.na)]
+
+cat4 <- mapply(validation_data$paee, validation_data$cam_index, FUN=function(x,y){
+  if (y == 4){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+})
+cat4 <- cat4[!sapply(cat4,is.na)]
+
+# fitting of distributions 
+library(fitdistrplus)
+# normal distributions
+dist1 <- fitdistr(cat1, "normal", method='mle')
+dist2 <- fitdistr(cat2, "normal", method='mle')
+dist3 <- fitdistr(cat3, "normal", method='mle')
+dist4 <- fitdistr(cat4, "normal", method='mle')
+
+# take the sufficient statistics to recreate the distributions from which we can sample
+# Index properties (Assumption that they are Gaussian)
+# Format : (mean, stdev)
+index_mean1 <- dist1[[1]][1]
+index_stdev1 <- dist1[[1]][2]
+index_mean2 <- dist2[[1]][1]
+index_stdev2 <- dist2[[1]][2]
+index_mean3 <- dist3[[1]][1]
+index_stdev3 <- dist3[[1]][2]
+index_mean4 <- dist4[[1]][1]
+index_stdev4 <- dist4[[1]][2]
+mean_paee_difference <- abs(mean(c(index_mean1-index_mean2, index_mean2-index_mean3, index_mean3-index_mean4)))
 
 
+# Density estimation for each index 
 
 
+# ___  ___ _____ _____ _   _ ___________     ___ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \   /   |
+# | .  . || |__   | | | |_| | | | | | | |  / /| |
+# | |\/| ||  __|  | | |  _  | | | | | | | / /_| |
+# | |  | || |___  | | | | | \ \_/ / |/ /  \___  |
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/       |_/
+#                                                
