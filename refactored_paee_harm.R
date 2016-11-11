@@ -504,11 +504,11 @@ lambda_list_men <- c(lambda_men)
 lambda_list_women <- c(lambda_women)
 
 ## Beta Calculation
-val_data_men <- subset(study_data, sex==0)
-val_data_women <- subset(study_data, sex==1)
+study_data_men <- subset(study_data, sex==0)
+study_data_women <- subset(study_data, sex==1)
 
-cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_men, robust=TRUE)
-cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_women, robust=TRUE)
+cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_men, robust=TRUE)
+cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_women, robust=TRUE)
 
 beta_men <- cox_regression_men$coefficients
 beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
@@ -655,7 +655,7 @@ cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
 ## First run through we set the mean to be the first thing we sample per category
 ## and calculate the lm many times
 ##
-for (i in 1:2) {
+for (i in 1:10) {
   cat1_men_choice <- sample(cat1_men,1,replace=TRUE)
   cat2_men_choice <- sample(cat2_men,1,replace=TRUE)
   cat3_men_choice <- sample(cat3_men,1,replace=TRUE)
@@ -758,11 +758,11 @@ for (i in 1:2) {
   ))
 
   # Predictions per model
-  val_data_men <- subset(study_data, sex==0)
-  val_data_women <- subset(study_data, sex==1)
+  study_data_men <- subset(study_data, sex==0)
+  study_data_women <- subset(study_data, sex==1)
 
-  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_men, robust=TRUE)
-  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_women, robust=TRUE)
+  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_men, robust=TRUE)
+  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_women, robust=TRUE)
 
   beta_men <- cox_regression_men$coefficients
   beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
@@ -845,7 +845,7 @@ women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, 
 # | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| |_/ /
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\____/ 
 
-for (i in 1:2) {
+for (i in 1:10) {
   ###
   ### Lambda Calculation
   ###
@@ -905,11 +905,11 @@ for (i in 1:2) {
   ))
 
   # Predictions per model
-  val_data_men <- subset(study_data, sex==0)
-  val_data_women <- subset(study_data, sex==1)
+  study_data_men <- subset(study_data, sex==0)
+  study_data_women <- subset(study_data, sex==1)
 
-  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_men, robust=TRUE)
-  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_women, robust=TRUE)
+  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_men, robust=TRUE)
+  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_women, robust=TRUE)
 
   beta_men <- cox_regression_men$coefficients
   beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
@@ -1071,6 +1071,61 @@ study_data_women$cam_index_dfit <- unlist(mapply(study_data_women$cam_index, SIM
   }
 ))
 
+### Men
+## coef = beta
+pc_study_data_dfit_men <- lm(formula=foo~cam_index_dfit, data=study_data_men)
+cc_study_data_dfit_men <- pc_study_data_dfit_men$coefficients["cam_index_dfit"]
+# stdError
+stdError_cc_study_data_dfit_men <- (summary(pc_study_data_dfit_men)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_beta_hat_star_dfit_men <- cc_study_data_dfit_men - 1.96*stdError_cc_study_data_dfit_men
+uci_beta_hat_star_dfit_men <- cc_study_data_dfit_men + 1.96*stdError_cc_study_data_dfit_men
+
+## coef = lambda
+pc_val_data_dfit_men <- lm(formula=paee~cam_index_dfit, data=validation_data_men)
+cc_val_data_dfit_men <- pc_val_data_dfit_men$coefficients["cam_index_dfit"]
+# stdError
+stdError_cc_val_data_dfit_men <- (summary(pc_val_data_dfit_men)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_lambda_hat_dfit_men <- cc_val_data_dfit_men - 1.96*(stdError_cc_val_data_dfit_men)
+uci_lambda_hat_dfit_men <- cc_val_data_dfit_men + 1.96*(stdError_cc_val_data_dfit_men)
+
+# RC 
+beta_hat_star_dfit_men <- cc_study_data_dfit_men
+lambda_hat_dfit_men <- cc_val_data_dfit_men
+beta_hat_dfit_men <- beta_hat_star_dfit_men/lambda_hat_dfit_men
+var_beta_dfit_men <- stdError_cc_study_data_dfit/(lambda_hat_dfit_men^2) + (beta_hat_star_dfit_men/lambda_hat_dfit_men^2)^2*stdError_cc_val_data_dfit_men
+# confidence intervals
+uci_beta_hat_dfit_men <- beta_hat_dfit_men - 1.96*sqrt(var_beta_dfit_men)
+lci_beta_hat_dfit_men <- beta_hat_dfit_men + 1.96*sqrt(var_beta_dfit_men)
+
+### Women
+## coef = beta
+pc_study_data_dfit_women <- lm(formula=foo~cam_index_dfit, data=study_data_women)
+cc_study_data_dfit_women <- pc_study_data_dfit_women$coefficients["cam_index_dfit"]
+# stdError
+stdError_cc_study_data_dfit_women <- (summary(pc_study_data_dfit_women)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_beta_hat_star_dfit_women <- cc_study_data_dfit_women - 1.96*stdError_cc_study_data_dfit_women
+uci_beta_hat_star_dfit_women <- cc_study_data_dfit_women + 1.96*stdError_cc_study_data_dfit_women
+
+## coef = lambda
+pc_val_data_dfit_women <- lm(formula=paee~cam_index_dfit, data=validation_data_women)
+cc_val_data_dfit_women <- pc_val_data_dfit_women$coefficients["cam_index_dfit"]
+# stdError
+stdError_cc_val_data_dfit_women <- (summary(pc_val_data_dfit_women)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_lambda_hat_dfit_women <- cc_val_data_dfit_women - 1.96*(stdError_cc_val_data_dfit_women)
+uci_lambda_hat_dfit_women <- cc_val_data_dfit_women + 1.96*(stdError_cc_val_data_dfit_women)
+
+# RC 
+beta_hat_star_dfit_women <- cc_study_data_dfit_women
+lambda_hat_dfit_women <- cc_val_data_dfit_women
+beta_hat_dfit_women <- beta_hat_star_dfit_women/lambda_hat_dfit_women
+var_beta_dfit_women <- stdError_cc_study_data_dfit/(lambda_hat_dfit_women^2) + (beta_hat_star_dfit_women/lambda_hat_dfit_women^2)^2*stdError_cc_val_data_dfit_women
+# confidence intervals
+uci_beta_hat_dfit_women <- beta_hat_dfit_women - 1.96*sqrt(var_beta_dfit_women)
+lci_beta_hat_dfit_women <- beta_hat_dfit_women + 1.96*sqrt(var_beta_dfit_women)
 
 # ___  ___ _____ _____ _   _ ___________     ___ 
 # |  \/  ||  ___|_   _| | | |  _  |  _  \   /   |
@@ -1093,8 +1148,8 @@ summary(rdr_regression_fit_men)
 summary(rdr_regression_fit_women)
 
 # Beta
-cox_regression_men_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = val_data_men, robust=TRUE)
-cox_regression_women_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = val_data_women, robust=TRUE)
+cox_regression_men_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = study_data_men, robust=TRUE)
+cox_regression_women_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = study_data_women, robust=TRUE)
 beta_inc_men <- sum(summary(cox_regression_men_index)$coef[,1])/4
 beta_inc_women <- sum(summary(cox_regression_women_index)$coef[,1])/4
 
