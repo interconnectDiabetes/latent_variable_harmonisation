@@ -435,6 +435,13 @@ dist2 <- fitdist(cat2, "norm", method='mle')
 dist3 <- fitdist(cat3, "norm", method='mle')
 dist4 <- fitdist(cat4, "norm", method='mle')
 
+dist_list = list(dist1,dist2,dist3,dist4)
+
+for (i in 1:4){
+  plot(dist_list[[i]])
+}
+
+
 # take the sufficient statistics to recreate the distributions from which we can sample
 # Index properties (Assumption that they are Gaussian)
 # Format : (mean, stdev)
@@ -502,4 +509,16 @@ lci_beta_hat_dfit <- beta_hat_dfit + 1.96*sqrt(var_beta_dfit)
 # | |  | || |___  | | | | | \ \_/ / |/ /  \___  |
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/       |_/
 #                                                
-# Density estimation for each index 
+# Density estimation for each index using kernel based estimation methods. Then sample directly using the kernels.
+library(stats)
+
+density1 <- density(cat1)
+density2 <- density(cat2)
+density3 <- density(cat3)
+density4 <- density(cat4)
+
+density_list = list(density1,density2,density3,density4)
+
+for (i in 1:4){
+  plot(density_list[[i]])
+}
