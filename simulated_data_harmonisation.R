@@ -522,3 +522,70 @@ density_list = list(density1,density2,density3,density4)
 for (i in 1:4){
   plot(density_list[[i]])
 }
+
+# sampling is a bit more confusing because there is no inbuilt function for sampling from a density object in R
+# However it can be broken down to:
+# repeat nsim times:
+#   sample (with replacement) a random observation from the data
+#   sample from the kernel, and add the previously sampled random observation
+
+# If we use a Gaussian kernel, the density estimate is a mixture of n normals, each centred on the sample points
+# and all having standard deviation h equal to the estimated bandwifth.
+# estimated bandwith
+bw_1 <- density1$bw
+bw_2 <- density2$bw
+bw_3 <- density3$bw
+bw_4 <- density4$bw
+
+kernel_means_1 <- sample(cat1, 1, replace=TRUE)
+rnorm(1, mean = kernel_means_1, sd = bw_1)
+kernel_means_2 <- sample(cat2, 1, replace=TRUE)
+rnorm(1, mean = kernel_means_2, sd = bw_2)
+kernel_means_3 <- sample(cat3, 1, replace=TRUE)
+rnorm(1, mean = kernel_means_3, sd = bw_3)
+kernel_means_4 <- sample(cat4, 1, replace=TRUE)
+rnorm(1, mean = kernel_means_4, sd = bw_4)
+
+study_data$cam_index_means_sample <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+    	kernel_means_1 <- sample(cat1, 1, replace=TRUE)
+      	output = rnorm(1, mean = kernel_means_1, sd = bw_1)
+    } else if (x == 2) {
+    	kernel_means_2 <- sample(cat2, 1, replace=TRUE)
+      	output = rnorm(1, mean = kernel_means_2, sd = bw_2)
+    } else if (x == 3) {
+    	kernel_means_3 <- sample(cat3, 1, replace=TRUE)
+      	output = rnorm(1, mean = kernel_means_3, sd = bw_3)
+    } else if (x == 4) {
+    	kernel_means_4 <- sample(cat4, 1, replace=TRUE)
+      	output = rnorm(1, mean = kernel_means_4, sd = bw_4)
+    } else {
+      	output = NA
+  	}
+  	return(output)
+	}
+))
+
+validation_data$cam_index_means_sample <- unlist(mapply(validation_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      	output = NA
+    } else if (x == 1){
+    	kernel_means_1 <- sample(cat1, 1, replace=TRUE)
+      	output = rnorm(1, mean = kernel_means_1, sd = bw_1)
+    } else if (x == 2) {
+    	kernel_means_2 <- sample(cat2, 1, replace=TRUE)
+      	output = rnorm(1, mean = kernel_means_2, sd = bw_2)
+    } else if (x == 3) {
+    	kernel_means_3 <- sample(cat3, 1, replace=TRUE)
+      	output = rnorm(1, mean = kernel_means_3, sd = bw_3)
+    } else if (x == 4) {
+    	kernel_means_4 <- sample(cat4, 1, replace=TRUE)
+      	output = rnorm(1, mean = kernel_means_4, sd = bw_4)
+    } else {
+      	output = NA
+  	}
+  	return(output)
+	}
+))

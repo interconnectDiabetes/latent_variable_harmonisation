@@ -1134,6 +1134,9 @@ lci_beta_hat_dfit_women <- beta_hat_dfit_women + 1.96*sqrt(var_beta_dfit_women)
 # | |  | || |___  | | | | | \ \_/ / |/ /  \___  |
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/       |_/
 #                                                
+# We estimate the density of the pdf using kernel based estimation methods. Then sample directly using the kernels.
+
+
 
 ############################################################################################
 ############################ Pretty Printing Results #######################################
