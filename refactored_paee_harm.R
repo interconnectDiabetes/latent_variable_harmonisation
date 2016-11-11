@@ -504,11 +504,11 @@ lambda_list_men <- c(lambda_men)
 lambda_list_women <- c(lambda_women)
 
 ## Beta Calculation
-og_men <- subset(study_data, sex==0)
-og_women <- subset(study_data, sex==1)
+val_data_men <- subset(study_data, sex==0)
+val_data_women <- subset(study_data, sex==1)
 
-cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
-cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
+cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_men, robust=TRUE)
+cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_women, robust=TRUE)
 
 beta_men <- cox_regression_men$coefficients
 beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
@@ -655,7 +655,7 @@ cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
 ## First run through we set the mean to be the first thing we sample per category
 ## and calculate the lm many times
 ##
-for (i in 1:10) {
+for (i in 1:2) {
   cat1_men_choice <- sample(cat1_men,1,replace=TRUE)
   cat2_men_choice <- sample(cat2_men,1,replace=TRUE)
   cat3_men_choice <- sample(cat3_men,1,replace=TRUE)
@@ -758,11 +758,11 @@ for (i in 1:10) {
   ))
 
   # Predictions per model
-  og_men <- subset(study_data, sex==0)
-  og_women <- subset(study_data, sex==1)
+  val_data_men <- subset(study_data, sex==0)
+  val_data_women <- subset(study_data, sex==1)
 
-  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
-  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
+  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_men, robust=TRUE)
+  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_women, robust=TRUE)
 
   beta_men <- cox_regression_men$coefficients
   beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
@@ -845,7 +845,7 @@ women_dataframe <- data.frame(lambda = lambda_list_women, beta=beta_list_women, 
 # | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| |_/ /
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\____/ 
 
-for (i in 1:10) {
+for (i in 1:2) {
   ###
   ### Lambda Calculation
   ###
@@ -905,11 +905,11 @@ for (i in 1:10) {
   ))
 
   # Predictions per model
-  og_men <- subset(study_data, sex==0)
-  og_women <- subset(study_data, sex==1)
+  val_data_men <- subset(study_data, sex==0)
+  val_data_women <- subset(study_data, sex==1)
 
-  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_men, robust=TRUE)
-  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = og_women, robust=TRUE)
+  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_men, robust=TRUE)
+  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = val_data_women, robust=TRUE)
 
   beta_men <- cox_regression_men$coefficients
   beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
@@ -1005,6 +1005,12 @@ dist2_women <- fitdist(cat2_women, "norm", method='mle')
 dist3_women <- fitdist(cat3_women, "norm", method='mle')
 dist4_women <- fitdist(cat4_women, "norm", method='mle')
 
+dist_list = list(dist1_men,dist2_men,dist3_men,dist4_men,dist1_women,dist2_women,dist3_women,dist4_women)
+
+for (i in 1:8){
+  plot(dist_list[[i]])
+}
+
 index_mean1_men <- dist1_men[[1]][1]
 index_stdev1_men <- dist1_men[[1]][2]
 index_mean2_men <- dist2_men[[1]][1]
@@ -1024,7 +1030,6 @@ index_stdev3_women <- dist3_women[[1]][2]
 index_mean4_women <- dist4_women[[1]][1]
 index_stdev4_women <- dist4_women[[1]][2]
 mean_paee_difference_women <- abs(mean(c(index_mean1_women-index_mean2_women, index_mean2_women-index_mean3_women, index_mean3_women-index_mean4_women)))
-
 
 val_data_men$cam_index_dfit <- unlist(mapply(val_data_men$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
@@ -1088,8 +1093,8 @@ summary(rdr_regression_fit_men)
 summary(rdr_regression_fit_women)
 
 # Beta
-cox_regression_men_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = og_men, robust=TRUE)
-cox_regression_women_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = og_women, robust=TRUE)
+cox_regression_men_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = val_data_men, robust=TRUE)
+cox_regression_women_index <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index, data = val_data_women, robust=TRUE)
 beta_inc_men <- sum(summary(cox_regression_men_index)$coef[,1])/4
 beta_inc_women <- sum(summary(cox_regression_women_index)$coef[,1])/4
 
