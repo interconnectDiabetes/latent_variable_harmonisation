@@ -1073,16 +1073,16 @@ study_data_women$cam_index_dfit <- unlist(mapply(study_data_women$cam_index, SIM
 
 ### Men
 ## coef = beta
-pc_study_data_dfit_men <- lm(formula=foo~cam_index_dfit, data=study_data_men)
+pc_study_data_dfit_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_dfit, data = study_data_men, robust=TRUE)
 cc_study_data_dfit_men <- pc_study_data_dfit_men$coefficients["cam_index_dfit"]
 # stdError
-stdError_cc_study_data_dfit_men <- (summary(pc_study_data_dfit_men)$coefficients[,"Std. Error"])[-1]
+stdError_cc_study_data_dfit_men <- (summary(pc_study_data_dfit_men)$coefficients[,"robust se"])[-1]
 # confidence intervals
 lci_beta_hat_star_dfit_men <- cc_study_data_dfit_men - 1.96*stdError_cc_study_data_dfit_men
 uci_beta_hat_star_dfit_men <- cc_study_data_dfit_men + 1.96*stdError_cc_study_data_dfit_men
 
 ## coef = lambda
-pc_val_data_dfit_men <- lm(formula=paee~cam_index_dfit, data=validation_data_men)
+pc_val_data_dfit_men <- lm(formula=PAEE~cam_index_dfit, data=val_data_men)
 cc_val_data_dfit_men <- pc_val_data_dfit_men$coefficients["cam_index_dfit"]
 # stdError
 stdError_cc_val_data_dfit_men <- (summary(pc_val_data_dfit_men)$coefficients[,"Std. Error"])[-1]
@@ -1094,23 +1094,23 @@ uci_lambda_hat_dfit_men <- cc_val_data_dfit_men + 1.96*(stdError_cc_val_data_dfi
 beta_hat_star_dfit_men <- cc_study_data_dfit_men
 lambda_hat_dfit_men <- cc_val_data_dfit_men
 beta_hat_dfit_men <- beta_hat_star_dfit_men/lambda_hat_dfit_men
-var_beta_dfit_men <- stdError_cc_study_data_dfit/(lambda_hat_dfit_men^2) + (beta_hat_star_dfit_men/lambda_hat_dfit_men^2)^2*stdError_cc_val_data_dfit_men
+var_beta_dfit_men <- stdError_cc_study_data_dfit_men/(lambda_hat_dfit_men^2) + (beta_hat_star_dfit_men/lambda_hat_dfit_men^2)^2*stdError_cc_val_data_dfit_men
 # confidence intervals
 uci_beta_hat_dfit_men <- beta_hat_dfit_men - 1.96*sqrt(var_beta_dfit_men)
 lci_beta_hat_dfit_men <- beta_hat_dfit_men + 1.96*sqrt(var_beta_dfit_men)
 
 ### Women
 ## coef = beta
-pc_study_data_dfit_women <- lm(formula=foo~cam_index_dfit, data=study_data_women)
+pc_study_data_dfit_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_dfit, data = study_data_women, robust=TRUE)
 cc_study_data_dfit_women <- pc_study_data_dfit_women$coefficients["cam_index_dfit"]
 # stdError
-stdError_cc_study_data_dfit_women <- (summary(pc_study_data_dfit_women)$coefficients[,"Std. Error"])[-1]
+stdError_cc_study_data_dfit_women <- (summary(pc_study_data_dfit_women)$coefficients[,"robust se"])[-1]
 # confidence intervals
 lci_beta_hat_star_dfit_women <- cc_study_data_dfit_women - 1.96*stdError_cc_study_data_dfit_women
 uci_beta_hat_star_dfit_women <- cc_study_data_dfit_women + 1.96*stdError_cc_study_data_dfit_women
 
 ## coef = lambda
-pc_val_data_dfit_women <- lm(formula=paee~cam_index_dfit, data=validation_data_women)
+pc_val_data_dfit_women <- lm(formula=PAEE~cam_index_dfit, data=val_data_women)
 cc_val_data_dfit_women <- pc_val_data_dfit_women$coefficients["cam_index_dfit"]
 # stdError
 stdError_cc_val_data_dfit_women <- (summary(pc_val_data_dfit_women)$coefficients[,"Std. Error"])[-1]
@@ -1122,7 +1122,7 @@ uci_lambda_hat_dfit_women <- cc_val_data_dfit_women + 1.96*(stdError_cc_val_data
 beta_hat_star_dfit_women <- cc_study_data_dfit_women
 lambda_hat_dfit_women <- cc_val_data_dfit_women
 beta_hat_dfit_women <- beta_hat_star_dfit_women/lambda_hat_dfit_women
-var_beta_dfit_women <- stdError_cc_study_data_dfit/(lambda_hat_dfit_women^2) + (beta_hat_star_dfit_women/lambda_hat_dfit_women^2)^2*stdError_cc_val_data_dfit_women
+var_beta_dfit_women <- stdError_cc_study_data_dfit_women/(lambda_hat_dfit_women^2) + (beta_hat_star_dfit_women/lambda_hat_dfit_women^2)^2*stdError_cc_val_data_dfit_women
 # confidence intervals
 uci_beta_hat_dfit_women <- beta_hat_dfit_women - 1.96*sqrt(var_beta_dfit_women)
 lci_beta_hat_dfit_women <- beta_hat_dfit_women + 1.96*sqrt(var_beta_dfit_women)
@@ -1217,3 +1217,12 @@ exp(summary(women_dataframe$upper95)["Median"])^6.8
 exp(summary(women_dataframe$calibratedBeta)["Median"])^6.8
 exp(summary(women_dataframe$calBetaLower95)["Median"])^6.8
 exp(summary(women_dataframe$calBetaUpper95)["Median"])^6.8
+
+##
+## Method 3
+##
+
+##
+## Method 4
+##
+
