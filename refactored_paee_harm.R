@@ -327,249 +327,13 @@ study_data$cam_index <- apply(X = study_data[,c('pa_work', 'camMets_ind')], MARG
 study_data$camMets_ind <- as.factor(study_data$camMets_ind)
 study_data$cam_index <- as.factor(study_data$cam_index)
 
-###############################################################################
-################################# METHODS #####################################
-###############################################################################
 
-# ___  ___ _____ _____ _   _ ___________   __  
-# |  \/  ||  ___|_   _| | | |  _  |  _  \ /  | 
-# | .  . || |__   | | | |_| | | | | | | | `| | 
-# | |\/| ||  __|  | | |  _  | | | | | | |  | | 
-# | |  | || |___  | | | | | \ \_/ / |/ /  _| |_
-# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \___/
 
-# Harmonisation using the paee means from each of the cambridge indices.
 
-# Setting the means for the validation data
-val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-  if (y == 0) {
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = 35.6
-    } else if (x == 2) {
-      output = 43.7
-    } else if (x == 3) {
-      output = 49.0
-    } else if (x == 4) {
-      output = 56.2
-    } else {
-      output = NA
-    }
-  } else if (y == 1){
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = 36.5
-    } else if (x == 2) {
-      output = 39.8
-    } else if (x == 3) {
-      output = 43.6
-    } else if (x == 4) {
-      output = 48.2
-    } else {
-      output = NA
-    } 
-  } else {
-    output = NA
-  }
-  return(output)
-}
-))
-
-# val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-#   if (y == 0) {
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 32.49748
-#     } else if (x == 2) {
-#       output = 42.040295
-#     } else if (x == 3) {
-#       output = 45.94756
-#     } else if (x == 4) {
-#       output = 55.79739
-#     } else {
-#       output = NA
-#     }
-#   } else if (y == 1){
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 35.41059
-#     } else if (x == 2) {
-#       output = 38.77947
-#     } else if (x == 3) {
-#       output = 42.77706
-#     } else if (x == 4) {
-#       output = 45.80403
-#     } else {
-#       output = NA
-#     }
-#   } else {
-#     output = NA
-#   }
-#   return(output)
-# }
-# ))
-
-# Set the means for the study data
-study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-  if (y == 0) {
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = 35.6
-    } else if (x == 2) {
-      output = 43.7
-    } else if (x == 3) {
-      output = 49.0
-    } else if (x == 4) {
-      output = 56.2
-    } else {
-      output = NA
-    }
-  } else if (y == 1){
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = 36.5
-    } else if (x == 2) {
-      output = 39.8
-    } else if (x == 3) {
-      output = 43.6
-    } else if (x == 4) {
-      output = 48.2
-    } else {
-      output = NA
-    } 
-  } else {
-    output = NA
-  }
-  return(output)
-}
-))
-
-# study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
-#   if (y == 0) {
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 32.49748
-#     } else if (x == 2) {
-#       output = 42.040295
-#     } else if (x == 3) {
-#       output = 45.94756
-#     } else if (x == 4) {
-#       output = 55.79739
-#     } else {
-#       output = NA
-#     }
-#   } else if (y == 1){
-#     if (is.na(x)) {
-#       output = NA
-#     } else if (x == 1){
-#       output = 35.41059
-#     } else if (x == 2) {
-#       output = 38.77947
-#     } else if (x == 3) {
-#       output = 42.77706
-#     } else if (x == 4) {
-#       output = 45.80403
-#     } else {
-#       output = NA
-#     }
-#   } else {
-#     output = NA
-#   }
-#   return(output)
-# }
-# ))
-
-## Lambda Calculation
+####### CAT DATA
 val_data_men <- subset(val_data, sex==0)
 val_data_women <- subset(val_data, sex==1)
 
-rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=val_data_men)
-rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=val_data_women)
-
-lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
-lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
-
-lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_means","Std. Error"])^2
-lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_means","Std. Error"])^2
-
-# Store the lambda in a list for comparison
-lambda_list_men <- c(lambda_men)
-lambda_list_women <- c(lambda_women)
-
-## Beta Calculation
-study_data_men <- subset(study_data, sex==0)
-study_data_women <- subset(study_data, sex==1)
-
-cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_men, robust=TRUE)
-cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_women, robust=TRUE)
-
-beta_men <- cox_regression_men$coefficients
-beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
-
-beta_women <- cox_regression_women$coefficients
-beta_se_women <- summary(cox_regression_women)$coefficients[,"robust se"]
-
-upper_ci_men <- log(summary(cox_regression_men)$conf.int[,"upper .95"])
-lower_ci_men <- log(summary(cox_regression_men)$conf.int[,"lower .95"])
-upper_ci_women <- log(summary(cox_regression_women)$conf.int[,"upper .95"])
-lower_ci_women <- log(summary(cox_regression_women)$conf.int[,"lower .95"])
-
-upper_ci_list_men <- c(upper_ci_men)
-lower_ci_list_men <- c(lower_ci_men)
-upper_ci_list_women <- c(upper_ci_women)
-lower_ci_list_women <- c(lower_ci_women)
-
-# Store the beta in a list for comparison
-beta_list_men <- c(beta_men)
-beta_list_women <- c(beta_women)
-
-# calculate the calibrated beta and store in list
-cal_beta_men <- beta_men/lambda_men
-cal_beta_women <- beta_women/lambda_women
-
-cal_beta_list_men <- c(cal_beta_men)
-cal_beta_list_women <- c(cal_beta_women)
-
-# Calibrated Confidence Interval calc helper
-cal_beta_sd_men <- (beta_se_men^2)/(lambda_men^2) + ((beta_men/lambda_men^2)^2)*lambda_men_var # formula 12
-cal_beta_sd_women <- (beta_se_women^2)/(lambda_women^2) + ((beta_women/lambda_women^2)^2)*lambda_women_var # formula 12
-
-cal_confidence_interval_help_men <- 1.96*sqrt(cal_beta_sd_men)
-cal_confidence_interval_help_women <- 1.96*sqrt(cal_beta_sd_women)
-
-cal_upper_ci_men <- cal_beta_men + cal_confidence_interval_help_men
-cal_lower_ci_men <- cal_beta_men - cal_confidence_interval_help_men
-cal_upper_ci_women <- cal_beta_women + cal_confidence_interval_help_women
-cal_lower_ci_women <- cal_beta_women - cal_confidence_interval_help_women
-
-cal_upper_ci_list_men <- c(cal_upper_ci_men)
-cal_lower_ci_list_men <- c(cal_lower_ci_men)
-cal_upper_ci_list_women <- c(cal_upper_ci_women)
-cal_lower_ci_list_women <- c(cal_lower_ci_women)
-
-
-
-
-# ___  ___ _____ _____ _   _ ___________   _____   ___  
-# |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \ / _ \ 
-# | .  . || |__   | | | |_| | | | | | | | `' / /'/ /_\ \
-# | |\/| ||  __|  | | |  _  | | | | | | |   / /  |  _  |
-# | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| | | |
-# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\_| |_/                                     
-###############################################################################################################
-################################## WITH SAMPLED PAEE VALS #####################################################
-# Set seed for pseudo random selection. 
-set.seed(999)
-
-## Set lists of values for each PA categorisation that will be used to draw random numbers for
-## the validation set's observed PAEE values
 cat1_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
   if (y == 1){
     output = x
@@ -651,6 +415,255 @@ cat4_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function
 }) 
 cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
 
+# Means of categories
+cat1_men_mean <- mean(cat1_men)
+cat2_men_mean <- mean(cat2_men)
+cat3_men_mean <- mean(cat3_men)
+cat4_men_mean <- mean(cat4_men)
+
+cat1_women_mean <- mean(cat1_women)
+cat2_women_mean <- mean(cat2_women)
+cat3_women_mean <- mean(cat3_women)
+cat4_women_mean <- mean(cat4_women)
+###############################################################################
+################################# METHODS #####################################
+###############################################################################
+
+# ___  ___ _____ _____ _   _ ___________   __  
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ /  | 
+# | .  . || |__   | | | |_| | | | | | | | `| | 
+# | |\/| ||  __|  | | |  _  | | | | | | |  | | 
+# | |  | || |___  | | | | | \ \_/ / |/ /  _| |_
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \___/
+
+# Harmonisation using the paee means from each of the cambridge indices.
+
+# # Setting the means for the validation data
+# val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+#   if (y == 0) {
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 35.6
+#     } else if (x == 2) {
+#       output = 43.7
+#     } else if (x == 3) {
+#       output = 49.0
+#     } else if (x == 4) {
+#       output = 56.2
+#     } else {
+#       output = NA
+#     }
+#   } else if (y == 1){
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 36.5
+#     } else if (x == 2) {
+#       output = 39.8
+#     } else if (x == 3) {
+#       output = 43.6
+#     } else if (x == 4) {
+#       output = 48.2
+#     } else {
+#       output = NA
+#     } 
+#   } else {
+#     output = NA
+#   }
+#   return(output)
+# }
+# ))
+
+val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  if (y == 0) {
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = cat1_men_mean
+    } else if (x == 2) {
+      output = cat2_men_mean
+    } else if (x == 3) {
+      output = cat3_men_mean
+    } else if (x == 4) {
+      output = cat4_men_mean
+    } else {
+      output = NA
+    }
+  } else if (y == 1){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = cat1_women_mean
+    } else if (x == 2) {
+      output = cat2_women_mean
+    } else if (x == 3) {
+      output = cat3_women_mean
+    } else if (x == 4) {
+      output = cat4_women_mean
+    } else {
+      output = NA
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}
+))
+
+# Set the means for the study data
+# study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+#   if (y == 0) {
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 35.6
+#     } else if (x == 2) {
+#       output = 43.7
+#     } else if (x == 3) {
+#       output = 49.0
+#     } else if (x == 4) {
+#       output = 56.2
+#     } else {
+#       output = NA
+#     }
+#   } else if (y == 1){
+#     if (is.na(x)) {
+#       output = NA
+#     } else if (x == 1){
+#       output = 36.5
+#     } else if (x == 2) {
+#       output = 39.8
+#     } else if (x == 3) {
+#       output = 43.6
+#     } else if (x == 4) {
+#       output = 48.2
+#     } else {
+#       output = NA
+#     } 
+#   } else {
+#     output = NA
+#   }
+#   return(output)
+# }
+# ))
+
+study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  if (y == 0) {
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = cat1_men_mean
+    } else if (x == 2) {
+      output = cat2_men_mean
+    } else if (x == 3) {
+      output = cat3_men_mean
+    } else if (x == 4) {
+      output = cat4_men_mean
+    } else {
+      output = NA
+    }
+  } else if (y == 1){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = cat1_women_mean
+    } else if (x == 2) {
+      output = cat2_women_mean
+    } else if (x == 3) {
+      output = cat3_women_mean
+    } else if (x == 4) {
+      output = cat4_women_mean
+    } else {
+      output = NA
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}
+))
+
+## Lambda Calculation
+val_data_men <- subset(val_data, sex==0)
+val_data_women <- subset(val_data, sex==1)
+
+rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=val_data_men)
+rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=val_data_women)
+
+lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
+lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
+
+lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_means","Std. Error"])^2
+lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_means","Std. Error"])^2
+
+# Store the lambda in a list for comparison
+lambda_list_men <- c(lambda_men)
+lambda_list_women <- c(lambda_women)
+
+## Beta Calculation
+study_data_men <- subset(study_data, sex==0)
+study_data_women <- subset(study_data, sex==1)
+
+cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_men, robust=TRUE)
+cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_women, robust=TRUE)
+
+beta_men <- cox_regression_men$coefficients
+beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
+
+beta_women <- cox_regression_women$coefficients
+beta_se_women <- summary(cox_regression_women)$coefficients[,"robust se"]
+
+upper_ci_men <- log(summary(cox_regression_men)$conf.int[,"upper .95"])
+lower_ci_men <- log(summary(cox_regression_men)$conf.int[,"lower .95"])
+upper_ci_women <- log(summary(cox_regression_women)$conf.int[,"upper .95"])
+lower_ci_women <- log(summary(cox_regression_women)$conf.int[,"lower .95"])
+
+upper_ci_list_men <- c(upper_ci_men)
+lower_ci_list_men <- c(lower_ci_men)
+upper_ci_list_women <- c(upper_ci_women)
+lower_ci_list_women <- c(lower_ci_women)
+
+# Store the beta in a list for comparison
+beta_list_men <- c(beta_men)
+beta_list_women <- c(beta_women)
+
+# calculate the calibrated beta and store in list
+cal_beta_men <- beta_men/lambda_men
+cal_beta_women <- beta_women/lambda_women
+
+cal_beta_list_men <- c(cal_beta_men)
+cal_beta_list_women <- c(cal_beta_women)
+
+# Calibrated Confidence Interval calc helper
+cal_beta_sd_men <- (beta_se_men^2)/(lambda_men^2) + ((beta_men/lambda_men^2)^2)*lambda_men_var # formula 12
+cal_beta_sd_women <- (beta_se_women^2)/(lambda_women^2) + ((beta_women/lambda_women^2)^2)*lambda_women_var # formula 12
+
+cal_confidence_interval_help_men <- 1.96*sqrt(cal_beta_sd_men)
+cal_confidence_interval_help_women <- 1.96*sqrt(cal_beta_sd_women)
+
+cal_upper_ci_men <- cal_beta_men + cal_confidence_interval_help_men
+cal_lower_ci_men <- cal_beta_men - cal_confidence_interval_help_men
+cal_upper_ci_women <- cal_beta_women + cal_confidence_interval_help_women
+cal_lower_ci_women <- cal_beta_women - cal_confidence_interval_help_women
+
+cal_upper_ci_list_men <- c(cal_upper_ci_men)
+cal_lower_ci_list_men <- c(cal_lower_ci_men)
+cal_upper_ci_list_women <- c(cal_upper_ci_women)
+cal_lower_ci_list_women <- c(cal_lower_ci_women)
+
+
+# ___  ___ _____ _____ _   _ ___________   _____   ___  
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \ / _ \ 
+# | .  . || |__   | | | |_| | | | | | | | `' / /'/ /_\ \
+# | |\/| ||  __|  | | |  _  | | | | | | |   / /  |  _  |
+# | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| | | |
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\_| |_/                                     
+###############################################################################################################
+################################## WITH SAMPLED PAEE VALS #####################################################
+# Set seed for pseudo random selection. 
+set.seed(999)
+
 ##
 ## First run through we set the mean to be the first thing we sample per category
 ## and calculate the lm many times
@@ -665,7 +678,7 @@ for (i in 1:10) {
   cat3_women_choice <- sample(cat3_women,1,replace=TRUE)
   cat4_women_choice <- sample(cat4_women,1,replace=TRUE)
 
-  val_data$cam_index_means <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  val_data$cam_index_2a <- unlist(mapply(val_data$cam_index, val_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
@@ -707,21 +720,21 @@ for (i in 1:10) {
   val_data_men <- subset(val_data, sex==0)
   val_data_women <- subset(val_data, sex==1)
 
-  rdr_regression_fit_men <- lm(formula=PAEE~cam_index_means, data=val_data_men)
-  rdr_regression_fit_women <- lm(formula=PAEE~cam_index_means, data=val_data_women)
+  rdr_regression_fit_men <- lm(formula=PAEE~cam_index_2a, data=val_data_men)
+  rdr_regression_fit_women <- lm(formula=PAEE~cam_index_2a, data=val_data_women)
 
-  lambda_men <- rdr_regression_fit_men$coefficients["cam_index_means"]
-  lambda_women <- rdr_regression_fit_women$coefficients["cam_index_means"]
+  lambda_men <- rdr_regression_fit_men$coefficients["cam_index_2a"]
+  lambda_women <- rdr_regression_fit_women$coefficients["cam_index_2a"]
 
-  lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_means","Std. Error"])^2
-  lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_means","Std. Error"])^2
+  lambda_men_var <- (summary(rdr_regression_fit_men)$coefficients["cam_index_2a","Std. Error"])^2
+  lambda_women_var <- (summary(rdr_regression_fit_women)$coefficients["cam_index_2a","Std. Error"])^2
 
   # Store the lambda in a list for comparison
   lambda_list_men <- c(lambda_list_men, lambda_men)
   lambda_list_women <- c(lambda_list_women, lambda_women)
 
   ## Cam index means
-  study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  study_data$cam_index_2a <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
@@ -761,8 +774,8 @@ for (i in 1:10) {
   study_data_men <- subset(study_data, sex==0)
   study_data_women <- subset(study_data, sex==1)
 
-  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_men, robust=TRUE)
-  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_women, robust=TRUE)
+  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_2a, data = study_data_men, robust=TRUE)
+  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_2a, data = study_data_women, robust=TRUE)
 
   beta_men <- cox_regression_men$coefficients
   beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
@@ -868,7 +881,7 @@ for (i in 1:10) {
   ##
   ## Beta Calculation
   ##
-  study_data$cam_index_means <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
+  study_data$cam_index_2b <- unlist(mapply(study_data$cam_index, study_data$sex, SIMPLIFY = FALSE, FUN=function(x,y){
   if (y == 0) {
     if (is.na(x)) {
       output = NA
@@ -908,8 +921,8 @@ for (i in 1:10) {
   study_data_men <- subset(study_data, sex==0)
   study_data_women <- subset(study_data, sex==1)
 
-  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_men, robust=TRUE)
-  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_means, data = study_data_women, robust=TRUE)
+  cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_2b, data = study_data_men, robust=TRUE)
+  cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_2b, data = study_data_women, robust=TRUE)
 
   beta_men <- cox_regression_men$coefficients
   beta_se_men <- summary(cox_regression_men)$coefficients[,"robust se"]
