@@ -497,7 +497,7 @@ uci_lambda_hat_dfit <- cc_val_data_dfit + 1.96*(stdError_cc_val_data_dfit)
 beta_hat_star_dfit <- cc_study_data_dfit
 lambda_hat_dfit <- cc_val_data_dfit
 beta_hat_dfit <- beta_hat_star_dfit/lambda_hat_dfit
-var_beta_dfit <- stdError_cc_study_data_dfit/(lambda_hat_dfit^2) + (beta_hat_star_dfit/lambda_hat_dfit^2)^2*stdError_cc_val_data_means
+var_beta_dfit <- stdError_cc_study_data_dfit/(lambda_hat_dfit^2) + (beta_hat_star_dfit/lambda_hat_dfit^2)^2*stdError_cc_val_data_dfit
 # confidence intervals
 uci_beta_hat_dfit <- beta_hat_dfit - 1.96*sqrt(var_beta_dfit)
 lci_beta_hat_dfit <- beta_hat_dfit + 1.96*sqrt(var_beta_dfit)
@@ -546,7 +546,7 @@ rnorm(1, mean = kernel_means_3, sd = bw_3)
 kernel_means_4 <- sample(cat4, 1, replace=TRUE)
 rnorm(1, mean = kernel_means_4, sd = bw_4)
 
-study_data$cam_index_means_sample <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+study_data$cam_kernelEst <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
       output = NA
     } else if (x == 1){
@@ -568,7 +568,7 @@ study_data$cam_index_means_sample <- unlist(mapply(study_data$cam_index, SIMPLIF
 	}
 ))
 
-validation_data$cam_index_means_sample <- unlist(mapply(validation_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+validation_data$cam_kernelEst <- unlist(mapply(validation_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
       	output = NA
     } else if (x == 1){
@@ -589,3 +589,30 @@ validation_data$cam_index_means_sample <- unlist(mapply(validation_data$cam_inde
   	return(output)
 	}
 ))
+
+## coef = beta
+pc_study_data_kernel <- lm(formula=foo~cam_kernelEst, data=study_data)
+cc_study_data_kernel <- pc_study_data_kernel$coefficients["cam_kernelEst"]
+# stdError
+stdError_cc_study_data_kernel <- (summary(pc_study_data_kernel)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_beta_hat_star_kernel <- cc_study_data_kernel - 1.96*stdError_cc_study_data_kernel
+uci_beta_hat_star_kernel <- cc_study_data_kernel + 1.96*stdError_cc_study_data_kernel
+
+## coef = lambda
+pc_val_data_kernel <- lm(formula=paee~cam_kernelEst, data=validation_data)
+cc_val_data_kernel <- pc_val_data_kernel$coefficients["cam_kernelEst"]
+# stdError
+stdError_cc_val_data_kernel <- (summary(pc_val_data_kernel)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_lambda_hat_kernel <- cc_val_data_kernel - 1.96*(stdError_cc_val_data_kernel)
+uci_lambda_hat_kernel <- cc_val_data_kernel + 1.96*(stdError_cc_val_data_kernel)
+
+# RC 
+beta_hat_star_kernel <- cc_study_data_kernel
+lambda_hat_kernel <- cc_val_data_kernel
+beta_hat_kernel <- beta_hat_star_kernel/lambda_hat_kernel
+var_beta_kernel <- stdError_cc_study_data_kernel/(lambda_hat_kernel^2) + (beta_hat_star_kernel/lambda_hat_kernel^2)^2*stdError_cc_val_data_kernel
+# confidence intervals
+uci_beta_hat_dfit <- beta_hat_kernel - 1.96*sqrt(var_beta_kernel)
+lci_beta_hat_dfit <- beta_hat_kernel + 1.96*sqrt(var_beta_kernel)
