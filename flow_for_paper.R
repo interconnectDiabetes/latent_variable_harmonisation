@@ -123,7 +123,10 @@ output <- do.call(rbind,(lapply(act_split,function(x){
 ))
 row.names(output)<-NULL
 
-# to do: Add in UMEA, if possible (not sure if all indices can be generated)
+###############################################################################
+###############to do: Add in UMEA        #####################################
+###############################################################################
+# add Umea , if possible (not sure if all indices can be generated)
 # 
 # epic_umea <- read.csv("V:/Studies/InterConnect/Internal/Latent variable harmonisation/epic_umea.csv", header=T)
 # the csv was generated from:
@@ -136,6 +139,20 @@ row.names(output)<-NULL
 # cleaned actiheart table by universal id
 merged_output <- merge(output, epic, by = 'universal_id')
 
+# fix employment status
+
+merged_output$pa_workini <- as.vector(do.call(rbind,lapply(X = merged_output$pa_workini, FUN = function(x){
+  
+  if ( x == 9){
+    ind = 5
+  }
+  else { 
+    ind = x
+  }
+  return(ind)
+})
+))
+
 # calculate the BMI using the weight and height and include this in the table to make
 # a model for PAEE
 bmi_calc <- function(weight, height){
@@ -144,7 +161,11 @@ bmi_calc <- function(weight, height){
 }
 merged_output$bmi <- mapply(FUN=bmi_calc, merged_output$weight, merged_output$height)
 
-## In this section we regenerate cam_index column ie check logic
+
+###############################################################################
+###############################################################################
+###############################################################################
+## In this section we regenerate cam_index column ie check logic - seems to match up
 
 # camMets_ind for cam_matrix
 # totalMets_index calculation
@@ -185,24 +206,26 @@ cam_matrix = matrix( byrow = TRUE,
 
 merged_output$cam_index2 <- apply(X = merged_output[,c('pa_workini', 'camMets_ind')], MARGIN = 1,
                                   FUN = function(x){
-                                    if (x[1] == 9){
-                                      x_ind = 5
-                                    } else {
-                                      x_ind = x[1]
-                                    }
-                                    output <- cam_matrix[x_ind, x[2]]
+                                   
+                                    output <- cam_matrix[x[1], x[2]]
                                     return(output)
                                   })
 
-#if test has zero length then we are happy with the definition of cam_index!
+#if test has zero length then we are happy with the original value of cam_index!
 
 test <- merged_output[merged_output$cam_index!=merged_output$cam_index2,]
 
-#record results
+###############################################################################
+###############################################################################
+###############################################################################
+#record means etc for the cam index and binary index
 
 cam_index_means = aggregate(merged_output$PAEE, by=list(cam_index=merged_output$cam_index, sex=merged_output$sex), mean, na.rm = TRUE)
+colnames(cam_index_means)[3] = 'cam_index_mean'
 cam_index_medians = aggregate(merged_output$PAEE, by=list(cam_index=merged_output$cam_index, sex=merged_output$sex), median, na.rm = TRUE)
+colnames(cam_index_medians)[3] = 'cam_index_median'
 cam_index_counts =aggregate(merged_output$PAEE, by=list(cam_index=merged_output$cam_index, sex=merged_output$sex), length)
+colnames(cam_index_counts)[3] = 'cam_index_count'
 
 # now define other indices
 # Cam index is Method A
@@ -219,48 +242,52 @@ merged_output$binary_index <- unlist(lapply(merged_output$cam_index, FUN=functio
 # record results
 
 binary_index_means = aggregate(merged_output$PAEE, by=list(binary_index=merged_output$binary_index, sex=merged_output$sex), mean, na.rm = TRUE)
+colnames(binary_index_means)[3] = 'binary_index_mean'
 binary_index_medians = aggregate(merged_output$PAEE, by=list(binary_index=merged_output$binary_index, sex=merged_output$sex), median, na.rm = TRUE)
+colnames(binary_index_medians)[3] = 'binary_index_median'
 binary_index_counts =aggregate(merged_output$PAEE, by=list(binary_index=merged_output$binary_index, sex=merged_output$sex), length)
+colnames(binary_index_counts)[3] = 'binary_index_count'
 
-
+###############################################################################
+###############################################################################
+###############################################################################
 # Method C - regression based (but still essentially 16 categories) on components of cam index
 
-merged_output$pa_work_ind <- as.factor(as.vector(do.call(rbind,lapply(X = merged_output$pa_workini, FUN = function(x){
-  
-  if (x == 5 || x == 9){
-    ind = 1
-  }
-  else { 
-    ind = x
-  }
-  return(ind)
-})
-)))
+
 
 #create factors for regression
 merged_output$camMets_ind_fact <- as.factor(merged_output$camMets_ind)
-merged_output$sex_fact <- as.factor(merged_output$sex)
+merged_output$pa_work_ind <- as.factor(merged_output$pa_workini)
 
-reg_out <- glm(formula=PAEE ~ pa_work_ind + camMets_ind_fact + sex_fact, data = merged_output, family='gaussian')
+merged_output_women <- subset(merged_output, sex==0)
+merged_output_men <- subset(merged_output, sex==1)
 
+reg_out_men <- glm(formula=PAEE ~ pa_work_ind + camMets_ind_fact , data = merged_output_men, family='gaussian')
+reg_out_women <- glm(formula=PAEE ~ pa_work_ind + camMets_ind_fact , data = merged_output_women, family='gaussian')
 
+#store coefficients
 
+#coeffs <- summary(reg_out)$coefficients[, 1]
 
+coeffs_men <- summary(reg_out_men)$coefficients[, 1]
+coeffs_women <- summary(reg_out_women)$coefficients[, 1]
+
+###############################################################################
+###############################################################################
+###############################################################################
 # calculate the lambdas (to be used much later!)
 
 # Setting the 'observed' PAEE values by the mean
 
-# cam index
+# cam index - do a 'vlookup'
 
-temp <- merge(merged_output, cam_index_means, by=c('cam_index', 'sex'))[,c('universal_id', 'sex', 'sex_fact', 
-        'country.x', 'height', 'weight','age', 'PAEE', 'center', 'camMets_ind',  'cam_index',
-        'binary_index',	'camMets_ind_fact',	'pa_work_ind', 'pa_total', 'bmi')]
-
-
+temp <- merge(merged_output, cam_index_means, by=c('cam_index', 'sex'))[,c('universal_id', 'sex', 
+        'country.x', 'PAEE', 'center', 'camMets_ind',  'cam_index', 'binary_index',
+        'camMets_ind_fact',	'pa_work_ind', 'pa_total', 'bmi', 'cam_index_mean')]
 
 new_data <- temp[order(temp$universal_id),]
 
-# binary index
+# binary index - 'vlookup' again
 
 temp <- merge(new_data, binary_index_means, by=c('binary_index', 'sex'))
 
@@ -271,7 +298,7 @@ new_data <- temp[order(temp$universal_id),]
 # convert work index into binaries to make use of regression coeffs
 
 temp <- data.frame(sapply(levels(new_data$pa_work_ind), function(x) as.integer(x == new_data$pa_work_ind)))
-colnames(temp) <- c('pa_work_ind_1','pa_work_ind_2','pa_work_ind_3','pa_work_ind_4')
+colnames(temp) <- c('pa_work_ind_1','pa_work_ind_2','pa_work_ind_3','pa_work_ind_4','pa_work_ind_5')
 new_data <- cbind(new_data, temp)
 
 # convert ltpa index into binaries
@@ -280,5 +307,231 @@ temp <- data.frame(sapply(levels(new_data$camMets_ind_fact), function(x) as.inte
 colnames(temp) <- c('camMets_ind_1','camMets_ind_2','camMets_ind_3','camMets_ind_4')
 new_data <- cbind(new_data, temp)
 
-new_data$reg_value <- 
+# use regression coefficients to estimate PAEE
 
+final_output_women <- subset(new_data, sex==0)
+final_output_men <- subset(new_data, sex==1)
+
+final_output_women$reg_value <- coeffs_women['(Intercept)'] + final_output_women$pa_work_ind_2 * coeffs_women['pa_work_ind2'] +
+  final_output_women$pa_work_ind_3 * coeffs_women['pa_work_ind3'] + final_output_women$pa_work_ind_4 * coeffs_women['pa_work_ind4'] +
+  final_output_women$pa_work_ind_5 * coeffs_women['pa_work_ind5'] +
+  final_output_women$camMets_ind_2 * coeffs_women['camMets_ind_fact2'] + final_output_women$camMets_ind_3 * coeffs_women['camMets_ind_fact3'] +
+  final_output_women$camMets_ind_4 * coeffs_women['camMets_ind_fact4']
+
+final_output_men$reg_value <- coeffs_men['(Intercept)'] + final_output_men$pa_work_ind_2 * coeffs_men['pa_work_ind2'] +
+  final_output_men$pa_work_ind_3 * coeffs_men['pa_work_ind3'] + final_output_men$pa_work_ind_4 * coeffs_men['pa_work_ind4'] +
+  final_output_men$pa_work_ind_5 * coeffs_men['pa_work_ind5'] +
+  final_output_men$camMets_ind_2 * coeffs_men['camMets_ind_fact2'] + final_output_men$camMets_ind_3 * coeffs_men['camMets_ind_fact3'] +
+  final_output_men$camMets_ind_4 * coeffs_men['camMets_ind_fact4']
+
+
+# Now do the lambda calculations - these give values of 1!!! as we originally predicted...
+
+rdr_regression_fit_binary_men <- lm(formula=PAEE~binary_index_mean, data=final_output_men)
+rdr_regression_fit_binary_women <- lm(formula=PAEE~binary_index_mean, data=final_output_women)
+rdr_regression_fit_cam_men <- lm(formula=PAEE~cam_index_mean, data=final_output_men)
+rdr_regression_fit_cam_women <- lm(formula=PAEE~cam_index_mean, data=final_output_women)
+rdr_regression_fit_reg_men <- lm(formula=PAEE~reg_value, data=final_output_men)
+rdr_regression_fit_reg_women <- lm(formula=PAEE~reg_value, data=final_output_women)
+
+plot(x = final_output_men$cam_index_mean, y= final_output_men$PAEE)
+abline(0,1)
+plot(x = final_output_men$reg_value, y= final_output_men$PAEE)
+abline(0,1)
+
+
+###############################################################################
+###############################################################################
+###############################################################################
+###
+### Cox Regression bit
+###
+
+### Setup the data necessary to calculate the cox regression on the prediction set.
+og_data <- read.csv("PHIA0000232016_IA88_25Jul/PHIA0000232016.csv")
+
+
+# these data - 1 = men, 2 = women, based on mean weights, assume men higher:
+# aggregate(og_data$weight_adj, by=list(sex=og_data$sex), mean, na.rm = TRUE)
+# this is opposite to the validation data
+
+# simplify columns
+
+og_data <- og_data[c('MRCid_IAp_13', 'country', 'centre', 'dmstatus_ver_outc', 'age_recr_max', 'fup_time',
+                     'sex', 'l_school', 'bmi_adj', 'pa_work', 'm_cycl', 'm_sport',
+                     'alc_re', 'qe_energy', 'smoke_stat')]
+
+
+
+
+og_data$pa_work <- unlist(lapply(og_data$pa_work, FUN=function(x){
+  if (x == 6){
+    out = 5
+  } else {
+    out = x
+  }
+  return (out)
+}))
+
+og_data$pa_workini <- factor(og_data$pa_workini)
+
+## Calculating X_t, with X_t0
+tempfupdiff <- (og_data$fup_time/365.25)
+og_data$ageEnd <- og_data$age_recr_max + tempfupdiff
+
+# Calculating X_d
+eventCens <- lapply(og_data$dmstatus_ver_outc, FUN=function(x){
+  if (x==1 || x==2){
+    x = 1
+  } else {
+    x = 0
+  }
+})
+
+og_data$eventCens <- unlist(eventCens)
+
+# prentice weighted age starts
+og_data$age_recr_prentice <- og_data$age_recr_max
+for (i in 1:length(og_data$age_recr_max)){
+  if(og_data$dmstatus_ver_outc[i] == 2){
+    og_data$age_recr_prentice[i] = og_data$ageEnd[i] - 0.00001 
+  }
+}
+
+
+# smoke, lschool, country factorization and leveling
+og_data$country <- factor(og_data$country, labels=c("FRANCE", "ITALY", 
+                                                    "SPAIN", "UK", "NETHERLANDS", "GERMANY", "SWEDEN", "DENMARK"))
+
+og_data$smoke_stat <- factor(og_data$smoke_stat, labels=c("NEVER", "FORMER", 
+                                                          "SMOKER", "UNKOWN"))
+
+og_data$l_school <- factor(og_data$l_school, labels=c("NONE", "PRIMARY", 
+                                                      "TECHNICAL/PROFESSIONAL", "SECONDARY", "LONGER EDUCATION/UNI", "NOT SPECIFIED"))
+
+
+## Calculating own Cambridge Index
+og_data$cam_total <- c(rep(0,nrow(og_data)))
+for (i in 1:nrow(og_data)){
+  og_data$cam_total[i] = sum(og_data$m_cycl[i]/6, og_data$m_sport[i]/6, na.rm=TRUE)    
+}
+
+# camMets_ind for cam_matrix
+# totalMets_index calculation
+og_data$camMets_ind <- as.vector(do.call(rbind, lapply(X=og_data$cam_total, FUN = function(x){
+  if(is.na(x)){
+    ind = NA
+  }
+  else if (x == 0){
+    ind = 1
+  }
+  else if (x <= 3.5) {
+    ind = 2
+  }
+  else if (x <= 7) {
+    ind = 3
+  }
+  else if (x > 7) {
+    ind = 4
+  } 
+  else {
+    ind = NA
+  }
+  return(ind)
+})
+))
+
+
+og_data$cam_index <- apply(X = og_data[,c('pa_work', 'camMets_ind')], MARGIN = 1, 
+                           FUN = function(x){
+                             output <- cam_matrix[x[1], x[2]]
+                             return(output)
+                           }
+)
+
+ og_data$camMets_ind <- as.factor(og_data$camMets_ind)
+ og_data$cam_index <- as.factor(og_data$cam_index)
+
+# create binary index
+
+og_data$binary_index <- unlist(lapply(og_data$cam_index, FUN=function(x){
+  if (x[1] == 1) {output = 1 }
+  else {output = 2}
+  
+  return(output)
+}))
+
+og_data$binary_index <- as.factor(og_data$binary_index)
+
+og_men <- subset(og_data, sex==1)
+og_women <- subset(og_data, sex==2)
+
+###############################################################################
+###############################################################################
+###############################################################################
+#test the process - gives singularity error on men - why is this?!??!
+# but vaguely matches pa_methods in Stata
+
+cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_men, robust=TRUE)
+cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_women, robust=TRUE)
+
+# As a baseline, do the regression assuming we are harmonising to the lowest common denominator
+# which in this case is binary index
+# similarly, there is a singularity error on men
+# also this gives 'better' results for men ie smaller hazard ratio, when they should be 'worse'
+
+base_reg_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_men, robust=TRUE)
+base_reg_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_women, robust=TRUE)
+
+
+#
+# Setting the 'observed' PAEE values by the mean
+# work on non-gender split data for convenience.
+
+# cam index - do a 'vlookup'
+
+temp <- merge(og_data, cam_index_means, by=c('cam_index', 'sex'))[,c('MRCid_IAp_13', 'sex', 
+                                                                           'country', 'centre', 'camMets_ind',  'cam_index',
+                                                                           'binary_index',	'pa_workini', 'cam_index_mean', 'bmi_adj',
+                                                                     'smoke_stat', 'l_school', 'alc_re', 'qe_energy',
+                                                                     'age_recr_prentice','ageEnd','eventCens')]
+
+
+
+new_og_data <- temp[order(temp$MRCid_IAp_13),]
+
+# binary index - 'vlookup' again
+
+temp <- merge(new_og_data, binary_index_means, by=c('binary_index', 'sex'))
+
+new_og_data <- temp[order(temp$MRCid_IAp_13),]
+
+# regression based
+
+# convert work index into binaries to make use of regression coeffs
+
+temp <- data.frame(sapply(levels(new_og_data$pa_workini), function(x) as.integer(x == new_og_data$pa_workini)))
+colnames(temp) <- c('pa_workini_1','pa_workini_2','pa_workini_3','pa_workini_4')
+new_og_data <- cbind(new_og_data, temp)
+
+# convert ltpa index into binaries
+
+temp <- data.frame(sapply(levels(new_og_data$camMets_ind_fact), function(x) as.integer(x == new_og_data$camMets_ind_fact)))
+colnames(temp) <- c('camMets_ind_1','camMets_ind_2','camMets_ind_3','camMets_ind_4')
+new_og_data <- cbind(new_og_data, temp)
+
+# use regression coefficients to estimate PAEE
+
+
+new_data_men <- subset(new_data, sex==0)
+new_data_women <- subset(new_data, sex==1)
+
+final_output_women$reg_value <- coeffs_women['(Intercept)'] + final_output_women$pa_work_ind_2 * coeffs_women['pa_work_ind2'] +
+  final_output_women$pa_work_ind_3 * coeffs_women['pa_work_ind3'] + final_output_women$pa_work_ind_4 * coeffs_women['pa_work_ind4'] +
+  final_output_women$camMets_ind_2 * coeffs_women['camMets_ind_fact2'] + final_output_women$camMets_ind_3 * coeffs_women['camMets_ind_fact3'] +
+  final_output_women$camMets_ind_4 * coeffs_women['camMets_ind_fact4']
+
+final_output_men$reg_value <- coeffs_men['(Intercept)'] + final_output_men$pa_work_ind_2 * coeffs_men['pa_work_ind2'] +
+  final_output_men$pa_work_ind_3 * coeffs_men['pa_work_ind3'] + final_output_men$pa_work_ind_4 * coeffs_men['pa_work_ind4'] +
+  final_output_men$camMets_ind_2 * coeffs_men['camMets_ind_fact2'] + final_output_men$camMets_ind_3 * coeffs_men['camMets_ind_fact3'] +
+  final_output_men$camMets_ind_4 * coeffs_men['camMets_ind_fact4']
