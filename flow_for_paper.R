@@ -355,6 +355,16 @@ og_data <- read.csv("PHIA0000232016_IA88_25Jul/PHIA0000232016.csv")
 # aggregate(og_data$weight_adj, by=list(sex=og_data$sex), mean, na.rm = TRUE)
 # this is opposite to the validation data
 
+# Fix sex
+og_data$sex <- unlist(lapply(og_data$sex, FUN=function(x){
+  if (x==1){
+    x = 1
+  } else {
+    x = 0
+  }
+}))
+
+
 # simplify columns
 
 og_data <- og_data[c('MRCid_IAp_13', 'country', 'centre', 'dmstatus_ver_outc', 'age_recr_max', 'fup_time',
@@ -373,7 +383,7 @@ og_data$pa_work <- unlist(lapply(og_data$pa_work, FUN=function(x){
   return (out)
 }))
 
-og_data$pa_workini <- factor(og_data$pa_workini)
+og_data$pa_workini <- factor(og_data$pa_work)
 
 ## Calculating X_t, with X_t0
 tempfupdiff <- (og_data$fup_time/365.25)
@@ -449,8 +459,8 @@ og_data$cam_index <- apply(X = og_data[,c('pa_work', 'camMets_ind')], MARGIN = 1
                            }
 )
 
- og_data$camMets_ind <- as.factor(og_data$camMets_ind)
- og_data$cam_index <- as.factor(og_data$cam_index)
+ og_data$camMets_fact <- as.factor(og_data$camMets_ind)
+ og_data$cam_index_fact <- as.factor(og_data$cam_index)
 
 # create binary index
 
@@ -464,24 +474,23 @@ og_data$binary_index <- unlist(lapply(og_data$cam_index, FUN=function(x){
 og_data$binary_index <- as.factor(og_data$binary_index)
 
 og_men <- subset(og_data, sex==1)
-og_women <- subset(og_data, sex==2)
+og_women <- subset(og_data, sex==0)
+
+
+# fix empty france level for men
+og_data_men$country <- droplevels(og_data_men$country)
+
+
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
-#test the process - gives singularity error on men - why is this?!??!
-# but vaguely matches pa_methods in Stata
+#test the process
+# vaguely matches pa_methods in Stata
 
-cox_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_men, robust=TRUE)
-cox_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_women, robust=TRUE)
+test_regression_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_fact + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_men, robust=TRUE)
+test_regression_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_fact + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_women, robust=TRUE)
 
-# As a baseline, do the regression assuming we are harmonising to the lowest common denominator
-# which in this case is binary index
-# similarly, there is a singularity error on men
-# also this gives 'better' results for men ie smaller hazard ratio, when they should be 'worse'
-
-base_reg_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_men, robust=TRUE)
-base_reg_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_women, robust=TRUE)
 
 
 #
@@ -490,11 +499,15 @@ base_reg_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index 
 
 # cam index - do a 'vlookup'
 
-temp <- merge(og_data, cam_index_means, by=c('cam_index', 'sex'))[,c('MRCid_IAp_13', 'sex', 
-                                                                           'country', 'centre', 'camMets_ind',  'cam_index',
-                                                                           'binary_index',	'pa_workini', 'cam_index_mean', 'bmi_adj',
-                                                                     'smoke_stat', 'l_school', 'alc_re', 'qe_energy',
-                                                                     'age_recr_prentice','ageEnd','eventCens')]
+rm(temp)
+rm(new_og_data)
+
+temp <- merge(og_data, cam_index_means, by=c('cam_index', 'sex'))[,c('MRCid_IAp_13', 'sex', 'age_recr_prentice', 'ageEnd',
+                                                                     'eventCens',
+                                                                    'country', 'centre', 'camMets_ind', 'camMets_fact',
+                                                                    'cam_index', 'cam_index_fact', 'binary_index',
+                                                                    'pa_workini', 'cam_index_mean', 'bmi_adj',
+                                                                     'smoke_stat', 'l_school', 'alc_re', 'qe_energy')]
 
 
 
@@ -511,27 +524,52 @@ new_og_data <- temp[order(temp$MRCid_IAp_13),]
 # convert work index into binaries to make use of regression coeffs
 
 temp <- data.frame(sapply(levels(new_og_data$pa_workini), function(x) as.integer(x == new_og_data$pa_workini)))
-colnames(temp) <- c('pa_workini_1','pa_workini_2','pa_workini_3','pa_workini_4')
+colnames(temp) <- c('pa_workini_1','pa_workini_2','pa_workini_3','pa_workini_4','pa_workini_5')
 new_og_data <- cbind(new_og_data, temp)
 
 # convert ltpa index into binaries
 
-temp <- data.frame(sapply(levels(new_og_data$camMets_ind_fact), function(x) as.integer(x == new_og_data$camMets_ind_fact)))
+temp <- data.frame(sapply(levels(new_og_data$camMets_fact), function(x) as.integer(x == new_og_data$camMets_fact)))
 colnames(temp) <- c('camMets_ind_1','camMets_ind_2','camMets_ind_3','camMets_ind_4')
 new_og_data <- cbind(new_og_data, temp)
 
 # use regression coefficients to estimate PAEE
 
 
-new_data_men <- subset(new_data, sex==0)
-new_data_women <- subset(new_data, sex==1)
+new_data_men <- subset(new_og_data, sex==1)
+new_data_women <- subset(new_og_data, sex==0)
 
-final_output_women$reg_value <- coeffs_women['(Intercept)'] + final_output_women$pa_work_ind_2 * coeffs_women['pa_work_ind2'] +
-  final_output_women$pa_work_ind_3 * coeffs_women['pa_work_ind3'] + final_output_women$pa_work_ind_4 * coeffs_women['pa_work_ind4'] +
-  final_output_women$camMets_ind_2 * coeffs_women['camMets_ind_fact2'] + final_output_women$camMets_ind_3 * coeffs_women['camMets_ind_fact3'] +
-  final_output_women$camMets_ind_4 * coeffs_women['camMets_ind_fact4']
+# fix empty france level for men
+new_data_men$country <- droplevels(new_data_men$country)
 
-final_output_men$reg_value <- coeffs_men['(Intercept)'] + final_output_men$pa_work_ind_2 * coeffs_men['pa_work_ind2'] +
-  final_output_men$pa_work_ind_3 * coeffs_men['pa_work_ind3'] + final_output_men$pa_work_ind_4 * coeffs_men['pa_work_ind4'] +
-  final_output_men$camMets_ind_2 * coeffs_men['camMets_ind_fact2'] + final_output_men$camMets_ind_3 * coeffs_men['camMets_ind_fact3'] +
-  final_output_men$camMets_ind_4 * coeffs_men['camMets_ind_fact4']
+new_data_women$reg_value <- coeffs_women['(Intercept)'] + new_data_women$pa_workini_2 * coeffs_women['pa_work_ind2'] +
+  new_data_women$pa_workini_3 * coeffs_women['pa_work_ind3'] + new_data_women$pa_workini_4 * coeffs_women['pa_work_ind4'] +
+  new_data_women$pa_workini_5 * coeffs_women['pa_work_ind5'] +
+  new_data_women$camMets_ind_2 * coeffs_women['camMets_ind_fact2'] + new_data_women$camMets_ind_3 * coeffs_women['camMets_ind_fact3'] +
+  new_data_women$camMets_ind_4 * coeffs_women['camMets_ind_fact4']
+
+new_data_men$reg_value <- coeffs_men['(Intercept)'] + new_data_men$pa_workini_2 * coeffs_men['pa_work_ind2'] +
+  new_data_men$pa_workini_3 * coeffs_men['pa_work_ind3'] + new_data_men$pa_workini_4 * coeffs_men['pa_work_ind4'] +
+  new_data_men$pa_workini_5 * coeffs_men['pa_work_ind5'] +
+  new_data_men$camMets_ind_2 * coeffs_men['camMets_ind_fact2'] + new_data_men$camMets_ind_3 * coeffs_men['camMets_ind_fact3'] +
+  new_data_men$camMets_ind_4 * coeffs_men['camMets_ind_fact4']
+
+
+####Cox regressions
+
+# As a baseline, do the regression assuming we are harmonising to the lowest common denominator
+# which in this case is binary index
+# similarly, there is a singularity error on men
+# also this gives 'better' results for men ie smaller hazard ratio, when they should be 'worse'
+
+
+binary_cox_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index_mean + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_data_men, robust=TRUE)
+binary_cox_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index_mean + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_data_women, robust=TRUE)
+
+
+cam_cox_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_mean + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_data_men, robust=TRUE)
+cam_cox_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_mean + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_data_women, robust=TRUE)
+
+reg_cox_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ reg_value + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_data_men, robust=TRUE)
+reg_cox_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ reg_value + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_data_women, robust=TRUE)
+
