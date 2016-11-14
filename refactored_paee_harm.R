@@ -1255,6 +1255,61 @@ val_data_women$cam_kernelEst <- unlist(mapply(val_data_women$cam_index, SIMPLIFY
 ))
 
 
+## Men
+## coef = beta
+pc_study_data_kernel_men <- lm(formula=PAEE~cam_kernelEst, data=study_data_men)
+cc_study_data_kernel_men <- pc_study_data_kernel_men$coefficients["cam_kernelEst"]
+# stdError
+stdError_cc_study_data_kernel_men <- (summary(pc_study_data_kernel_men)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_beta_hat_star_kernel_men <- cc_study_data_kernel_men - 1.96*stdError_cc_study_data_kernel_men
+uci_beta_hat_star_kernel_men <- cc_study_data_kernel_men + 1.96*stdError_cc_study_data_kernel_men
+
+## coef = lambda
+pc_val_data_kernel_men <- lm(formula=paee~cam_kernelEst, data=validation_data_men)
+cc_val_data_kernel_men <- pc_val_data_kernel_men$coefficients["cam_kernelEst"]
+# stdError
+stdError_cc_val_data_kernel_men <- (summary(pc_val_data_kernel_men)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_lambda_hat_kernel_men <- cc_val_data_kernel_men - 1.96*(stdError_cc_val_data_kernel_men)
+uci_lambda_hat_kernel_men <- cc_val_data_kernel_men + 1.96*(stdError_cc_val_data_kernel_men)
+
+# RC 
+beta_hat_star_kernel_men <- cc_study_data_kernel_men
+lambda_hat_kernel_men <- cc_val_data_kernel_men
+beta_hat_kernel_men <- beta_hat_star_kernel_men/lambda_hat_kernel_men
+var_beta_kernel_men <- stdError_cc_study_data_kernel_men/(lambda_hat_kernel_men^2) + (beta_hat_star_kernel_men/lambda_hat_kernel_men^2)^2*stdError_cc_val_data_kernel_men
+# confidence intervals
+uci_beta_hat_dfit_men <- beta_hat_kernel_men - 1.96*sqrt(var_beta_kernel_men)
+lci_beta_hat_dfit_men <- beta_hat_kernel_men + 1.96*sqrt(var_beta_kernel_men)
+
+## Women
+pc_study_data_kernel_women <- lm(formula=PAEE~cam_kernelEst, data=study_data_women)
+cc_study_data_kernel_women <- pc_study_data_kernel_women$coefficients["cam_kernelEst"]
+# stdError
+stdError_cc_study_data_kernel_women <- (summary(pc_study_data_kernel_women)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_beta_hat_star_kernel_women <- cc_study_data_kernel_women - 1.96*stdError_cc_study_data_kernel_women
+uci_beta_hat_star_kernel_women <- cc_study_data_kernel_women + 1.96*stdError_cc_study_data_kernel_women
+
+## coef = lambda
+pc_val_data_kernel_women <- lm(formula=paee~cam_kernelEst, data=validation_data_women)
+cc_val_data_kernel_women <- pc_val_data_kernel_women$coefficients["cam_kernelEst"]
+# stdError
+stdError_cc_val_data_kernel_women <- (summary(pc_val_data_kernel_women)$coefficients[,"Std. Error"])[-1]
+# confidence intervals
+lci_lambda_hat_kernel_women <- cc_val_data_kernel_women - 1.96*(stdError_cc_val_data_kernel_women)
+uci_lambda_hat_kernel_women <- cc_val_data_kernel_women + 1.96*(stdError_cc_val_data_kernel_women)
+
+# RC 
+beta_hat_star_kernel_women <- cc_study_data_kernel_women
+lambda_hat_kernel_women <- cc_val_data_kernel_women
+beta_hat_kernel_women <- beta_hat_star_kernel_women/lambda_hat_kernel_women
+var_beta_kernel_women <- stdError_cc_study_data_kernel_women/(lambda_hat_kernel_women^2) + (beta_hat_star_kernel_women/lambda_hat_kernel_women^2)^2*stdError_cc_val_data_kernel_women
+# confidence intervals
+uci_beta_hat_dfit_women <- beta_hat_kernel_women - 1.96*sqrt(var_beta_kernel_women)
+lci_beta_hat_dfit_women <- beta_hat_kernel_women + 1.96*sqrt(var_beta_kernel_women)
+
 ############################################################################################
 ############################ Pretty Printing Results #######################################
 ############################################################################################
