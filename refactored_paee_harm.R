@@ -1165,6 +1165,94 @@ bw2_women <- density2_women$bw
 bw3_women <- density3_women$bw
 bw4_women <- density4_women$bw
 
+# Sampling for each participant
+study_data_men$cam_kernelEst <- unlist(mapply(study_data_men$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      km_1_men <- sample(cat1_men, 1, replace=TRUE)
+      output = rnorm(1, mean = km_1_men, sd = bw1_men)
+    } else if (x == 2) {
+      km_2_men <- sample(cat2_men, 1, replace=TRUE)
+      output = rnorm(1, mean = km_2_men, sd = bw2_men)
+    } else if (x == 3) {
+      km_3_men <- sample(cat3_men, 1, replace=TRUE)
+      output = rnorm(1, mean = km_3_men, sd = bw3_men)
+    } else if (x == 4) {
+      km_4_men <- sample(cat4_men, 1, replace=TRUE)
+      output = rnorm(1, mean = km_4_men, sd = bw4_men)
+    } else {
+      output = NA
+    }
+    return(output)
+  }
+))
+
+val_data_men$cam_kernelEst <- unlist(mapply(val_data_men$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      km_1_men <- sample(cat1_men, 1, replace=TRUE)
+      output = rnorm(1, mean = km_1_men, sd = bw1_men)
+    } else if (x == 2) {
+      km_2_men <- sample(cat2_men, 1, replace=TRUE)
+      output = rnorm(1, mean = km_2_men, sd = bw2_men)
+    } else if (x == 3) {
+      km_3_men <- sample(cat3_men, 1, replace=TRUE)
+      output = rnorm(1, mean = km_3_men, sd = bw3_men)
+    } else if (x == 4) {
+      km_4_men <- sample(cat4_men, 1, replace=TRUE)
+      output = rnorm(1, mean = km_4_men, sd = bw4_men)
+    } else {
+      output = NA
+    }
+    return(output)
+  }
+))
+
+study_data_women$cam_kernelEst <- unlist(mapply(study_data_women$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      km_1_women <- sample(cat1_women, 1, replace=TRUE)
+      output = rnorm(1, mean = km_1_women, sd = bw1_women)
+    } else if (x == 2) {
+      km_2_women <- sample(cat2_women, 1, replace=TRUE)
+      output = rnorm(1, mean = km_2_women, sd = bw2_women)
+    } else if (x == 3) {
+      km_3_women <- sample(cat3_women, 1, replace=TRUE)
+      output = rnorm(1, mean = km_3_women, sd = bw3_women)
+    } else if (x == 4) {
+      km_4_women <- sample(cat4_women, 1, replace=TRUE)
+      output = rnorm(1, mean = km_4_women, sd = bw4_women)
+    } else {
+      output = NA
+    }
+    return(output)
+  }
+))
+
+val_data_women$cam_kernelEst <- unlist(mapply(val_data_women$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      km_1_women <- sample(cat1_women, 1, replace=TRUE)
+      output = rnorm(1, mean = km_1_women, sd = bw1_women)
+    } else if (x == 2) {
+      km_2_women <- sample(cat2_women, 1, replace=TRUE)
+      output = rnorm(1, mean = km_2_women, sd = bw2_women)
+    } else if (x == 3) {
+      km_3_women <- sample(cat3_women, 1, replace=TRUE)
+      output = rnorm(1, mean = km_3_women, sd = bw3_women)
+    } else if (x == 4) {
+      km_4_women <- sample(cat4_women, 1, replace=TRUE)
+      output = rnorm(1, mean = km_4_women, sd = bw4_women)
+    } else {
+      output = NA
+    }
+    return(output)
+  }
+))
 
 
 ############################################################################################

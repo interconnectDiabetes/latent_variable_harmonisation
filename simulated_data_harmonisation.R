@@ -628,15 +628,6 @@ bw_2 <- density2$bw
 bw_3 <- density3$bw
 bw_4 <- density4$bw
 
-kernel_means_1 <- sample(cat1, 1, replace=TRUE)
-rnorm(1, mean = kernel_means_1, sd = bw_1)
-kernel_means_2 <- sample(cat2, 1, replace=TRUE)
-rnorm(1, mean = kernel_means_2, sd = bw_2)
-kernel_means_3 <- sample(cat3, 1, replace=TRUE)
-rnorm(1, mean = kernel_means_3, sd = bw_3)
-kernel_means_4 <- sample(cat4, 1, replace=TRUE)
-rnorm(1, mean = kernel_means_4, sd = bw_4)
-
 study_data$cam_kernelEst <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
       output = NA
