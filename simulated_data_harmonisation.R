@@ -374,7 +374,98 @@ mean_lci_beta_hat_sample <- mean(lci_beta_hat_sample_list)
 # | |\/| ||  __|  | | |  _  | | | | | | |   / /  | ___ \
 # | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| |_/ /
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\____/ 
-                                                      
+# empty list initialization
+
+beta_hat_star_sample_list <- vector('numeric')
+lambda_hat_sample_list <- vector('numeric')
+beta_hat_sample_list <- vector('numeric')
+uci_beta_hat_star_sample_list <- vector('numeric')
+lci_beta_hat_star_sample_list <- vector('numeric')
+uci_lambda_hat_sample_list <- vector('numeric')
+lci_lambda_hat_sample_list <- vector('numeric')
+uci_beta_hat_sample_list <- vector('numeric')
+lci_beta_hat_sample_list <- vector('numeric')
+
+for (i in 1:10) {
+	study_data$cam_index_means_sample <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+	    if (is.na(x)) {
+	      output = NA
+	    } else if (x == 1){
+	      output = sample(cat1,1,replace=TRUE)
+	    } else if (x == 2) {
+	      output = sample(cat2,1,replace=TRUE)
+	    } else if (x == 3) {
+	      output = sample(cat3,1,replace=TRUE)
+	    } else if (x == 4) {
+	      output = cat4_choice
+	    } else {
+	      output = NA
+	  	}
+	  	return(output)
+		}
+	))
+
+	validation_data$cam_index_means_sample <- unlist(mapply(validation_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+	    if (is.na(x)) {
+	      output = NA
+	    } else if (x == 1){
+	      output = sample(cat1,1,replace=TRUE)
+	    } else if (x == 2) {
+	      output = sample(cat2,1,replace=TRUE)
+	    } else if (x == 3) {
+	      output = sample(cat3,1,replace=TRUE)
+	    } else if (x == 4) {
+	      output = sample(cat4,1,replace=TRUE)
+	    } else {
+	      output = NA
+	  	}
+	  	return(output)
+		}
+	))
+
+	# calculation of beta hat star
+	regression_study <- lm(formula=foo~cam_index_means_sample, data=study_data)
+	beta_hat_star_sample <- regression_study$coefficients["cam_index_means_sample"]
+	beta_hat_star_sample_list <- c(beta_hat_star_sample_list, beta_hat_star_sample)
+	#stdError and confidence intervals
+	stdError_beta_hat_star_sample <- (summary(regression_study)$coefficients[,"Std. Error"])[-1]
+	uci_beta_hat_star_sample <- beta_hat_star_sample - 1.96*stdError_beta_hat_star_sample
+	lci_beta_hat_star_sample <- beta_hat_star_sample + 1.96*stdError_beta_hat_star_sample
+	uci_beta_hat_star_sample_list <- c(uci_beta_hat_star_sample_list, uci_beta_hat_star_sample)
+	lci_beta_hat_star_sample_list <- c(lci_beta_hat_star_sample_list, lci_beta_hat_star_sample)
+
+	# calculation of lambda hat
+	regression_lambda <- lm(formula=paee~cam_index_means, data=validation_data)
+	lambda_hat_sample <- regression_lambda$coefficients["cam_index_mean"]
+	lambda_hat_sample_list <- c(lambda_hat_sample_list, lambda_hat_sample)
+	#stdError and confidence intervals
+	stdError_lambda_hat_sample <- (summary(regression_lambda)$coefficients[,"Std. Error"])[-1]
+	uci_lambda_hat_sample <- lambda_hat_sample + 1.96*(stdError_lambda_hat_sample)
+	lci_lambda_hat_sample <- lambda_hat_sample + 1.96*(stdError_lambda_hat_sample)
+	uci_lambda_hat_sample_list <- c(uci_lambda_hat_sample_list, uci_lambda_hat_sample)
+	lci_lambda_hat_sample_list <- c(lci_lambda_hat_sample_list, lci_lambda_hat_sample)
+
+	# calculation of calibrated beta
+	beta_hat_sample <- beta_hat_star_sample/lambda_hat_sample
+	beta_hat_sample_list <- c(beta_hat_sample_list,beta_hat_sample)
+	#stdError and confidence intervals
+	var_beta_sample <- stdError_beta_hat_star_sample/(lambda_hat_sample^2) + (beta_hat_star_sample/lambda_hat_sample^2)^2*stdError_lambda_hat_sample
+	uci_beta_hat_sample <- beta_hat_sample - 1.96*sqrt(var_beta_sample)
+	lci_beta_hat_sample <- beta_hat_sample + 1.96*sqrt(var_beta_sample)
+	uci_beta_hat_sample_list <- c(uci_beta_hat_sample_list, uci_beta_hat_sample)
+	lci_beta_hat_sample_list <- c(lci_beta_hat_sample_list, lci_beta_hat_sample)
+}
+
+mean_beta_hat_star_sample <- mean(beta_hat_star_sample_list)
+mean_lambda_hat_sample <- mean(lambda_hat_sample_list)
+mean_beta_hat_sample <- mean(beta_hat_sample_list)
+mean_uci_beta_hat_star_sample <- mean(uci_beta_hat_star_sample_list)
+mean_lci_beta_hat_star_sample <- mean(lci_beta_hat_star_sample_list)
+mean_uci_lambda_hat_sample <- mean(uci_lambda_hat_sample_list)
+mean_lci_lambda_hat_sample <- mean(lci_lambda_hat_sample_list)
+mean_uci_beta_hat_sample <- mean(uci_beta_hat_sample_list)
+mean_lci_beta_hat_sample <- mean(lci_beta_hat_sample_list)
+
 
 # ___  ___ _____ _____ _   _ ___________   _____ 
 # |  \/  ||  ___|_   _| | | |  _  |  _  \ |____ |
