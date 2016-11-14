@@ -1135,6 +1135,35 @@ lci_beta_hat_dfit_women <- beta_hat_dfit_women + 1.96*sqrt(var_beta_dfit_women)
 # \_|  |_/\____/  \_/ \_| |_/\___/|___/       |_/
 #                                                
 # We estimate the density of the pdf using kernel based estimation methods. Then sample directly using the kernels.
+# fitting of distributions via MLE
+library(stats)
+# normal distributions
+density1_men <- density(cat1_men)
+density2_men <- density(cat2_men)
+density3_men <- density(cat3_men)
+density4_men <- density(cat4_men)
+
+density1_women <- density(cat1_women)
+density2_women <- density(cat2_women)
+density3_women <- density(cat3_women)
+density4_women <- density(cat4_women)
+
+density_list = list(density1_men,density2_men,density3_men,density4_men,density1_women,density2_women,density3_women,density4_women)
+
+for (i in 1:8){
+  plot(density_list[[i]])
+}
+
+# Bandwidths necessary for sampling
+bw1_men <- density1_men$bw
+bw2_men <- density2_men$bw
+bw3_men <- density3_men$bw
+bw4_men <- density4_men$bw
+
+bw1_women <- density1_women$bw
+bw2_women <- density2_women$bw
+bw3_women <- density3_women$bw
+bw4_women <- density4_women$bw
 
 
 
