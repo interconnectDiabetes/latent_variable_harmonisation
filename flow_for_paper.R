@@ -19,6 +19,7 @@
 ## WARNING THIS SCRIPT WILL ONLY RUN IF WORKING DIRECTORY IS SET TO THE RIGHT LOCATION
 setwd("V:/Studies/InterConnect/Internal/Latent variable harmonisation")
 library("survival")
+library("metafor")
 
 # Read the actiheart and EPIC study data (sweden UMEA is missing in 
 # main file, needs to be loaded seperately)
@@ -569,11 +570,15 @@ for (i in 1:length(study_data$age_recr_max)){
 study_data$country <- factor(study_data$country, labels=c("FRANCE", "ITALY", 
                                                     "SPAIN", "UK", "NETHERLANDS", "GERMANY", "SWEDEN", "DENMARK"))
 
+study_data$smoke_stat[study_data$smoke_stat == 4] <- NA
+
 study_data$smoke_stat <- factor(study_data$smoke_stat, labels=c("NEVER", "FORMER", 
-                                                          "SMOKER", "UNKOWN"))
+                                                          "SMOKER"))
+
+study_data$l_school[study_data$l_school == 5] <- NA
 
 study_data$l_school <- factor(study_data$l_school, labels=c("NONE", "PRIMARY", 
-                                                      "TECHNICAL/PROFESSIONAL", "SECONDARY", "LONGER EDUCATION/UNI", "NOT SPECIFIED"))
+                                                      "TECHNICAL/PROFESSIONAL", "SECONDARY", "LONGER EDUCATION/UNI"))
 
 
 ## Calculating own Cambridge Index
@@ -720,8 +725,9 @@ new_study_data_men$reg_value <- coeffs_men['(Intercept)'] + new_study_data_men$p
 # for women, cam index is the "worst"
 # for men, regression is the "worst"
 
-binary_cox_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index_mean + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_study_data_men, robust=TRUE)
-binary_cox_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index_mean + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_study_data_women, robust=TRUE)
+# this is equivalent to active and not active categories
+binary_cox_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_study_data_men, robust=TRUE)
+binary_cox_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_study_data_women, robust=TRUE)
 
 
 cam_cox_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_mean + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_study_data_men, robust=TRUE)
@@ -729,4 +735,458 @@ cam_cox_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_mean
 
 reg_cox_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ reg_value + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_study_data_men, robust=TRUE)
 reg_cox_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ reg_value + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = new_study_data_women, robust=TRUE)
+
+# comparison of associations using binary index means and REMA
+
+#MEN
+
+countries = levels(new_study_data_men$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = new_study_data_men, subset = new_study_data_men$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index_mean + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('binary_index_mean', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('binary_index_mean', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true hazard ratio = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Binary Index - Men', adj = c( 0, 1 ))
+
+#WOMEN
+
+countries = levels(new_study_data_women$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = new_study_data_women, subset = new_study_data_women$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ binary_index_mean + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('binary_index_mean', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('binary_index_mean', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true hazard ratio = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Binary Index - women', adj = c( 0, 1 ))
+
+# comparison of associations using cam index means and REMA
+
+#MEN
+
+countries = levels(new_study_data_men$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = new_study_data_men, subset = new_study_data_men$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_mean + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('cam_index_mean', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('cam_index_mean', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true hazard ratio = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Cam Index - Men', adj = c( 0, 1 ))
+
+#WOMEN
+
+
+countries = levels(new_study_data_women$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = new_study_data_women, subset = new_study_data_women$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ cam_index_mean + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('cam_index_mean', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('cam_index_mean', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true hazard ratio = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Cam Index - women', adj = c( 0, 1 ))
+
+
+# comparison of associations using regression values and REMA
+
+#MEN
+
+countries = levels(new_study_data_men$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = new_study_data_men, subset = new_study_data_men$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ reg_value + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('reg_value', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('reg_value', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true hazard ratio = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Regression values - Men', adj = c( 0, 1 ))
+
+#WOMEN
+
+
+countries = levels(new_study_data_women$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = new_study_data_women, subset = new_study_data_women$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ reg_value + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('reg_value', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('reg_value', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true hazard ratio = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Regression values - women', adj = c( 0, 1 ))
+
+
+#SIMULATIONS
+
+# MEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS - cam
+# GERMANY SWEDEN DENMARK - reg
+
+# reductionist harmonisation method. Convert all to active yes or no
+
+reductionist_men <- new_study_data_men[,c('country','bmi_adj', 'smoke_stat', 
+                                          'l_school', 'alc_re', 'qe_energy',
+                                          'age_recr_prentice', 'ageEnd', 'eventCens',
+                                          'binary_index', 'cam_index', 'reg_value')]
+
+# red_harm can take a value of 1 meaning inactive, or 2 meaning active
+
+reductionist_men$red_harm <- apply(X = reductionist_men[,c('country','bmi_adj', 'smoke_stat', 
+                                                   'l_school', 'alc_re', 'qe_energy',
+                                                   'age_recr_prentice', 'ageEnd', 'eventCens',
+                                                   'binary_index', 'cam_index', 'reg_value')], MARGIN = 1, 
+                             FUN = function(x){
+                               if(x[1] == 'ITALY' | x[1] == 'SPAIN'){
+                                 output = x[10]
+                               }
+                               # in this conversion of cam index, we will use a different rule
+                               # to that which was used to define binary index
+                               if(x[1] == 'UK' | x[1] == 'NETHERLANDS'){
+
+                                 if(x[11] == 1){
+                                   output = 1
+                                 }
+                                 else {
+                                   output = 2
+                                 }
+                               }
+                               # arbitrarily choose 45 as cut point between active and non active
+                               if(x[1] == 'GERMANY' | x[1] == 'SWEDEN' | x[1] == 'DENMARK'){
+                                 if (x[12] < 45){
+                                  output = 1
+                                 }
+                                 else {
+                                   output = 2
+                                 }
+                               }
+                               return(output)
+                             }
+)
+
+
+
+countries = levels(reductionist_men$country)
+
+  estimates = vector()
+  s_errors = vector()
+
+for (i in 1:length(countries)){
+    temp = droplevels(subset(x = reductionist_men, subset = reductionist_men$country == countries[i]))
+    model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ red_harm + bmi_adj
+                    + smoke_stat + l_school + alc_re + qe_energy, 
+                    data = temp, robust=TRUE))
+    model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+    estimates = rbind(estimates,model_coeffs[grep('red_harm', row.names(model_coeffs)),"coef"])
+    s_errors = rbind(s_errors,model_coeffs[grep('red_harm', row.names(model_coeffs)),"robust se"])
+  
+}
+  
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true hazard ratio = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Reductionist - Men', adj = c( 0, 1 ))
+
+
+# validation harmonisation method. Convert all to PAEE value
+
+validation_men <- new_study_data_men[,c('country','bmi_adj', 'smoke_stat', 
+                                          'l_school', 'alc_re', 'qe_energy',
+                                          'age_recr_prentice', 'ageEnd', 'eventCens',
+                                          'binary_index_mean', 'cam_index_mean', 'reg_value')]
+
+# select the appropriate index mean
+
+validation_men$val_harm <- apply(X = validation_men[,c('country','bmi_adj', 'smoke_stat', 
+                                                           'l_school', 'alc_re', 'qe_energy',
+                                                           'age_recr_prentice', 'ageEnd', 'eventCens',
+                                                           'binary_index_mean', 'cam_index_mean', 'reg_value')], MARGIN = 1, 
+                                   FUN = function(x){
+                                     if(x[1] == 'ITALY' | x[1] == 'SPAIN'){
+                                       # choose binary index mean PAEE
+                                       output = x[10]
+                                     }
+                                     
+                                     if(x[1] == 'UK' | x[1] == 'NETHERLANDS'){
+                                       # choose cam index mean
+                                       output = x[11]
+                                     }
+                                     
+                                     if(x[1] == 'GERMANY' | x[1] == 'SWEDEN' | x[1] == 'DENMARK'){
+                                       # choose reg mean
+                                       output = x[12]
+                                     }
+                                     return(as.numeric(output))
+                                   }
+)
+
+
+
+
+countries = levels(validation_men$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = validation_men, subset = validation_men$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ val_harm + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('val_harm', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('val_harm', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true relative risk = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Validation - Men', adj = c( 0, 1 ))
+
+
+# WOMEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS & FRANCE - cam
+# GERMANY SWEDEN DENMARK - reg
+
+# reductionist harmonisation method. Convert all to active yes or no
+
+reductionist_women <- new_study_data_women[,c('country','bmi_adj', 'smoke_stat', 
+                                          'l_school', 'alc_re', 'qe_energy',
+                                          'age_recr_prentice', 'ageEnd', 'eventCens',
+                                          'binary_index', 'cam_index', 'reg_value')]
+
+# red_harm can take a value of 1 meaning inactive, or 2 meaning active
+
+reductionist_women$red_harm <- apply(X = reductionist_women[,c('country','bmi_adj', 'smoke_stat', 
+                                                           'l_school', 'alc_re', 'qe_energy',
+                                                           'age_recr_prentice', 'ageEnd', 'eventCens',
+                                                           'binary_index', 'cam_index', 'reg_value')], MARGIN = 1, 
+                                   FUN = function(x){
+                                     if(x[1] == 'ITALY' | x[1] == 'SPAIN'){
+                                       output = x[10]
+                                     }
+                                     # in this conversion of cam index, we will use a different rule
+                                     # to that which was used to define binary index
+                                     if(x[1] == 'UK' | x[1] == 'NETHERLANDS' |x[1] == 'FRANCE'){
+                                       
+                                       if(x[11] == 1){
+                                         output = 1
+                                       }
+                                       else {
+                                         output = 2
+                                       }
+                                     }
+                                     # arbitrarily choose 45 as cut point between active and non active
+                                     if(x[1] == 'GERMANY' | x[1] == 'SWEDEN' | x[1] == 'DENMARK'){
+                                       if (x[12] < 45){
+                                         output = 1
+                                       }
+                                       else {
+                                         output = 2
+                                       }
+                                     }
+                                     return(output)
+                                   }
+)
+
+
+
+countries = levels(reductionist_women$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = reductionist_women, subset = reductionist_women$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ red_harm + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('red_harm', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('red_harm', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true hazard ratio = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Reductionist - women', adj = c( 0, 1 ))
+
+
+# validation harmonisation method. Convert all to PAEE value
+
+validation_women <- new_study_data_women[,c('country','bmi_adj', 'smoke_stat', 
+                                        'l_school', 'alc_re', 'qe_energy',
+                                        'age_recr_prentice', 'ageEnd', 'eventCens',
+                                        'binary_index_mean', 'cam_index_mean', 'reg_value')]
+
+# select the appropriate index mean
+
+validation_women$val_harm <- apply(X = validation_women[,c('country','bmi_adj', 'smoke_stat', 
+                                                       'l_school', 'alc_re', 'qe_energy',
+                                                       'age_recr_prentice', 'ageEnd', 'eventCens',
+                                                       'binary_index_mean', 'cam_index_mean', 'reg_value')], MARGIN = 1, 
+                                 FUN = function(x){
+                                   if(x[1] == 'ITALY' | x[1] == 'SPAIN'){
+                                     # choose binary index mean PAEE
+                                     output = x[10]
+                                   }
+                                   
+                                   if(x[1] == 'UK' | x[1] == 'NETHERLANDS' |  x[1] == 'FRANCE'){
+                                     # choose cam index mean
+                                     output = x[11]
+                                   }
+                                   
+                                   if(x[1] == 'GERMANY' | x[1] == 'SWEDEN' | x[1] == 'DENMARK'){
+                                     # choose reg mean
+                                     output = x[12]
+                                   }
+                                   return(as.numeric(output))
+                                 }
+)
+
+
+
+
+countries = levels(validation_women$country)
+
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = validation_women, subset = validation_women$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ val_harm + bmi_adj
+                        + smoke_stat + l_school + alc_re + qe_energy, 
+                        data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('val_harm', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('val_harm', row.names(model_coeffs)),"robust se"])
+  
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                        .(round(res$QEp,3)),')')),
+       xlab=bquote(paste('Test of H'[0]*': true relative risk = 1, p = ',
+                         .(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
+
 
