@@ -1109,7 +1109,7 @@ final_output_women <- final_output_women
 
 
 # Binary Index
-cat1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, FUN=function(x,y){
+bin1_men <- mapply(final_output_men$PAEE, final_output_men$binary_index, FUN=function(x,y){
   if (y == 1){
     output = x
   } else {
@@ -1117,11 +1117,45 @@ cat1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, FUN=functi
   }
   return(output) 
 }) 
-cat1_men <- cat1_men[!sapply(cat1_men,is.na)]
+bin1_men <- bin1_men[!sapply(bin1_men,is.na)]
 
+bin2_men <- mapply(final_output_men$PAEE, final_output_men$binary_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+bin2_men <- bin2_men[!sapply(bin2_men,is.na)]
+
+bin1_women <- mapply(final_output_women$PAEE, final_output_women$binary_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+bin1_women <- bin1_women[!sapply(bin1_women,is.na)]
+
+bin2_women <- mapply(final_output_women$PAEE, final_output_women$binary_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+bin2_women <- bin2_women[!sapply(bin2_women,is.na)]
+
+# Means of categories
+bin1_men_mean <- mean(bin1_men)
+bin2_men_mean <- mean(bin2_men)
+bin1_women_mean <- mean(bin1_women)
+bin2_women_mean <- mean(bin2_women)
 
 # Cambridge Index
-
 cat1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, FUN=function(x,y){
   if (y == 1){
     output = x
