@@ -21,6 +21,50 @@ library("survival")
 library("graphics")
 library("metafor")
 
+###############################################################################
+############################### FUNCTIONS #####################################
+###############################################################################
+bmi_calc <- function(weight, height){
+  bmi = (weight/height)/height
+  return(bmi)
+}
+
+gaussian_index_sample <- function(x,gender){
+  # returns a datapoint sampled from the index distribution
+  # This can be seen as an exposure to be used in the data_generator
+  # :param: index = cambridge index
+  if (gender == 1){
+    if (x == 1){
+      index_mean <- index_mean1_men
+      index_stdev <- index_stdev1_men
+    } else if (x == 2){
+      index_mean <- index_mean2_men
+      index_stdev <- index_stdev2_men
+    } else if (x == 3){
+      index_mean <- index_mean3_men
+      index_stdev <- index_stdev3_men
+    } else {
+      index_mean <- index_mean4_men
+      index_stdev <- index_stdev4_men
+    }
+  } else {
+    if (x == 0){
+      index_mean <- index_mean1_women
+      index_stdev <- index_stdev1_women
+    } else if (x == 2){
+      index_mean <- index_mean2_women
+      index_stdev <- index_stdev2_women
+    } else if (x == 3){
+      index_mean <- index_mean3_women
+      index_stdev <- index_stdev3_women
+    } else {
+      index_mean <- index_mean4_women
+      index_stdev <- index_stdev4_women
+    }
+  }
+  data_point <- rnorm(1, index_mean, index_stdev)
+  return (data_point)
+}
 
 ###############################################################################
 ###############################################################################
@@ -1855,13 +1899,23 @@ reg4_5_women_mean <- mean(reg4_5_women)
 ############################################################################
 # Validation approach 3: Sampling from Fitted Distribution
 ############################################################################
-
-
 # binary_fitted (2 groups * 2 genders)
 dist_bin1_men <- fitdist(bin1_men, "norm", method='mle')
 dist_bin2_men <- fitdist(bin2_men, "norm", method='mle')
+
 dist_bin1_women <- fitdist(bin1_women, "norm", method='mle')
 dist_bin2_women <- fitdist(bin2_women, "norm", method='mle')
+
+# sufficient stats
+mean_bin1_men <- dist_bin1_men[[1]][1]
+stdev_bin1_men <- dist_bin1_men[[1]][2]
+mean_bin2_men <- dist_bin2_men[[1]][1]
+stdev_bin2_men <- dist_bin2_men[[1]][2]
+
+mean_bin1_women <- dist_bin1_women[[1]][1]
+stdev_bin1_women <- dist_bin1_women[[1]][2]
+mean_bin2_women <- dist_bin2_women[[1]][1]
+stdev_bin2_women <- dist_bin2_women[[1]][2]
 
 # cam_fitted (4 groups * 2 genders)
 dist1_men_cam <- fitdist(cat1_men, "norm", method='mle')
@@ -1873,6 +1927,25 @@ dist1_women_cam <- fitdist(cat1_women, "norm", method='mle')
 dist2_women_cam <- fitdist(cat2_women, "norm", method='mle')
 dist3_women_cam <- fitdist(cat3_women, "norm", method='mle')
 dist4_women_cam <- fitdist(cat4_women, "norm", method='mle')
+
+# sufficient stats
+index_mean1_men <- dist1_men_cam[[1]][1]
+index_stdev1_men <- dist1_men_cam[[1]][2]
+index_mean2_men <- dist2_men_cam[[1]][1]
+index_stdev2_men <- dist2_men_cam[[1]][2]
+index_mean3_men <- dist3_men_cam[[1]][1]
+index_stdev3_men <- dist3_men_cam[[1]][2]
+index_mean4_men <- dist4_men_cam[[1]][1]
+index_stdev4_men <- dist4_men_cam[[1]][2]
+
+index_mean1_women <- dist1_women_cam[[1]][1]
+index_stdev1_women <- dist1_women_cam[[1]][2]
+index_mean2_women <- dist2_women_cam[[1]][1]
+index_stdev2_women <- dist2_women_cam[[1]][2]
+index_mean3_women <- dist3_women_cam[[1]][1]
+index_stdev3_women <- dist3_women_cam[[1]][2]
+index_mean4_women <- dist4_women_cam[[1]][1]
+index_stdev4_women <- dist4_women_cam[[1]][2]
 
 # reg_fitted (20 groups * 2 genders)
 dist_reg1_1_men <- fitdist(reg1_1_men, "norm", method='mle')
@@ -1917,6 +1990,93 @@ dist_reg2_5_women <- fitdist(reg2_5_women, "norm", method='mle')
 dist_reg3_5_women <- fitdist(reg3_5_women, "norm", method='mle')
 dist_reg4_5_women <- fitdist(reg4_5_women, "norm", method='mle')
 
+
+# sufficient stats
+mean_reg1_1_men <- dist_reg1_1_men[[1]][1]
+mean_reg2_1_men <- dist_reg2_1_men[[1]][1]
+mean_reg3_1_men <- dist_reg3_1_men[[1]][1]
+mean_reg4_1_men <- dist_reg4_1_men[[1]][1]
+mean_reg1_2_men <- dist_reg1_2_men[[1]][1]
+mean_reg2_2_men <- dist_reg2_2_men[[1]][1]
+mean_reg3_2_men <- dist_reg3_2_men[[1]][1]
+mean_reg4_2_men <- dist_reg4_2_men[[1]][1]
+mean_reg1_3_men <- dist_reg1_3_men[[1]][1]
+mean_reg2_3_men <- dist_reg2_3_men[[1]][1]
+mean_reg3_3_men <- dist_reg3_3_men[[1]][1]
+mean_reg4_3_men <- dist_reg4_3_men[[1]][1]
+mean_reg1_4_men <- dist_reg1_4_men[[1]][1]
+mean_reg2_4_men <- dist_reg2_4_men[[1]][1]
+mean_reg3_4_men <- dist_reg3_4_men[[1]][1]
+mean_reg4_4_men <- dist_reg4_4_men[[1]][1]
+mean_reg1_5_men <- dist_reg1_5_men[[1]][1]
+mean_reg2_5_men <- dist_reg2_5_men[[1]][1]
+mean_reg3_5_men <- dist_reg3_5_men[[1]][1]
+mean_reg4_5_men <- dist_reg4_5_men[[1]][1]
+
+stdev_reg1_1_men <- dist_reg1_1_men[[1]][2]
+stdev_reg2_1_men <- dist_reg2_1_men[[1]][2]
+stdev_reg3_1_men <- dist_reg3_1_men[[1]][2]
+stdev_reg4_1_men <- dist_reg4_1_men[[1]][2]
+stdev_reg1_2_men <- dist_reg1_2_men[[1]][2]
+stdev_reg2_2_men <- dist_reg2_2_men[[1]][2]
+stdev_reg3_2_men <- dist_reg3_2_men[[1]][2]
+stdev_reg4_2_men <- dist_reg4_2_men[[1]][2]
+stdev_reg1_3_men <- dist_reg1_3_men[[1]][2]
+stdev_reg2_3_men <- dist_reg2_3_men[[1]][2]
+stdev_reg3_3_men <- dist_reg3_3_men[[1]][2]
+stdev_reg4_3_men <- dist_reg4_3_men[[1]][2]
+stdev_reg1_4_men <- dist_reg1_4_men[[1]][2]
+stdev_reg2_4_men <- dist_reg2_4_men[[1]][2]
+stdev_reg3_4_men <- dist_reg3_4_men[[1]][2]
+stdev_reg4_4_men <- dist_reg4_4_men[[1]][2]
+stdev_reg1_5_men <- dist_reg1_5_men[[1]][2]
+stdev_reg2_5_men <- dist_reg2_5_men[[1]][2]
+stdev_reg3_5_men <- dist_reg3_5_men[[1]][2]
+stdev_reg4_5_men <- dist_reg4_5_men[[1]][2]
+
+mean_reg1_1_women <- dist_reg1_1_women[[1]][1]
+mean_reg2_1_women <- dist_reg2_1_women[[1]][1]
+mean_reg3_1_women <- dist_reg3_1_women[[1]][1]
+mean_reg4_1_women <- dist_reg4_1_women[[1]][1]
+mean_reg1_2_women <- dist_reg1_2_women[[1]][1]
+mean_reg2_2_women <- dist_reg2_2_women[[1]][1]
+mean_reg3_2_women <- dist_reg3_2_women[[1]][1]
+mean_reg4_2_women <- dist_reg4_2_women[[1]][1]
+mean_reg1_3_women <- dist_reg1_3_women[[1]][1]
+mean_reg2_3_women <- dist_reg2_3_women[[1]][1]
+mean_reg3_3_women <- dist_reg3_3_women[[1]][1]
+mean_reg4_3_women <- dist_reg4_3_women[[1]][1]
+mean_reg1_4_women <- dist_reg1_4_women[[1]][1]
+mean_reg2_4_women <- dist_reg2_4_women[[1]][1]
+mean_reg3_4_women <- dist_reg3_4_women[[1]][1]
+mean_reg4_4_women <- dist_reg4_4_women[[1]][1]
+mean_reg1_5_women <- dist_reg1_5_women[[1]][1]
+mean_reg2_5_women <- dist_reg2_5_women[[1]][1]
+mean_reg3_5_women <- dist_reg3_5_women[[1]][1]
+mean_reg4_5_women <- dist_reg4_5_women[[1]][1]
+
+stdev_reg1_1_women <- dist_reg1_1_women[[1]][2]
+stdev_reg2_1_women <- dist_reg2_1_women[[1]][2]
+stdev_reg3_1_women <- dist_reg3_1_women[[1]][2]
+stdev_reg4_1_women <- dist_reg4_1_women[[1]][2]
+stdev_reg1_2_women <- dist_reg1_2_women[[1]][2]
+stdev_reg2_2_women <- dist_reg2_2_women[[1]][2]
+stdev_reg3_2_women <- dist_reg3_2_women[[1]][2]
+stdev_reg4_2_women <- dist_reg4_2_women[[1]][2]
+stdev_reg1_3_women <- dist_reg1_3_women[[1]][2]
+stdev_reg2_3_women <- dist_reg2_3_women[[1]][2]
+stdev_reg3_3_women <- dist_reg3_3_women[[1]][2]
+stdev_reg4_3_women <- dist_reg4_3_women[[1]][2]
+stdev_reg1_4_women <- dist_reg1_4_women[[1]][2]
+stdev_reg2_4_women <- dist_reg2_4_women[[1]][2]
+stdev_reg3_4_women <- dist_reg3_4_women[[1]][2]
+stdev_reg4_4_women <- dist_reg4_4_women[[1]][2]
+stdev_reg1_5_women <- dist_reg1_5_women[[1]][2]
+stdev_reg2_5_women <- dist_reg2_5_women[[1]][2]
+stdev_reg3_5_women <- dist_reg3_5_women[[1]][2]
+stdev_reg4_5_women <- dist_reg4_5_women[[1]][2]
+
+
 # MEN
 # ITALY & SPAIN - binary
 # UK & NETHERLANDS - cam
@@ -1949,6 +2109,13 @@ dens_bin2_men <- density(bin2_men)
 dens_bin1_women <- density(bin1_women)
 dens_bin2_women <- density(bin2_women)
 
+# bandwidth
+bw_bin1_men <- dens_bin1_men$bw
+bw_bin2_men <- dens_bin2_men$bw
+bw_bin1_women <- dens_bin1_women$bw 
+bw_bin2_women <- dens_bin2_women$bw
+
+
 # cam_kden (4 groups * 2 genders)
 dens1_men_cam <- density(cat1_men)
 dens2_men_cam <- density(cat2_men)
@@ -1959,6 +2126,18 @@ dens1_women_cam <- density(cat1_women)
 dens2_women_cam <- density(cat2_women)
 dens3_women_cam <- density(cat3_women)
 dens4_women_cam <- density(cat4_women)
+
+# bandwidth
+bw1_men_cam <- dens1_men_cam$bw
+bw2_men_cam <- dens2_men_cam$bw
+bw3_men_cam <- dens3_men_cam$bw
+bw4_men_cam <- dens4_men_cam$bw
+
+bw1_women_cam <- dens1_women_cam$bw
+bw2_women_cam <- dens2_women_cam$bw
+bw3_women_cam <- dens3_women_cam$bw
+bw4_women_cam <- dens4_women_cam$bw
+
 
 # reg_kden (20 groups * 2 genders)
 dens_reg1_1_men <- density(reg1_1_men)
@@ -2002,6 +2181,51 @@ dens_reg1_5_women <- density(reg1_5_women)
 dens_reg2_5_women <- density(reg2_5_women)
 dens_reg3_5_women <- density(reg3_5_women)
 dens_reg4_5_women <- density(reg4_5_women)
+
+# bandwidth
+bw_reg1_1_men <- dens_reg1_1_men$bw
+bw_reg2_1_men <- dens_reg2_1_men$bw
+bw_reg3_1_men <- dens_reg3_1_men$bw
+bw_reg4_1_men <- dens_reg4_1_men$bw
+bw_reg1_2_men <- dens_reg1_2_men$bw
+bw_reg2_2_men <- dens_reg2_2_men$bw
+bw_reg3_2_men <- dens_reg3_2_men$bw
+bw_reg4_2_men <- dens_reg4_2_men$bw
+bw_reg1_3_men <- dens_reg1_3_men$bw
+bw_reg2_3_men <- dens_reg2_3_men$bw
+bw_reg3_3_men <- dens_reg3_3_men$bw
+bw_reg4_3_men <- dens_reg4_3_men$bw
+bw_reg1_4_men <- dens_reg1_4_men$bw
+bw_reg2_4_men <- dens_reg2_4_men$bw
+bw_reg3_4_men <- dens_reg3_4_men$bw
+bw_reg4_4_men <- dens_reg4_4_men$bw
+bw_reg1_5_men <- dens_reg1_5_men$bw
+bw_reg2_5_men <- dens_reg2_5_men$bw
+bw_reg3_5_men <- dens_reg3_5_men$bw
+bw_reg4_5_men <- dens_reg4_5_men$bw
+
+bw_reg1_1_women <- dens_reg1_1_women$bw
+bw_reg2_1_women <- dens_reg2_1_women$bw
+bw_reg3_1_women <- dens_reg3_1_women$bw
+bw_reg4_1_women <- dens_reg4_1_women$bw
+bw_reg1_2_women <- dens_reg1_2_women$bw
+bw_reg2_2_women <- dens_reg2_2_women$bw
+bw_reg3_2_women <- dens_reg3_2_women$bw
+bw_reg4_2_women <- dens_reg4_2_women$bw
+bw_reg1_3_women <- dens_reg1_3_women$bw
+bw_reg2_3_women <- dens_reg2_3_women$bw
+bw_reg3_3_women <- dens_reg3_3_women$bw
+bw_reg4_3_women <- dens_reg4_3_women$bw
+bw_reg1_4_women <- dens_reg1_4_women$bw
+bw_reg2_4_women <- dens_reg2_4_women$bw
+bw_reg3_4_women <- dens_reg3_4_women$bw
+bw_reg4_4_women <- dens_reg4_4_women$bw
+bw_reg1_5_women <- dens_reg1_5_women$bw
+bw_reg2_5_women <- dens_reg2_5_women$bw
+bw_reg3_5_women <- dens_reg3_5_women$bw
+bw_reg4_5_women <- dens_reg4_5_women$bw
+
+# bandwidth
 
 # MEN
 # ITALY & SPAIN - binary
