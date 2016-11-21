@@ -803,14 +803,31 @@ usr <- par("usr")
 text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
 text(usr[1], usr[4], 'Regression values - women', adj = c( 0, 1 ))
 
-#SIMULATIONS
+#  _____ _                 _       _   _                 
+# /  ___(_)               | |     | | (_)                
+# \ `--. _ _ __ ___  _   _| | __ _| |_ _  ___  _ __  ___ 
+#  `--. \ | '_ ` _ \| | | | |/ _` | __| |/ _ \| '_ \/ __|
+# /\__/ / | | | | | | |_| | | (_| | |_| | (_) | | | \__ \
+# \____/|_|_| |_| |_|\__,_|_|\__,_|\__|_|\___/|_| |_|___/
+
+
+# ______         _            _   _             _     _   
+# | ___ \       | |          | | (_)           (_)   | |  
+# | |_/ /___  __| |_   _  ___| |_ _  ___  _ __  _ ___| |_ 
+# |    // _ \/ _` | | | |/ __| __| |/ _ \| '_ \| / __| __|
+# | |\ \  __/ (_| | |_| | (__| |_| | (_) | | | | \__ \ |_ 
+# \_| \_\___|\__,_|\__,_|\___|\__|_|\___/|_| |_|_|___/\__|
+                                                        
 
 # MEN
 # ITALY & SPAIN - binary
 # UK & NETHERLANDS - cam
 # GERMANY SWEDEN DENMARK - reg
 
-# reductionist harmonisation method. Convert all to active yes or no
+# Simulation
+############################################################################
+# Reductionist Harmonisation: Make everything binary dependent on thresholds
+############################################################################
 
 reductionist_men <- new_study_data_men[,c('country','bmi_adj', 'smoke_stat', 
                                           'l_school', 'alc_re', 'qe_energy',
@@ -851,8 +868,6 @@ reductionist_men$red_harm <- apply(X = reductionist_men[,c('country','bmi_adj', 
                              }
 )
 
-
-
 countries = levels(reductionist_men$country)
 
   estimates = vector()
@@ -876,65 +891,16 @@ text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
 text(usr[1], usr[4], 'Reductionist - Men', adj = c( 0, 1 ))
 
 
-# validation harmonisation method. Convert all to PAEE value
-validation_men <- new_study_data_men[,c('country','bmi_adj', 'smoke_stat', 
-                                          'l_school', 'alc_re', 'qe_energy',
-                                          'age_recr_prentice', 'ageEnd', 'eventCens',
-                                          'binary_index_mean', 'cam_index_mean', 'reg_value')]
-
-# select the appropriate index mean
-validation_men$val_harm <- apply(X = validation_men[,c('country','bmi_adj', 'smoke_stat', 
-                                                           'l_school', 'alc_re', 'qe_energy',
-                                                           'age_recr_prentice', 'ageEnd', 'eventCens',
-                                                           'binary_index_mean', 'cam_index_mean', 'reg_value')], MARGIN = 1, 
-                                   FUN = function(x){
-                                     if(x[1] == 'ITALY' | x[1] == 'SPAIN'){
-                                       # choose binary index mean PAEE
-                                       output = x[10]
-                                     }
-                                     
-                                     if(x[1] == 'UK' | x[1] == 'NETHERLANDS'){
-                                       # choose cam index mean
-                                       output = x[11]
-                                     }
-                                     
-                                     if(x[1] == 'GERMANY' | x[1] == 'SWEDEN' | x[1] == 'DENMARK'){
-                                       # choose reg mean
-                                       output = x[12]
-                                     }
-                                     return(as.numeric(output))
-                                   }
-)
-
-
-countries = levels(validation_men$country)
-estimates = vector()
-s_errors = vector()
-
-for (i in 1:length(countries)){
-  temp = droplevels(subset(x = validation_men, subset = validation_men$country == countries[i]))
-  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ val_harm + bmi_adj
-    + smoke_stat + l_school + alc_re + qe_energy, data = temp, robust=TRUE))
-  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
-  estimates = rbind(estimates,model_coeffs[grep('val_harm', row.names(model_coeffs)),"coef"])
-  s_errors = rbind(s_errors,model_coeffs[grep('val_harm', row.names(model_coeffs)),"robust se"])
-}
-
-res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
-
-forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',.(round(res$QEp,3)),')')),
-  xlab=bquote(paste('Test of H'[0]*': true relative risk = 1, p = ',.(round(res$pval,3)))), atransf = exp)
-usr <- par("usr")
-text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
-text(usr[1], usr[4], 'Validation - Men', adj = c( 0, 1 ))
-
-
 # WOMEN
 # ITALY & SPAIN - binary
 # UK & NETHERLANDS & FRANCE - cam
 # GERMANY SWEDEN DENMARK - reg
 
-# reductionist harmonisation method. Convert all to active yes or no
+# Simulation
+############################################################################
+# Reductionist Harmonisation: Make everything binary dependent on thresholds
+############################################################################
+
 reductionist_women <- new_study_data_women[,c('country','bmi_adj', 'smoke_stat', 
                                           'l_school', 'alc_re', 'qe_energy',
                                           'age_recr_prentice', 'ageEnd', 'eventCens',
@@ -999,6 +965,84 @@ usr <- par("usr")
 text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
 text(usr[1], usr[4], 'Reductionist - women', adj = c( 0, 1 ))
 
+#  _   _       _ _     _       _   _             
+# | | | |     | (_)   | |     | | (_)            
+# | | | | __ _| |_  __| | __ _| |_ _  ___  _ __  
+# | | | |/ _` | | |/ _` |/ _` | __| |/ _ \| '_ \ 
+# \ \_/ / (_| | | | (_| | (_| | |_| | (_) | | | |
+#  \___/ \__,_|_|_|\__,_|\__,_|\__|_|\___/|_| |_|
+
+# ___  ___ _____ _____ _   _ ___________   __  
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ /  | 
+# | .  . || |__   | | | |_| | | | | | | | `| | 
+# | |\/| ||  __|  | | |  _  | | | | | | |  | | 
+# | |  | || |___  | | | | | \ \_/ / |/ /  _| |_
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \___/
+                                               
+# Simulation
+############################################################################
+# Validation Harmonisation: Convert to PAEE using means
+############################################################################
+# MEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS - cam
+# GERMANY SWEDEN DENMARK - reg
+
+validation_men <- new_study_data_men[,c('country','bmi_adj', 'smoke_stat', 
+                                          'l_school', 'alc_re', 'qe_energy',
+                                          'age_recr_prentice', 'ageEnd', 'eventCens',
+                                          'binary_index_mean', 'cam_index_mean', 'reg_value')]
+
+# select the appropriate index mean
+validation_men$val_harm <- apply(X = validation_men[,c('country','bmi_adj', 'smoke_stat', 
+                                                           'l_school', 'alc_re', 'qe_energy',
+                                                           'age_recr_prentice', 'ageEnd', 'eventCens',
+                                                           'binary_index_mean', 'cam_index_mean', 'reg_value')], MARGIN = 1, 
+                                   FUN = function(x){
+                                     if(x[1] == 'ITALY' | x[1] == 'SPAIN'){
+                                       # choose binary index mean PAEE
+                                       output = x[10]
+                                     }
+                                     
+                                     if(x[1] == 'UK' | x[1] == 'NETHERLANDS'){
+                                       # choose cam index mean
+                                       output = x[11]
+                                     }
+                                     
+                                     if(x[1] == 'GERMANY' | x[1] == 'SWEDEN' | x[1] == 'DENMARK'){
+                                       # choose reg mean
+                                       output = x[12]
+                                     }
+                                     return(as.numeric(output))
+                                   }
+)
+
+countries = levels(validation_men$country)
+estimates = vector()
+s_errors = vector()
+
+for (i in 1:length(countries)){
+  temp = droplevels(subset(x = validation_men, subset = validation_men$country == countries[i]))
+  model = summary(coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ val_harm + bmi_adj
+    + smoke_stat + l_school + alc_re + qe_energy, data = temp, robust=TRUE))
+  model_coeffs <- model$coefficients[,c('coef', 'robust se')]
+  estimates = rbind(estimates,model_coeffs[grep('val_harm', row.names(model_coeffs)),"coef"])
+  s_errors = rbind(s_errors,model_coeffs[grep('val_harm', row.names(model_coeffs)),"robust se"])
+}
+
+res <- rma(yi = estimates, sei = s_errors, method='DL', slab = countries)
+
+forest(res, digits=3, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',.(round(res$QEp,3)),')')),
+  xlab=bquote(paste('Test of H'[0]*': true relative risk = 1, p = ',.(round(res$pval,3)))), atransf = exp)
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
+text(usr[1], usr[4], 'Validation - Men', adj = c( 0, 1 ))
+
+
+# WOMEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS & FRANCE - cam
+# GERMANY SWEDEN DENMARK - reg
 
 # validation harmonisation method. Convert all to PAEE value
 validation_women <- new_study_data_women[,c('country','bmi_adj', 'smoke_stat', 
@@ -1030,7 +1074,6 @@ validation_women$val_harm <- apply(X = validation_women[,c('country','bmi_adj', 
                                  }
 )
 
-
 countries = levels(validation_women$country)
 estimates = vector()
 s_errors = vector()
@@ -1052,19 +1095,92 @@ usr <- par("usr")
 text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
 text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
 
+
+# ___  ___ _____ _____ _   _ ___________   _____   ___  
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \ / _ \ 
+# | .  . || |__   | | | |_| | | | | | | | `' / /'/ /_\ \
+# | |\/| ||  __|  | | |  _  | | | | | | |   / /  |  _  |
+# | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| | | |
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\_| |_/           
 # Simulation
 ############################################################################
-# Validation approach 2: Sampling Directly from data
+# Validation approach 2a: Sampling Directly from data
 ############################################################################
+# MEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS - cam
+# GERMANY SWEDEN DENMARK - reg
 
+
+# WOMEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS & FRANCE - cam
+# GERMANY SWEDEN DENMARK - reg
+
+# ___  ___ _____ _____ _   _ ___________   _____ ______ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \| ___ \
+# | .  . || |__   | | | |_| | | | | | | | `' / /'| |_/ /
+# | |\/| ||  __|  | | |  _  | | | | | | |   / /  | ___ \
+# | |  | || |___  | | | | | \ \_/ / |/ /  ./ /___| |_/ /
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \_____/\____/ 
+# Simulation
+############################################################################
+# Validation approach 2b: Sampling Directly from data
+############################################################################
+# MEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS - cam
+# GERMANY SWEDEN DENMARK - reg
+
+
+# WOMEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS & FRANCE - cam
+# GERMANY SWEDEN DENMARK - reg
+
+# ___  ___ _____ _____ _   _ ___________   _____ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \ |____ |
+# | .  . || |__   | | | |_| | | | | | | |     / /
+# | |\/| ||  __|  | | |  _  | | | | | | |     \ \
+# | |  | || |___  | | | | | \ \_/ / |/ /  .___/ /
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/   \____/     
+# We fit distributions to the validation data and then generate samples from these for the study data
 # Simulation
 ############################################################################
 # Validation approach 3: Sampling from Fitted Distribution
 ############################################################################
+# MEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS - cam
+# GERMANY SWEDEN DENMARK - reg
 
+
+# WOMEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS & FRANCE - cam
+# GERMANY SWEDEN DENMARK - reg
+
+
+
+# ___  ___ _____ _____ _   _ ___________     ___ 
+# |  \/  ||  ___|_   _| | | |  _  |  _  \   /   |
+# | .  . || |__   | | | |_| | | | | | | |  / /| |
+# | |\/| ||  __|  | | |  _  | | | | | | | / /_| |
+# | |  | || |___  | | | | | \ \_/ / |/ /  \___  |
+# \_|  |_/\____/  \_/ \_| |_/\___/|___/       |_/
+#                                                
+# We estimate the density of the pdf using kernel based estimation methods. Then sample directly using the kernels.
 # Simulation
 ############################################################################
 # Validation approach 3: Sampling from Kernel Density Estimated Distribution
 ############################################################################
+# MEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS - cam
+# GERMANY SWEDEN DENMARK - reg
 
-# Kullback Leibler Divergence
+
+# WOMEN
+# ITALY & SPAIN - binary
+# UK & NETHERLANDS & FRANCE - cam
+# GERMANY SWEDEN DENMARK - reg
