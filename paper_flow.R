@@ -66,6 +66,211 @@ gaussian_index_sample <- function(x,gender){
   return (data_point)
 }
 
+gaussian_index_sample_bin <- function(x,gender){
+  # returns a datapoint sampled from the index distribution
+  # This can be seen as an exposure to be used in the data_generator
+  if (gender == 1){
+    if (x == 1){
+      index_mean <- mean_bin1_men
+      index_stdev <- stdev_bin1_men
+    } else {
+      index_mean <- mean_bin2_men
+      index_stdev <- stdev_bin2_men 
+    }
+  } else {
+    if (x == 1){
+      index_mean <- mean_bin1_women
+      index_stdev <- stdev_bin1_women
+    } else {
+      index_mean <- mean_bin2_women
+      index_stdev <- stdev_bin2_women
+    } 
+  }
+  data_point <- rnorm(1, index_mean, index_stdev)
+  return (data_point)
+}
+
+gaussian_index_sample_reg <- function(x,y,gender){
+  # returns a datapoint sampled from the index distribution
+  # This can be seen as an exposure to be used in the data_generator
+  if (gender == 1){
+    if (x == 1){
+      if (y == 1){
+        index_mean <- mean_reg1_1_men
+        index_stdev <- stdev_reg1_1_men
+      }
+      else if (y==2){
+        index_mean <- mean_reg1_2_men
+        index_stdev <- stdev_reg1_2_men
+      }
+      else if (y==3){
+        index_mean <- mean_reg1_3_men
+        index_stdev <- stdev_reg1_3_men
+      }
+      else if (y==4){
+        index_mean <- mean_reg1_4_men
+        index_stdev <- stdev_reg1_4_men
+      }
+      else if (y==5){
+        index_mean <- mean_reg1_5_men
+        index_stdev <- stdev_reg1_5_men
+      }
+    } else if (x == 2){
+      if (y == 1){
+        index_mean <- mean_reg2_1_men
+        index_stdev <- stdev_reg2_1_men
+      }
+      else if (y==2){
+        index_mean <- mean_reg2_2_men
+        index_stdev <- stdev_reg2_2_men
+      }
+      else if (y==3){
+        index_mean <- mean_reg2_3_men
+        index_stdev <- stdev_reg2_3_men
+      }
+      else if (y==4){
+        index_mean <- mean_reg2_4_men
+        index_stdev <- stdev_reg2_4_men
+      }
+      else if (y==5){
+        index_mean <- mean_reg2_5_men
+        index_stdev <- stdev_reg2_5_men
+      }
+    } else if (x == 3){
+      if (y == 1){
+        index_mean <- mean_reg3_1_men
+        index_stdev <- stdev_reg3_1_men
+      }
+      else if (y==2){
+        index_mean <- mean_reg3_2_men
+        index_stdev <- stdev_reg3_2_men
+      }
+      else if (y==3){
+        index_mean <- mean_reg3_3_men
+        index_stdev <- stdev_reg3_3_men
+      }
+      else if (y==4){
+        index_mean <- mean_reg3_4_men
+        index_stdev <- stdev_reg3_4_men
+      }
+      else if (y==5){
+        index_mean <- mean_reg3_5_men
+        index_stdev <- stdev_reg3_5_men
+      }
+    } else {
+      if (y == 1){
+        index_mean <- mean_reg4_1_men
+        index_stdev <- stdev_reg4_1_men
+      }
+      else if (y==2){
+        index_mean <- mean_reg4_2_men
+        index_stdev <- stdev_reg4_2_men
+      }
+      else if (y==3){
+        index_mean <- mean_reg4_3_men
+        index_stdev <- stdev_reg4_3_men
+      }
+      else if (y==4){
+        index_mean <- mean_reg4_4_men
+        index_stdev <- stdev_reg4_4_men
+      }
+      else if (y==5){
+        index_mean <- mean_reg4_5_men
+        index_stdev <- stdev_reg4_5_men
+      }
+    }
+  } else {
+    if (x == 0){
+      if (y == 1){
+        index_mean <- mean_reg1_1_women
+        index_stdev <- stdev_reg1_1_women
+      }
+      else if (y==2){
+        index_mean <- mean_reg1_2_women
+        index_stdev <- stdev_reg1_2_women
+      }
+      else if (y==3){
+        index_mean <- mean_reg1_3_women
+        index_stdev <- stdev_reg1_3_women
+      }
+      else if (y==4){
+        index_mean <- mean_reg1_4_women
+        index_stdev <- stdev_reg1_4_women
+      }
+      else if (y==5){
+        index_mean <- mean_reg1_5_women
+        index_stdev <- stdev_reg1_5_women
+      }
+    } else if (x == 2){
+      if (y == 1){
+        index_mean <- mean_reg2_1_women
+        index_stdev <- stdev_reg2_1_women
+      }
+      else if (y==2){
+        index_mean <- mean_reg2_2_women
+        index_stdev <- stdev_reg2_2_women
+      }
+      else if (y==3){
+        index_mean <- mean_reg2_3_women
+        index_stdev <- stdev_reg2_3_women
+      }
+      else if (y==4){
+        index_mean <- mean_reg2_4_women
+        index_stdev <- stdev_reg2_4_women
+      }
+      else if (y==5){
+        index_mean <- mean_reg2_5_women
+        index_stdev <- stdev_reg2_5_women
+      }
+    } else if (x == 3){
+      if (y == 1){
+        index_mean <- mean_reg3_1_women
+        index_stdev <- stdev_reg3_1_women
+      }
+      else if (y==2){
+        index_mean <- mean_reg3_2_women
+        index_stdev <- stdev_reg3_2_women
+      }
+      else if (y==3){
+        index_mean <- mean_reg3_3_women
+        index_stdev <- stdev_reg3_3_women
+      }
+      else if (y==4){
+        index_mean <- mean_reg3_4_women
+        index_stdev <- stdev_reg3_4_women
+      }
+      else if (y==5){
+        index_mean <- mean_reg3_5_women
+        index_stdev <- stdev_reg3_5_women
+      }
+    } else {
+      if (y == 1){
+        index_mean <- mean_reg4_1_women
+        index_stdev <- stdev_reg4_1_women
+      }
+      else if (y==2){
+        index_mean <- mean_reg4_2_women
+        index_stdev <- stdev_reg4_2_women
+      }
+      else if (y==3){
+        index_mean <- mean_reg4_3_women
+        index_stdev <- stdev_reg4_3_women
+      }
+      else if (y==4){
+        index_mean <- mean_reg4_4_women
+        index_stdev <- stdev_reg4_4_women
+      }
+      else if (y==5){
+        index_mean <- mean_reg4_5_women
+        index_stdev <- stdev_reg4_5_women
+      }
+    }
+  }
+  data_point <- rnorm(1, index_mean, index_stdev)
+  return (data_point)
+}
+
+
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -1928,6 +2133,7 @@ dist2_women_cam <- fitdist(cat2_women, "norm", method='mle')
 dist3_women_cam <- fitdist(cat3_women, "norm", method='mle')
 dist4_women_cam <- fitdist(cat4_women, "norm", method='mle')
 
+
 # sufficient stats
 index_mean1_men <- dist1_men_cam[[1]][1]
 index_stdev1_men <- dist1_men_cam[[1]][2]
@@ -1946,6 +2152,46 @@ index_mean3_women <- dist3_women_cam[[1]][1]
 index_stdev3_women <- dist3_women_cam[[1]][2]
 index_mean4_women <- dist4_women_cam[[1]][1]
 index_stdev4_women <- dist4_women_cam[[1]][2]
+
+final_output_men$cam_index_dfit <- unlist(mapply(final_output_men$camMets_ind, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x,gender=1)
+    }
+    return(output)
+  }
+))
+
+new_study_data_men$cam_index_dfit <- unlist(mapply(new_study_data_men$camMets_ind, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x,gender=1)
+    }
+    return(output)
+  }
+))
+
+final_output_women$cam_index_dfit <- unlist(mapply(final_output_women$camMets_ind, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x,gender=0)
+    }
+    return(output)
+  }
+))
+
+new_study_data_women$cam_index_dfit <- unlist(mapply(new_study_data_women$camMets_ind, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample(x,gender=0)
+    }
+    return(output)
+  }
+))
 
 # reg_fitted (20 groups * 2 genders)
 dist_reg1_1_men <- fitdist(reg1_1_men, "norm", method='mle')
