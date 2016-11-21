@@ -1104,12 +1104,12 @@ text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
 #  \___/\_| \_/___/ \____/\/   \/ \____/ \___/\____/ \____/\____/  \_/ \____/ 
                                                                             
 # THESE ARE NECESSARY FOR METHODS 2a, 2b, 3, and 4 to work                                                                        
+final_output_men <- final_output_men
+final_output_women <- final_output_women
 
-# Cambridge
-val_data_men <- subset(val_data, sex==0)
-val_data_women <- subset(val_data, sex==1)
 
-cat1_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
+# Binary Index
+cat1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, FUN=function(x,y){
   if (y == 1){
     output = x
   } else {
@@ -1120,7 +1120,20 @@ cat1_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
 cat1_men <- cat1_men[!sapply(cat1_men,is.na)]
 
 
-cat2_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
+# Cambridge Index
+
+cat1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat1_men <- cat1_men[!sapply(cat1_men,is.na)]
+
+
+cat2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, FUN=function(x,y){
   if (y == 2){
     output = x
   } else {
@@ -1130,7 +1143,7 @@ cat2_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
 }) 
 cat2_men <- cat2_men[!sapply(cat2_men,is.na)]
 
-cat3_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
+cat3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, FUN=function(x,y){
   if (y == 3){
     output = x
   } else {
@@ -1140,7 +1153,7 @@ cat3_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
 }) 
 cat3_men <- cat3_men[!sapply(cat3_men,is.na)]
 
-cat4_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
+cat4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, FUN=function(x,y){
   if (y == 4){
     output = x
   } else {
@@ -1150,7 +1163,7 @@ cat4_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
 })
 cat4_men <- cat4_men[!sapply(cat4_men,is.na)]
 
-cat1_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
+cat1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, FUN=function(x,y){
   if (y == 1){
     output = x
   } else {
@@ -1160,7 +1173,7 @@ cat1_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function
 })
 cat1_women <- cat1_women[!sapply(cat1_women,is.na)]
 
-cat2_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
+cat2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, FUN=function(x,y){
   if (y == 2){
     output = x
   } else {
@@ -1170,7 +1183,7 @@ cat2_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function
 }) 
 cat2_women <- cat2_women[!sapply(cat2_women,is.na)]
 
-cat3_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
+cat3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, FUN=function(x,y){
   if (y == 3){
     output = x
   } else {
@@ -1180,7 +1193,7 @@ cat3_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function
 }) 
 cat3_women <- cat3_women[!sapply(cat3_women,is.na)]
 
-cat4_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
+cat4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, FUN=function(x,y){
   if (y == 4){
     output = x
   } else {
