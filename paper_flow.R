@@ -238,32 +238,30 @@ epic_umea_new$pa_workini <- apply(X = epic_umea[,c('g2a', 'g2b', 'g2c', 'g2d', '
 
 # coding from original interact analysis - doesn't look right
 
-# epic_umea_new$pa_lt <- sapply(X = epic_umea[,'g6'],
-#                               FUN = function(x){       
-#                                 
-#                                 if (is.na(x)){
-#                                   x_ind = 0
-#                                 }
-#                                 else if (x == 1){
-#                                   x_ind = 3.5
-#                                 }
-#                                 else if (x == 2){
-#                                   x_ind = 3.5
-#                                 }
-#                                 else if (x == 3){
-#                                   x_ind = 5
-#                                 }
-#                                 else if (x == 4){
-#                                   x_ind = 8
-#                                 }
-#                                 else if (x == 5){
-#                                   x_ind = 4
-#                                 }
-#                                 else {
-#                                   x_ind = 0
-#                                 }
-#                                 return(x_ind)
-#                               })
+# epic_umea_new$pa_lt <- sapply(X = epic_umea[,'g6'],FUN = function(x){       
+#   if (is.na(x)){
+#     x_ind = 0
+#   }
+#   else if (x == 1){
+#     x_ind = 3.5
+#   }
+#   else if (x == 2){
+#     x_ind = 3.5
+#   }
+#   else if (x == 3){
+#     x_ind = 5
+#   }
+#   else if (x == 4){
+#     x_ind = 8
+#   }
+#   else if (x == 5){
+#     x_ind = 4
+#   }
+#   else {
+#     x_ind = 0
+#   }
+#   return(x_ind)
+# })
 
 epic_umea_new$pa_lt <- sapply(X = epic_umea[,'g6'],FUN = function(x){
   if (is.na(x)){
@@ -292,8 +290,6 @@ epic_umea_new$pa_lt <- sapply(X = epic_umea[,'g6'],FUN = function(x){
 
 # join Sweden to other epic data
 epic_final <- rbind(epic_umea_new, epic_trim)
-
-
 
 ### validation_data creation
 # merge or perform a "natural join" on the trimmed epic table and 
@@ -340,7 +336,6 @@ validation_data$cam_index <- apply(X = validation_data[,c('pa_workini', 'camMets
 })
 
 
-
 # calculate the BMI using the weight and height and include this in the table to make
 # a model for PAEE
 # bmi_calc <- function(weight, height){
@@ -354,7 +349,9 @@ validation_data$cam_index <- apply(X = validation_data[,c('pa_workini', 'camMets
 
 ###############################################################################
 ###############################################################################
-###############################################################################
+# Results 2, 3
+
+
 #record means etc for the cam index and binary index
 # Note that these match the Peters et al paper! Hurrah!
 cam_index_means = aggregate(validation_data$PAEE, by=list(cam_index=validation_data$cam_index, sex=validation_data$sex), mean, na.rm = TRUE)
@@ -384,7 +381,6 @@ colnames(binary_index_counts)[3] = 'binary_index_count'
 
 ###############################################################################
 ###############################################################################
-###############################################################################
 # Method C - regression based (but still essentially 16 categories) on components of cam index
 #create factors for regression
 validation_data$camMets_ind_fact <- as.factor(validation_data$camMets_ind)
@@ -403,7 +399,7 @@ coeffs_women <- summary(reg_out_women)$coefficients[, 1]
 
 ###############################################################################
 ###############################################################################
-###############################################################################
+# Result 3
 # calculate the lambdas (to be used much later!)
 
 # Setting the 'observed' PAEE values by the mean
