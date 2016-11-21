@@ -2122,6 +2122,46 @@ stdev_bin1_women <- dist_bin1_women[[1]][2]
 mean_bin2_women <- dist_bin2_women[[1]][1]
 stdev_bin2_women <- dist_bin2_women[[1]][2]
 
+final_output_men$bin_index_dfit <- unlist(mapply(final_output_men$camMets_ind, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample_bin(x,gender=1)
+    }
+    return(output)
+  }
+))
+
+new_study_data_men$bin_index_dfit <- unlist(mapply(new_study_data_men$camMets_ind, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample_bin(x,gender=1)
+    }
+    return(output)
+  }
+))
+
+final_output_women$bin_index_dfit <- unlist(mapply(final_output_women$camMets_ind, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample_bin(x,gender=0)
+    }
+    return(output)
+  }
+))
+
+new_study_data_women$bin_index_dfit <- unlist(mapply(new_study_data_women$camMets_ind, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample_bin(x,gender=0)
+    }
+    return(output)
+  }
+))
+
 # cam_fitted (4 groups * 2 genders)
 dist1_men_cam <- fitdist(cat1_men, "norm", method='mle')
 dist2_men_cam <- fitdist(cat2_men, "norm", method='mle')
@@ -2132,7 +2172,6 @@ dist1_women_cam <- fitdist(cat1_women, "norm", method='mle')
 dist2_women_cam <- fitdist(cat2_women, "norm", method='mle')
 dist3_women_cam <- fitdist(cat3_women, "norm", method='mle')
 dist4_women_cam <- fitdist(cat4_women, "norm", method='mle')
-
 
 # sufficient stats
 index_mean1_men <- dist1_men_cam[[1]][1]
@@ -2322,6 +2361,45 @@ stdev_reg2_5_women <- dist_reg2_5_women[[1]][2]
 stdev_reg3_5_women <- dist_reg3_5_women[[1]][2]
 stdev_reg4_5_women <- dist_reg4_5_women[[1]][2]
 
+final_output_men$reg_index_dfit <- unlist(mapply(final_output_men$camMets_ind,final_output_men$pa_workini_fact, SIMPLIFY = FALSE, FUN=function(x, y){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample_reg(x,y,gender=1)
+    }
+    return(output)
+  }
+))
+
+new_study_data_men$reg_index_dfit <- unlist(mapply(new_study_data_men$camMets_ind,new_study_data_men$pa_workini_fact, SIMPLIFY = FALSE, FUN=function(x, y){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample_reg(x,y,gender=1)
+    }
+    return(output)
+  }
+))
+
+final_output_women$reg_index_dfit <- unlist(mapply(final_output_women$camMets_ind,final_output_women$pa_workini_fact, SIMPLIFY = FALSE, FUN=function(x, y){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample_reg(x,y,gender=0)
+    }
+    return(output)
+  }
+))
+
+new_study_data_women$reg_index_dfit <- unlist(mapply(new_study_data_women$camMets_ind,new_study_data_women$pa_workini_fact, SIMPLIFY = FALSE, FUN=function(x, y){
+    if (is.na(x)) {
+      output = NA
+    } else {
+      output = gaussian_index_sample_reg(x,y,gender=0)
+    }
+    return(output)
+  }
+))
 
 # MEN
 # ITALY & SPAIN - binary
