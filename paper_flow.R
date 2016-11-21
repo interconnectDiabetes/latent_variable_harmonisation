@@ -1096,6 +1096,112 @@ text(usr[2], usr[4], "Hazard ratio [95% CI]", adj = c(1, 4))
 text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
 
 
+#  _____ _   _______ _______   __  _____ _   _______  _____ _____ _____ _____ 
+# |_   _| \ | |  _  \  ___\ \ / / /  ___| | | | ___ \/  ___|  ___|_   _/  ___|
+#   | | |  \| | | | | |__  \ V /  \ `--.| | | | |_/ /\ `--.| |__   | | \ `--. 
+#   | | | . ` | | | |  __| /   \   `--. \ | | | ___ \ `--. \  __|  | |  `--. \
+#  _| |_| |\  | |/ /| |___/ /^\ \ /\__/ / |_| | |_/ //\__/ / |___  | | /\__/ /
+#  \___/\_| \_/___/ \____/\/   \/ \____/ \___/\____/ \____/\____/  \_/ \____/ 
+                                                                            
+# THESE ARE NECESSARY FOR METHODS 2a, 2b, 3, and 4 to work                                                                        
+
+# Cambridge
+val_data_men <- subset(val_data, sex==0)
+val_data_women <- subset(val_data, sex==1)
+
+cat1_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat1_men <- cat1_men[!sapply(cat1_men,is.na)]
+
+
+cat2_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat2_men <- cat2_men[!sapply(cat2_men,is.na)]
+
+cat3_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
+  if (y == 3){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat3_men <- cat3_men[!sapply(cat3_men,is.na)]
+
+cat4_men <- mapply(val_data_men$PAEE, val_data_men$cam_index, FUN=function(x,y){
+  if (y == 4){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+})
+cat4_men <- cat4_men[!sapply(cat4_men,is.na)]
+
+cat1_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+})
+cat1_women <- cat1_women[!sapply(cat1_women,is.na)]
+
+cat2_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+cat2_women <- cat2_women[!sapply(cat2_women,is.na)]
+
+cat3_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
+  if (y == 3){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+cat3_women <- cat3_women[!sapply(cat3_women,is.na)]
+
+cat4_women <- mapply(val_data_women$PAEE, val_data_women$cam_index, FUN=function(x,y){
+  if (y == 4){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+cat4_women <- cat4_women[!sapply(cat4_women,is.na)]
+
+# Means of categories
+cat1_men_mean <- mean(cat1_men)
+cat2_men_mean <- mean(cat2_men)
+cat3_men_mean <- mean(cat3_men)
+cat4_men_mean <- mean(cat4_men)
+
+cat1_women_mean <- mean(cat1_women)
+cat2_women_mean <- mean(cat2_women)
+cat3_women_mean <- mean(cat3_women)
+cat4_women_mean <- mean(cat4_women)
+
+
 # ___  ___ _____ _____ _   _ ___________   _____   ___  
 # |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \ / _ \ 
 # | .  . || |__   | | | |_| | | | | | | | `' / /'/ /_\ \
