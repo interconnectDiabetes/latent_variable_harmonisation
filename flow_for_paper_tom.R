@@ -1,24 +1,24 @@
-##########################################################################################################
-##########################################################################################################
-############################### Lambda Measurement Error Calculation #####################################
-##########################################################################################################
-##########################################################################################################
+## Title: Harmonisation of PAEE
 
-## Paper(s):
+## Papers to find comparison results:
 ## 1. Physical activity reduces the risk of incident type 2 diabetes in 
 ## general and in abdominally lean and obese men and women: the EPIC-InterAct 
 ## Study
 ## 2. Validity of a short questionnaire to assess physical activity in 10 European
 ## countries 
 ## Author: Paul Scherer
-## Date: 12/08/2016
+## Date: 10/11/2016
+## University of Cambridge
 
 ###############################################################################
-########################### DATA AND SETTINGS #################################
+############################### SET UP ########################################
 ###############################################################################
-## WARNING THIS SCRIPT WILL ONLY RUN IF WORKING DIRECTORY IS SET TO THE RIGHT LOCATION
+# Working Directory
 setwd("V:/Studies/InterConnect/Internal/Latent variable harmonisation")
+
+# Libraries
 library("survival")
+library("graphics")
 library("metafor")
 
 # Read the actiheart and EPIC study data (sweden UMEA is missing in 
@@ -27,9 +27,7 @@ actiheart_summary <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_actihea
 epic <- read.csv("PHIA0000112014_IA85_12Mar/PAQIA0000112014_epic.csv", header=T)
 
 #UMEA file is separate, see details later
-
 epic_umea <- read.csv("V:/Studies/InterConnect/Internal/Latent variable harmonisation/epic_umea.csv", header=T)
-
 
 # actiheart - 0 = women, 1 = men, based on mean weights, assume men higher:
 # aggregate(actiheart_summary$weight, by=list(sex=actiheart_summary$sex), mean, na.rm = TRUE)
@@ -452,7 +450,8 @@ plot(x = final_output_men$cam_index_mean, y= final_output_men$PAEE)
 abline(0,1)
 plot(x = final_output_men$reg_value, y= final_output_men$PAEE)
 abline(0,1)
-
+plot(x = final_output_men$binary_index_mean, y= final_output_men$PAEE)
+abline(0,1)
 
 ###############################################################################
 ###############################################################################
