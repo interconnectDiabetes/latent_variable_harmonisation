@@ -1248,6 +1248,254 @@ cat2_women_mean <- mean(cat2_women)
 cat3_women_mean <- mean(cat3_women)
 cat4_women_mean <- mean(cat4_women)
 
+## 20 category reg based (Cam Index * PaWorkini)
+# cam 1
+reg1_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 1){
+    if (z == 1){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg1_1_men <- reg1_1_men[!sapply(reg1_1_men,is.na)]
+
+reg1_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 1){
+    if (z == 2){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg1_2_men <- reg1_2_men[!sapply(reg1_2_men,is.na)]
+
+reg1_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 1){
+    if (z == 3){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg1_3_men <- reg1_3_men[!sapply(reg1_3_men,is.na)]
+
+reg1_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 1){
+    if (z == 4){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg1_4_men <- reg1_4_men[!sapply(reg1_4_men,is.na)]
+
+reg1_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 1){
+    if (z == 5){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg1_5_men <- reg1_5_men[!sapply(reg1_5_men,is.na)]
+
+#cam2
+reg2_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 2){
+    if (z == 1){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg2_1_men <- reg2_1_men[!sapply(reg2_1_men,is.na)]
+
+reg2_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 2){
+    if (z == 2){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg2_2_men <- reg2_2_men[!sapply(reg2_2_men,is.na)]
+
+reg2_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 2){
+    if (z == 3){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg2_3_men <- reg2_3_men[!sapply(reg2_3_men,is.na)]
+
+reg2_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 2){
+    if (z == 4){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg2_4_men <- reg2_4_men[!sapply(reg2_4_men,is.na)]
+
+reg2_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 2){
+    if (z == 5){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg2_5_men <- reg2_5_men[!sapply(reg2_5_men,is.na)]
+
+#cam3
+reg3_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 3){
+    if (z == 1){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg3_1_men <- reg3_1_men[!sapply(reg3_1_men,is.na)]
+
+reg3_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 3){
+    if (z == 2){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg3_2_men <- reg3_2_men[!sapply(reg3_2_men,is.na)]
+
+reg3_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 3){
+    if (z == 3){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg3_3_men <- reg3_3_men[!sapply(reg3_3_men,is.na)]
+
+reg3_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 3){
+    if (z == 4){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg3_4_men <- reg3_4_men[!sapply(reg3_4_men,is.na)]
+
+reg3_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 3){
+    if (z == 5){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg3_5_men <- reg3_5_men[!sapply(reg3_5_men,is.na)]
+
+#cam4
+reg4_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 4){
+    if (z == 1){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg4_1_men <- reg4_1_men[!sapply(reg4_1_men,is.na)]
+
+reg4_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 4){
+    if (z == 2){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg4_2_men <- reg4_2_men[!sapply(reg4_2_men,is.na)]
+
+
+reg4_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 4){
+    if (z == 3){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg4_3_men <- reg4_3_men[!sapply(reg4_3_men,is.na)]
+
+
+reg4_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 4){
+    if (z == 4){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg4_4_men <- reg4_4_men[!sapply(reg4_4_men,is.na)]
+
+
+reg4_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+  if (y == 4){
+    if (z == 5){
+      output = x
+    }
+  } else {
+    output = NA
+  }
+  return(output)
+}) 
+reg4_5_men <- reg4_5_men[!sapply(reg4_5_men,is.na)]
+
 
 # ___  ___ _____ _____ _   _ ___________   _____   ___  
 # |  \/  ||  ___|_   _| | | |  _  |  _  \ / __  \ / _ \ 
@@ -1287,7 +1535,7 @@ cat4_women_mean <- mean(cat4_women)
 
 # binary_sampled (2 groups * 2 genders)
 # cam_sampled (4 groups * 2 genders)
-# reg_sampled (16 groups * 2 genders)
+# reg_sampled (20 groups * 2 genders)
 
 
 
@@ -1317,7 +1565,7 @@ cat4_women_mean <- mean(cat4_women)
 
 # binary_fitted (2 groups * 2 genders)
 # cam_fitted (4 groups * 2 genders)
-# reg_fitted (16 groups * 2 genders)
+# reg_fitted (20 groups * 2 genders)
 
 
 # MEN
