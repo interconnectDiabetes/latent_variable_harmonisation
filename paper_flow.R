@@ -1106,6 +1106,8 @@ text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
 ############################################################################
 # Validation approach 2a: Sampling Directly from data
 ############################################################################
+# We have to first make 3 new columns in both the validation and study data set for sampled values
+# 
 # MEN
 # ITALY & SPAIN - binary
 # UK & NETHERLANDS - cam
@@ -1127,6 +1129,15 @@ text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
 ############################################################################
 # Validation approach 2b: Sampling Directly from data
 ############################################################################
+# We have to first make 3 new columns in both the validation and study data set for sampled values
+# from the subsets of the indices (sex stratified). Then calculate lambdas and make the simulations as well.
+
+# binary_sampled (2 groups * 2 genders)
+# cam_sampled (4 groups * 2 genders)
+# reg_sampled (16 groups * 2 genders)
+
+
+
 # MEN
 # ITALY & SPAIN - binary
 # UK & NETHERLANDS - cam
@@ -1149,6 +1160,13 @@ text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
 ############################################################################
 # Validation approach 3: Sampling from Fitted Distribution
 ############################################################################
+
+
+# binary_fitted (2 groups * 2 genders)
+# cam_fitted (4 groups * 2 genders)
+# reg_fitted (16 groups * 2 genders)
+
+
 # MEN
 # ITALY & SPAIN - binary
 # UK & NETHERLANDS - cam
@@ -1174,6 +1192,11 @@ text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
 ############################################################################
 # Validation approach 3: Sampling from Kernel Density Estimated Distribution
 ############################################################################
+
+# binary_kden (2 groups * 2 genders)
+# cam_kden (4 groups * 2 genders)
+# reg_kden (16 groups * 2 genders)
+
 # MEN
 # ITALY & SPAIN - binary
 # UK & NETHERLANDS - cam
