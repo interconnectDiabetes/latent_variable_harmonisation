@@ -21,6 +21,9 @@ library("survival")
 library("graphics")
 library("metafor")
 
+# fitting of distributions via MLE
+library("fitdistrplus")
+
 ###############################################################################
 ############################### FUNCTIONS #####################################
 ###############################################################################
@@ -706,6 +709,14 @@ abline(0,1)
 plot(x = final_output_men$binary_index_mean, y= final_output_men$PAEE)
 abline(0,1)
 
+plot(x = final_output_women$cam_index_mean, y= final_output_women$PAEE)
+abline(0,1)
+plot(x = final_output_women$reg_value, y= final_output_women$PAEE)
+abline(0,1)
+plot(x = final_output_women$binary_index_mean, y= final_output_women$PAEE)
+abline(0,1)
+
+
 
 #  _____  _               _         ______        _         
 # /  ___|| |             | |        |  _  \      | |        
@@ -1353,9 +1364,6 @@ text(usr[1], usr[4], 'Validation - women', adj = c( 0, 1 ))
 #  \___/\_| \_/___/ \____/\/   \/ \____/ \___/\____/ \____/\____/  \_/ \____/ 
                                                                             
 # THESE ARE NECESSARY FOR METHODS 2a, 2b, 3, and 4 to work                                                                        
-final_output_men <- final_output_men
-final_output_women <- final_output_women
-
 
 # Binary Index
 bin1_men <- mapply(final_output_men$PAEE, final_output_men$binary_index, FUN=function(x,y){
@@ -1499,10 +1507,12 @@ cat4_women_mean <- mean(cat4_women)
 
 ## 20 category reg based (Cam Index * PaWorkini)
 # cam 1
-reg1_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg1_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 1){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1511,10 +1521,12 @@ reg1_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg1_1_men <- reg1_1_men[!sapply(reg1_1_men,is.na)]
 
-reg1_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg1_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 2){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1523,10 +1535,12 @@ reg1_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg1_2_men <- reg1_2_men[!sapply(reg1_2_men,is.na)]
 
-reg1_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg1_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 3){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1535,10 +1549,12 @@ reg1_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg1_3_men <- reg1_3_men[!sapply(reg1_3_men,is.na)]
 
-reg1_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg1_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 4){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1547,10 +1563,12 @@ reg1_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg1_4_men <- reg1_4_men[!sapply(reg1_4_men,is.na)]
 
-reg1_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg1_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 5){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1560,10 +1578,12 @@ reg1_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 reg1_5_men <- reg1_5_men[!sapply(reg1_5_men,is.na)]
 
 #cam2
-reg2_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg2_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 1){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1572,10 +1592,12 @@ reg2_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg2_1_men <- reg2_1_men[!sapply(reg2_1_men,is.na)]
 
-reg2_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg2_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 2){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1584,10 +1606,12 @@ reg2_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg2_2_men <- reg2_2_men[!sapply(reg2_2_men,is.na)]
 
-reg2_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg2_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 3){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1596,10 +1620,12 @@ reg2_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg2_3_men <- reg2_3_men[!sapply(reg2_3_men,is.na)]
 
-reg2_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg2_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 4){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1608,10 +1634,12 @@ reg2_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg2_4_men <- reg2_4_men[!sapply(reg2_4_men,is.na)]
 
-reg2_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg2_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 5){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1621,10 +1649,12 @@ reg2_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 reg2_5_men <- reg2_5_men[!sapply(reg2_5_men,is.na)]
 
 #cam3
-reg3_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg3_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 1){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1633,10 +1663,12 @@ reg3_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg3_1_men <- reg3_1_men[!sapply(reg3_1_men,is.na)]
 
-reg3_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg3_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 2){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1645,10 +1677,12 @@ reg3_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg3_2_men <- reg3_2_men[!sapply(reg3_2_men,is.na)]
 
-reg3_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg3_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 3){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1657,10 +1691,12 @@ reg3_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg3_3_men <- reg3_3_men[!sapply(reg3_3_men,is.na)]
 
-reg3_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg3_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 4){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1669,10 +1705,12 @@ reg3_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg3_4_men <- reg3_4_men[!sapply(reg3_4_men,is.na)]
 
-reg3_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg3_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 5){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1682,10 +1720,12 @@ reg3_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 reg3_5_men <- reg3_5_men[!sapply(reg3_5_men,is.na)]
 
 #cam4
-reg4_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg4_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 1){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1694,10 +1734,12 @@ reg4_1_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 }) 
 reg4_1_men <- reg4_1_men[!sapply(reg4_1_men,is.na)]
 
-reg4_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg4_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 2){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1707,10 +1749,12 @@ reg4_2_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 reg4_2_men <- reg4_2_men[!sapply(reg4_2_men,is.na)]
 
 
-reg4_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg4_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 3){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1720,10 +1764,12 @@ reg4_3_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 reg4_3_men <- reg4_3_men[!sapply(reg4_3_men,is.na)]
 
 
-reg4_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg4_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 4){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1733,10 +1779,12 @@ reg4_4_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_ou
 reg4_4_men <- reg4_4_men[!sapply(reg4_4_men,is.na)]
 
 
-reg4_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact FUN=function(x,y,z){
+reg4_5_men <- mapply(final_output_men$PAEE, final_output_men$cam_index, final_output_men$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 5){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1750,10 +1798,12 @@ reg4_5_men <- reg4_5_men[!sapply(reg4_5_men,is.na)]
 # Womens
 ## 20 category reg based (Cam Index * PaWorkini)
 # cam 1
-reg1_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg1_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 1){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1762,22 +1812,26 @@ reg1_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg1_1_women <- reg1_1_women[!sapply(reg1_1_women,is.na)]
 
-reg1_2_qomen <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg1_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 2){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
   }
   return(output)
 }) 
-reg1_2_qomen <- reg1_2_qomen[!sapply(reg1_2_qomen,is.na)]
+reg1_2_women <- reg1_2_women[!sapply(reg1_2_women,is.na)]
 
-reg1_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg1_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 3){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1786,10 +1840,12 @@ reg1_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg1_3_women <- reg1_3_women[!sapply(reg1_3_women,is.na)]
 
-reg1_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg1_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 4){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1798,10 +1854,12 @@ reg1_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg1_4_women <- reg1_4_women[!sapply(reg1_4_women,is.na)]
 
-reg1_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg1_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 1){
     if (z == 5){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1811,10 +1869,12 @@ reg1_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 reg1_5_women <- reg1_5_women[!sapply(reg1_5_women,is.na)]
 
 #cam2
-reg2_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg2_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 1){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1823,10 +1883,12 @@ reg2_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg2_1_women <- reg2_1_women[!sapply(reg2_1_women,is.na)]
 
-reg2_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg2_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 2){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1835,10 +1897,12 @@ reg2_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg2_2_women <- reg2_2_women[!sapply(reg2_2_women,is.na)]
 
-reg2_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg2_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 3){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1847,10 +1911,12 @@ reg2_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg2_3_women <- reg2_3_women[!sapply(reg2_3_women,is.na)]
 
-reg2_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg2_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 4){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1859,10 +1925,12 @@ reg2_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg2_4_women <- reg2_4_women[!sapply(reg2_4_women,is.na)]
 
-reg2_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg2_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 2){
     if (z == 5){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1872,10 +1940,12 @@ reg2_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 reg2_5_women <- reg2_5_women[!sapply(reg2_5_women,is.na)]
 
 #cam3
-reg3_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg3_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 1){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1884,10 +1954,12 @@ reg3_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg3_1_women <- reg3_1_women[!sapply(reg3_1_women,is.na)]
 
-reg3_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg3_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 2){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1896,10 +1968,12 @@ reg3_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg3_2_women <- reg3_2_women[!sapply(reg3_2_women,is.na)]
 
-reg3_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg3_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 3){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1908,10 +1982,12 @@ reg3_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg3_3_women <- reg3_3_women[!sapply(reg3_3_women,is.na)]
 
-reg3_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg3_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 4){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1920,10 +1996,12 @@ reg3_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg3_4_women <- reg3_4_women[!sapply(reg3_4_women,is.na)]
 
-reg3_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg3_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 3){
     if (z == 5){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1933,10 +2011,12 @@ reg3_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 reg3_5_women <- reg3_5_women[!sapply(reg3_5_women,is.na)]
 
 #cam4
-reg4_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg4_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 1){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1945,10 +2025,12 @@ reg4_1_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 }) 
 reg4_1_women <- reg4_1_women[!sapply(reg4_1_women,is.na)]
 
-reg4_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg4_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 2){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1958,10 +2040,12 @@ reg4_2_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 reg4_2_women <- reg4_2_women[!sapply(reg4_2_women,is.na)]
 
 
-reg4_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg4_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 3){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1971,10 +2055,12 @@ reg4_3_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 reg4_3_women <- reg4_3_women[!sapply(reg4_3_women,is.na)]
 
 
-reg4_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg4_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 4){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
@@ -1984,10 +2070,12 @@ reg4_4_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, fi
 reg4_4_women <- reg4_4_women[!sapply(reg4_4_women,is.na)]
 
 
-reg4_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact FUN=function(x,y,z){
+reg4_5_women <- mapply(final_output_women$PAEE, final_output_women$cam_index, final_output_women$pa_workini_fact, FUN=function(x,y,z){
   if (y == 4){
     if (z == 5){
       output = x
+    } else {
+      output = NA
     }
   } else {
     output = NA
