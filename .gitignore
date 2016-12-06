@@ -1,2 +1,4 @@
 #RDATA
 *.RData
+*.Rproj
+.Rproj.user/
