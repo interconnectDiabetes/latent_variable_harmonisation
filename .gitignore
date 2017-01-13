@@ -1,2 +1,5 @@
 #RDATA
 *.RData
+
+#Misc
+*.db
