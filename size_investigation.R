@@ -4,7 +4,7 @@
 
 # 1000 runs, each individual received a random value drawn from a distribution defined for their PA category. So Stephen is proposing:
 
-# 1. Generate data for a “large” validation study (e.g. N=1000, 250 individuals in each pa_index category).   
+# 1. Generate data for a "large"	 validation study (e.g. N=1000, 250 individuals in each pa_index category).   
 # The PAEE for individuals with pa_index=1 are values sampled from a Normal distribution, mean 30, SD 2.5, 
 # i.e. N(30,2.5); for pa_index=2, sample from N(40,2.5); for pa_index=3, sample from N(50,2.5); for pa_index=4, 
 # sample from N(60,2.5).  This way, the sampled distributions should be almost entirely non-overlapping.
@@ -13,7 +13,7 @@
 #  and estimate the PAEE/T2D association using the real InterAct data. Repeat this 1000 (or some other large 
 #  number) times.
 
-# 3. Repeat (1) and (2) for a “small” validation study (e.g. N=100, 25 in each pa_index category), sampling 
+# 3. Repeat (1) and (2) for a "small" validation study (e.g. N=100, 25 in each pa_index category), sampling 
 # values from the same 4 underlying distributions.
 
 ## Author: Paul Scherer
@@ -106,7 +106,7 @@ calculate_index_from_paee <- function(paee){
 ####################################################################################################
 
 # 'Large' Validation Dataset 
-large_val <- as.data.frame(c(rep(1,250),rep(2,250),rep(3,250),rep(4,250))
+large_val <- as.data.frame(c(rep(1,250),rep(2,250),rep(3,250),rep(4,250)))
 colnames(large_val) <- c("cam_index")
 large_val$cam_index <- as.factor(large_val$cam_index)
 large_val$cam_index <- large_val$cam_index
@@ -130,7 +130,7 @@ large_val$cam_index_means <- unlist(mapply(large_val$cam_index, SIMPLIFY = FALSE
 ))
 
 # 'Small' Validation Dataset 
-small_val <- as.data.frame(c(rep(1,25),rep(2,25),rep(3,25),rep(4,25))
+small_val <- as.data.frame(c(rep(1,25),rep(2,25),rep(3,25),rep(4,25)))
 colnames(small_val) <- c("cam_index")
 small_val$cam_index <- as.factor(small_val$cam_index)
 small_val$cam_index <- small_val$cam_index
@@ -152,3 +152,34 @@ small_val$cam_index_means <- unlist(mapply(small_val$cam_index, SIMPLIFY = FALSE
   	return(output)
 	}
 ))
+
+
+# Study data set of 20000 points for which we calculate the betas, (test)
+study_data <- as.data.frame(c(rep(1,5000),rep(2,5000),rep(3,5000),rep(4,5000)))
+colnames(study_data) <- c("cam_index")
+study_data$cam_index <- as.factor(study_data$cam_index)
+study_data$paee <- unlist(lapply(study_data$cam_index, gaussian_index_sample))
+study_data$foo <- unlist(lapply(study_data$paee, data_generator, beta=set_beta))
+study_data$cam_index_means <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = index_mean1
+    } else if (x == 2) {
+      output = index_mean2
+    } else if (x == 3) {
+      output = index_mean3
+    } else if (x == 4) {
+      output = index_mean4
+    } else {
+      output = NA
+  	}
+  	return(output)
+	}
+))
+
+# 2. For each individual, randomly select a value from the appropriate artificial validation study distribution
+#  and estimate the PAEE/T2D association using the real InterAct data. Repeat this 1000 (or some other large 
+#  number) times.
+
+trials <- 1000;
