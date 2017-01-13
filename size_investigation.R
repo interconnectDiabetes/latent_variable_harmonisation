@@ -2,6 +2,8 @@
 # Simulated data run 1000 runs, each individual recieved a raodonm value drawin 
 # from a distribution defined for their PA category.
 
+# 1000 runs, each individual received a random value drawn from a distribution defined for their PA category. So Stephen is proposing:
+
 # 1. Generate data for a “large” validation study (e.g. N=1000, 250 individuals in each pa_index category).   
 # The PAEE for individuals with pa_index=1 are values sampled from a Normal distribution, mean 30, SD 2.5, 
 # i.e. N(30,2.5); for pa_index=2, sample from N(40,2.5); for pa_index=3, sample from N(50,2.5); for pa_index=4, 
@@ -33,18 +35,18 @@ set_beta <- 0.5
 
 # Index properties (Assumption that they are Gaussian)
 # Format : (mean, stdev)
-index_mean1 <- 35.6
-index_stdev1 <- 13.7
-index_mean2 <- 43.7
-index_stdev2 <- 15.2
-index_mean3 <- 49.0
-index_stdev3 <- 17.9
-index_mean4 <- 56.2
-index_stdev4 <- 18.4
+index_mean1 <- 30
+index_stdev1 <- 2.5
+index_mean2 <- 40
+index_stdev2 <- 2.5
+index_mean3 <- 50
+index_stdev3 <- 2.5
+index_mean4 <- 60
+index_stdev4 <- 2.5
 
 # PAEE range
 paee_range_min <- 20
-paee_range_max <- 75
+paee_range_max <- 70
 
 ###############################################################################
 ############################# Functions #######################################
@@ -102,3 +104,51 @@ calculate_index_from_paee <- function(paee){
 ####################################################################################################
 ################################ Creation of datasets ##############################################
 ####################################################################################################
+
+# 'Large' Validation Dataset 
+large_val <- as.data.frame(c(rep(1,250),rep(2,250),rep(3,250),rep(4,250))
+colnames(large_val) <- c("cam_index")
+large_val$cam_index <- as.factor(large_val$cam_index)
+large_val$cam_index <- large_val$cam_index
+large_val$paee <- unlist(lapply(large_val$cam_index, gaussian_index_sample))
+large_val$cam_index_means <- unlist(mapply(large_val$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = index_mean1
+    } else if (x == 2) {
+      output = index_mean2
+    } else if (x == 3) {
+      output = index_mean3
+    } else if (x == 4) {
+      output = index_mean4
+    } else {
+      output = NA
+  	}
+  	return(output)
+	}
+))
+
+# 'Small' Validation Dataset 
+small_val <- as.data.frame(c(rep(1,25),rep(2,25),rep(3,25),rep(4,25))
+colnames(small_val) <- c("cam_index")
+small_val$cam_index <- as.factor(small_val$cam_index)
+small_val$cam_index <- small_val$cam_index
+small_val$paee <- unlist(lapply(small_val$cam_index, gaussian_index_sample))
+small_val$cam_index_means <- unlist(mapply(small_val$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = index_mean1
+    } else if (x == 2) {
+      output = index_mean2
+    } else if (x == 3) {
+      output = index_mean3
+    } else if (x == 4) {
+      output = index_mean4
+    } else {
+      output = NA
+  	}
+  	return(output)
+	}
+))
