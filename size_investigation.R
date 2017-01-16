@@ -52,8 +52,7 @@ paee_range_max <- 70
 ############################# Functions #######################################
 ###############################################################################
 data_generator <- function(exposure, beta=set_beta, constant=20, noise=2.5){
-	# returns a datapoint given an exposure
-	# relies on a set constant, gaussian noise component
+  # Gives the y in y = mx+b given the other parameters 
 	fbeta <- (beta*exposure) + constant
 	data_point <- rnorm(1,fbeta,noise)
 	return (data_point)
@@ -109,7 +108,6 @@ calculate_index_from_paee <- function(paee){
 large_val <- as.data.frame(c(rep(1,250),rep(2,250),rep(3,250),rep(4,250)))
 colnames(large_val) <- c("cam_index")
 large_val$cam_index <- as.factor(large_val$cam_index)
-large_val$cam_index <- large_val$cam_index
 large_val$paee <- unlist(lapply(large_val$cam_index, gaussian_index_sample))
 large_val$cam_index_means <- unlist(mapply(large_val$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
@@ -133,7 +131,6 @@ large_val$cam_index_means <- unlist(mapply(large_val$cam_index, SIMPLIFY = FALSE
 small_val <- as.data.frame(c(rep(1,25),rep(2,25),rep(3,25),rep(4,25)))
 colnames(small_val) <- c("cam_index")
 small_val$cam_index <- as.factor(small_val$cam_index)
-small_val$cam_index <- small_val$cam_index
 small_val$paee <- unlist(lapply(small_val$cam_index, gaussian_index_sample))
 small_val$cam_index_means <- unlist(mapply(small_val$cam_index, SIMPLIFY = FALSE, FUN=function(x){
     if (is.na(x)) {
@@ -178,8 +175,87 @@ study_data$cam_index_means <- unlist(mapply(study_data$cam_index, SIMPLIFY = FAL
 	}
 ))
 
-# 2. For each individual, randomly select a value from the appropriate artificial validation study distribution
-#  and estimate the PAEE/T2D association using the real InterAct data. Repeat this 1000 (or some other large 
-#  number) times.
+# Create lists to draw random samples from for predictions this is for the small validation set
+s_cat1 <- mapply(small_val$paee, small_val$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+s_cat1 <- s_cat1[!sapply(s_cat1,is.na)]
 
-trials <- 1000;
+s_cat2 <- mapply(small_val$paee, small_val$cam_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+s_cat2 <- s_cat2[!sapply(s_cat2,is.na)]
+
+s_cat3 <- mapply(small_val$paee, small_val$cam_index, FUN=function(x,y){
+  if (y == 3){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+s_cat3 <- s_cat3[!sapply(s_cat3,is.na)]
+
+s_cat4 <- mapply(small_val$paee, small_val$cam_index, FUN=function(x,y){
+  if (y == 4){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+})
+s_cat4 <- s_cat4[!sapply(s_cat4,is.na)]
+
+
+# similarly for the large validation set
+cat1 <- mapply(large_val$paee, large_val$cam_index, FUN=function(x,y){
+  if (y == 1){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat1 <- cat1[!sapply(cat1,is.na)]
+
+cat2 <- mapply(large_val$paee, large_val$cam_index, FUN=function(x,y){
+  if (y == 2){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat2 <- cat2[!sapply(cat2,is.na)]
+
+cat3 <- mapply(large_val$paee, large_val$cam_index, FUN=function(x,y){
+  if (y == 3){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output) 
+}) 
+cat3 <- cat3[!sapply(cat3,is.na)]
+
+cat4 <- mapply(large_val$paee, large_val$cam_index, FUN=function(x,y){
+  if (y == 4){
+    output = x
+  } else {
+    output = NA
+  }
+  return(output)
+})
+cat4 <- cat4[!sapply(cat4,is.na)]
+
+
