@@ -258,4 +258,79 @@ cat4 <- mapply(large_val$paee, large_val$cam_index, FUN=function(x,y){
 })
 cat4 <- cat4[!sapply(cat4,is.na)]
 
+####################################################################################################
+################################## Regression Fitting ##############################################
+####################################################################################################
+
+# Initialise empty lists to store coeffcients
+s_betas <- vector("numeric")
+s_std <- vector("numeric")
+
+l_betas <- vector("numeric")
+l_std <- vector("numeric")
+
+
+numtrials <- 10
+for (i in 1:numtrials){
+  # we assign random values from each category list of the validation set for each participant in the
+  # study data set and then find the regression equation using this data. 
+  # store the regression coefficient into list to create a dataframe afterwards
+  study_data$small_paee_sample <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+      if (is.na(x)) {
+        output = NA
+      } else if (x == 1){
+        output = sample(s_cat1,1,replace=TRUE)
+      } else if (x == 2) {
+        output = sample(s_cat2,1,replace=TRUE)
+      } else if (x == 3) {
+        output = sample(s_cat3,1,replace=TRUE)
+      } else if (x == 4) {
+        output = sample(s_cat4,1,replace=TRUE)
+      } else {
+        output = NA
+      }
+      return(output)
+    }
+  ))
+
+  study_data$large_paee_sample <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
+      if (is.na(x)) {
+        output = NA
+      } else if (x == 1){
+        output = sample(cat1,1,replace=TRUE)
+      } else if (x == 2) {
+        output = sample(cat2,1,replace=TRUE)
+      } else if (x == 3) {
+        output = sample(cat3,1,replace=TRUE)
+      } else if (x == 4) {
+        output = sample(cat4,1,replace=TRUE)
+      } else {
+        output = NA
+      }
+      return(output)
+    }
+  ))
+
+  # calculate and store the coefficients 
+  small_reg <- lm(formula=foo~small_paee_sample, data=study_data)
+  small_coeff <- small_reg$coefficients["small_paee_sample"]
+  small_std <- (summary(small_reg)$coefficients[,"Std. Error"])["small_paee_sample"]
+  s_betas <- c(s_betas, small_coeff)
+  s_std <- c(s_std, small_std)
+
+  large_reg <- lm(formula=foo~large_paee_sample, data=study_data)
+  large_coeff <- large_reg$coefficients["large_paee_sample"]
+  large_std <- (summary(large_reg)$coefficients[,"Std. Error"])["large_paee_sample"]
+  l_betas <- c(l_betas, large_coeff)
+  l_std <- c(l_std, large_std)
+
+}
+
+# Store values into dataframe
+results <- as.data.frame(c(1:numtrials))
+colnames(results) <- c("Trial")
+results$small_coeff <- s_betas
+results$small_stdError <- s_std
+results$large_coeff <- l_betas
+results$large_stdError <- l_std
 
