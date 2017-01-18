@@ -1,5 +1,9 @@
 ## Title: Harmonisation of PAEE
 
+# Preceded by initialFlow.R.
+# This script runs univariate linear harmonisation methods on different categorical representations of physical activity
+# using 4 different methods to generate samples.
+
 ## Papers to find comparison results:
 ## 1. Physical activity reduces the risk of incident type 2 diabetes in 
 ## general and in abdominally lean and obese men and women: the EPIC-InterAct 
@@ -9,6 +13,9 @@
 ## Author: Paul Scherer
 ## Date: 10/11/2016
 ## University of Cambridge
+
+
+#TODO: Some serious refactoring of the final parts to make it less verbose. 
 
 ###############################################################################
 ############################### SET UP ########################################

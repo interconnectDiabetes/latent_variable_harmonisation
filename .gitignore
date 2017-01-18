@@ -4,3 +4,8 @@
 .Rproj.user/
 .Rproj.user
 .Rhistory
+
+
+*.db
+
+
