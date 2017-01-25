@@ -4,7 +4,7 @@
 
 # 1000 runs, each individual received a random value drawn from a distribution defined for their PA category. So Stephen is proposing:
 
-# 1. Generate data for a "large"	 validation study (e.g. N=1000, 250 individuals in each pa_index category).   
+# 1. Generate data for a "large"   validation study (e.g. N=1000, 250 individuals in each pa_index category).   
 # The PAEE for individuals with pa_index=1 are values sampled from a Normal distribution, mean 30, SD 2.5, 
 # i.e. N(30,2.5); for pa_index=2, sample from N(40,2.5); for pa_index=3, sample from N(50,2.5); for pa_index=4, 
 # sample from N(60,2.5).  This way, the sampled distributions should be almost entirely non-overlapping.
@@ -53,51 +53,51 @@ paee_range_max <- 70
 ###############################################################################
 data_generator <- function(exposure, beta=set_beta, constant=20, noise=2.5){
   # Gives the y in y = mx+b given the other parameters 
-	fbeta <- (beta*exposure) + constant
-	data_point <- rnorm(1,fbeta,noise)
-	return (data_point)
+  fbeta <- (beta*exposure) + constant
+  data_point <- rnorm(1,fbeta,noise)
+  return (data_point)
 }
 
 gaussian_index_sample <- function(x){
-	# returns a datapoint sampled from the index distribution
-	# This can be seen as an exposure to be used in the data_generator
-	# :param: index = cambridge index
-	if (x == 1){
-		index_mean <- index_mean1
-		index_stdev <- index_stdev1
-	} else if (x == 2){
-		index_mean <- index_mean2
-		index_stdev <- index_stdev2
-	} else if (x == 3){
-		index_mean <- index_mean3
-		index_stdev <- index_stdev3
-	} else {
-		index_mean <- index_mean4
-		index_stdev <- index_stdev4
-	}
-	data_point <- rnorm(1, index_mean, index_stdev)
-	return (data_point)
+  # returns a datapoint sampled from the index distribution
+  # This can be seen as an exposure to be used in the data_generator
+  # :param: index = cambridge index
+  if (x == 1){
+    index_mean <- index_mean1
+    index_stdev <- index_stdev1
+  } else if (x == 2){
+    index_mean <- index_mean2
+    index_stdev <- index_stdev2
+  } else if (x == 3){
+    index_mean <- index_mean3
+    index_stdev <- index_stdev3
+  } else {
+    index_mean <- index_mean4
+    index_stdev <- index_stdev4
+  }
+  data_point <- rnorm(1, index_mean, index_stdev)
+  return (data_point)
 }
 
 
 lambda_collector_cam_index <- function(data_set_outcome, data_set_exposure, data_set){
-	rdr_regression_fit <- lm(formula=data_set_outcome~data_set_exposure, data=data_set)
-	lambda <- rdr_regression_fit$coefficients["cam_index_means"]
-	return (lambda)
+  rdr_regression_fit <- lm(formula=data_set_outcome~data_set_exposure, data=data_set)
+  lambda <- rdr_regression_fit$coefficients["cam_index_means"]
+  return (lambda)
 }
 
 calculate_index_from_paee <- function(paee){
-	# take paee value and calculate probability of it belonging to index
-	# random weighted assignment into that category
-	prob1 <- pnorm(paee, mean=index_mean1, sd=index_stdev1)
-	prob2 <- pnorm(paee, mean=index_mean2, sd=index_stdev2)
-	prob3 <- pnorm(paee, mean=index_mean3, sd=index_stdev3)
-	prob4 <- pnorm(paee, mean=index_mean4, sd=index_stdev4)
-
-	probs_cam_index <- c(prob1, prob2, prob3, prob4)
-	index_num <- sample(c(1:4), 1, replace=TRUE, prob=probs_cam_index )
-
-	return (index_num)
+  # take paee value and calculate probability of it belonging to index
+  # random weighted assignment into that category
+  prob1 <- pnorm(paee, mean=index_mean1, sd=index_stdev1)
+  prob2 <- pnorm(paee, mean=index_mean2, sd=index_stdev2)
+  prob3 <- pnorm(paee, mean=index_mean3, sd=index_stdev3)
+  prob4 <- pnorm(paee, mean=index_mean4, sd=index_stdev4)
+  
+  probs_cam_index <- c(prob1, prob2, prob3, prob4)
+  index_num <- sample(c(1:4), 1, replace=TRUE, prob=probs_cam_index )
+  
+  return (index_num)
 }
 
 ####################################################################################################
@@ -110,21 +110,21 @@ colnames(large_val) <- c("cam_index")
 large_val$cam_index <- as.factor(large_val$cam_index)
 large_val$paee <- unlist(lapply(large_val$cam_index, gaussian_index_sample))
 large_val$cam_index_means <- unlist(mapply(large_val$cam_index, SIMPLIFY = FALSE, FUN=function(x){
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = index_mean1
-    } else if (x == 2) {
-      output = index_mean2
-    } else if (x == 3) {
-      output = index_mean3
-    } else if (x == 4) {
-      output = index_mean4
-    } else {
-      output = NA
-  	}
-  	return(output)
-	}
+  if (is.na(x)) {
+    output = NA
+  } else if (x == 1){
+    output = index_mean1
+  } else if (x == 2) {
+    output = index_mean2
+  } else if (x == 3) {
+    output = index_mean3
+  } else if (x == 4) {
+    output = index_mean4
+  } else {
+    output = NA
+  }
+  return(output)
+}
 ))
 
 # 'Small' Validation Dataset 
@@ -133,21 +133,21 @@ colnames(small_val) <- c("cam_index")
 small_val$cam_index <- as.factor(small_val$cam_index)
 small_val$paee <- unlist(lapply(small_val$cam_index, gaussian_index_sample))
 small_val$cam_index_means <- unlist(mapply(small_val$cam_index, SIMPLIFY = FALSE, FUN=function(x){
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = index_mean1
-    } else if (x == 2) {
-      output = index_mean2
-    } else if (x == 3) {
-      output = index_mean3
-    } else if (x == 4) {
-      output = index_mean4
-    } else {
-      output = NA
-  	}
-  	return(output)
-	}
+  if (is.na(x)) {
+    output = NA
+  } else if (x == 1){
+    output = index_mean1
+  } else if (x == 2) {
+    output = index_mean2
+  } else if (x == 3) {
+    output = index_mean3
+  } else if (x == 4) {
+    output = index_mean4
+  } else {
+    output = NA
+  }
+  return(output)
+}
 ))
 
 
@@ -158,21 +158,21 @@ study_data$cam_index <- as.factor(study_data$cam_index)
 study_data$paee <- unlist(lapply(study_data$cam_index, gaussian_index_sample))
 study_data$foo <- unlist(lapply(study_data$paee, data_generator, beta=set_beta))
 study_data$cam_index_means <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
-    if (is.na(x)) {
-      output = NA
-    } else if (x == 1){
-      output = index_mean1
-    } else if (x == 2) {
-      output = index_mean2
-    } else if (x == 3) {
-      output = index_mean3
-    } else if (x == 4) {
-      output = index_mean4
-    } else {
-      output = NA
-  	}
-  	return(output)
-	}
+  if (is.na(x)) {
+    output = NA
+  } else if (x == 1){
+    output = index_mean1
+  } else if (x == 2) {
+    output = index_mean2
+  } else if (x == 3) {
+    output = index_mean3
+  } else if (x == 4) {
+    output = index_mean4
+  } else {
+    output = NA
+  }
+  return(output)
+}
 ))
 
 # Create lists to draw random samples from for predictions this is for the small validation set
@@ -276,54 +276,54 @@ for (i in 1:numtrials){
   # study data set and then find the regression equation using this data. 
   # store the regression coefficient into list to create a dataframe afterwards
   study_data$small_paee_sample <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
-      if (is.na(x)) {
-        output = NA
-      } else if (x == 1){
-        output = sample(s_cat1,1,replace=TRUE)
-      } else if (x == 2) {
-        output = sample(s_cat2,1,replace=TRUE)
-      } else if (x == 3) {
-        output = sample(s_cat3,1,replace=TRUE)
-      } else if (x == 4) {
-        output = sample(s_cat4,1,replace=TRUE)
-      } else {
-        output = NA
-      }
-      return(output)
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = sample(s_cat1,1,replace=TRUE)
+    } else if (x == 2) {
+      output = sample(s_cat2,1,replace=TRUE)
+    } else if (x == 3) {
+      output = sample(s_cat3,1,replace=TRUE)
+    } else if (x == 4) {
+      output = sample(s_cat4,1,replace=TRUE)
+    } else {
+      output = NA
     }
+    return(output)
+  }
   ))
-
+  
   study_data$large_paee_sample <- unlist(mapply(study_data$cam_index, SIMPLIFY = FALSE, FUN=function(x){
-      if (is.na(x)) {
-        output = NA
-      } else if (x == 1){
-        output = sample(cat1,1,replace=TRUE)
-      } else if (x == 2) {
-        output = sample(cat2,1,replace=TRUE)
-      } else if (x == 3) {
-        output = sample(cat3,1,replace=TRUE)
-      } else if (x == 4) {
-        output = sample(cat4,1,replace=TRUE)
-      } else {
-        output = NA
-      }
-      return(output)
+    if (is.na(x)) {
+      output = NA
+    } else if (x == 1){
+      output = sample(cat1,1,replace=TRUE)
+    } else if (x == 2) {
+      output = sample(cat2,1,replace=TRUE)
+    } else if (x == 3) {
+      output = sample(cat3,1,replace=TRUE)
+    } else if (x == 4) {
+      output = sample(cat4,1,replace=TRUE)
+    } else {
+      output = NA
     }
+    return(output)
+  }
   ))
-
+  
   # calculate and store the coefficients 
   small_reg <- lm(formula=foo~small_paee_sample, data=study_data)
   small_coeff <- small_reg$coefficients["small_paee_sample"]
   small_std <- (summary(small_reg)$coefficients[,"Std. Error"])["small_paee_sample"]
   s_betas <- c(s_betas, small_coeff)
   s_std <- c(s_std, small_std)
-
+  
   large_reg <- lm(formula=foo~large_paee_sample, data=study_data)
   large_coeff <- large_reg$coefficients["large_paee_sample"]
   large_std <- (summary(large_reg)$coefficients[,"Std. Error"])["large_paee_sample"]
   l_betas <- c(l_betas, large_coeff)
   l_std <- c(l_std, large_std)
-
+  
 }
 
 # Store values into dataframe
@@ -333,4 +333,3 @@ results$small_coeff <- s_betas
 results$small_stdError <- s_std
 results$large_coeff <- l_betas
 results$large_stdError <- l_std
-
