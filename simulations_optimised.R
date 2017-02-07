@@ -33,9 +33,9 @@ library(ggplot2)
                          ,index_indicator = c(1,2,3,4))
   
   # Defines runs to do with different sizes of validation study
-  #validation_index_size <- c(seq(5,95, 10), seq(100, 1000, 100))
-#validation_index_size <- c(seq(5,100, 10))  
-validation_index_size <- 5
+ # validation_index_size <- c(seq(5,95, 10), seq(100, 1000, 100))
+  validation_index_size <- c(5,100, 1000)  
+#validation_index_size <- 5
 
   study_index_size = 5000
   
@@ -59,9 +59,10 @@ study_data$foo <-   rnorm(length(study_data$paee),(set_beta*study_data$paee) + c
 
 # plot it
 
-print(ggplot(study_data,aes(x=paee,group=index,fill=index))+
+
+print(ggplot(study_data,aes(x=paee,group=index,fill=factor(index)))+
         geom_histogram(position="identity",alpha=0.5,binwidth=1)+
-        ggtitle(label = "Study data"))
+        ggtitle(label = "Study data")+scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
 
 
 # this loop is for the different sizes of validation study
@@ -79,11 +80,11 @@ print(ggplot(study_data,aes(x=paee,group=index,fill=index))+
                                 return (output)
                               })))
    
-   print(ggplot(validation_study,aes(x=paee,group=index,fill=index))+
+   print(ggplot(validation_study,aes(x=paee,group=index,fill=factor(index)))+
      geom_histogram(position="identity",alpha=0.5,binwidth=1)+theme_bw()+
-     ggtitle(label = paste("validation study size = ",validation_index_size[i])))
-   
-   
+     ggtitle(label = paste("validation study size = ",validation_index_size[i]))+
+       scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
+
 
    # Initialise some structures to store coeffcients
    
@@ -96,59 +97,60 @@ print(ggplot(study_data,aes(x=paee,group=index,fill=index))+
    # plot.new()
   # plot(x = study_data$paee, y= study_data$foo)
    
-   for (j in 1:numtrials){
-     # we assign random values from each category list of the validation set for each participant in the
-     # study data set and then find the regression equation using this data. 
-     # store the regression coefficient into list to create a dataframe afterwards
-   
-     #this is a draw per person, although it is done on a per index basis
-     # for example if there are 100 people in the index it draws 100
-     # values from the appropriate validation study index
-     study_data$paee_sample_per <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)),
-                                                    FUN = sample, size = study_index_size,replace=TRUE)))
+     for (j in 1:numtrials){
+       # we assign random values from each category list of the validation set for each participant in the
+       # study data set and then find the regression equation using this data. 
+       # store the regression coefficient into list to create a dataframe afterwards
      
-     #this is a draw per index
-     # for example if there are 100 people in the index it draws one
-     # value from the appropriate validation study index
-     # and replicates this 100 times
-     study_data$paee_sample_ind <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)),
-                                                    FUN = function(paee_vals){
-                                                        output = rep(x = sample(x = paee_vals, size = 1), times = study_index_size)
-                                                        return(output)
-                                                      
-                                                     })))
+       #this is a draw per person, although it is done on a per index basis
+       # for example if there are 100 people in the index it draws 100
+       # values from the appropriate validation study index
+       study_data$paee_sample_per <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)),
+                                                      FUN = sample, size = study_index_size,replace=TRUE)))
+       
+       #this is a draw per index
+       # for example if there are 100 people in the index it draws one
+       # value from the appropriate validation study index
+       # and replicates this 100 times
+       study_data$paee_sample_ind <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)),
+                                                      FUN = function(paee_vals){
+                                                          output = rep(x = sample(x = paee_vals, size = 1), times = study_index_size)
+                                                          return(output)
+                                                        
+                                                       })))
+    
+       # calculate and store the coefficients per person
+       reg_out_per <- lm(formula=foo~paee_sample_per, data=study_data)
+       reg_coeff_per <- reg_out_per$coefficients["paee_sample_per"]
+       reg_std_per <- (summary(reg_out_per)$coefficients[,"Std. Error"])["paee_sample_per"]
+       betas_per <- c(betas_per, reg_coeff_per)
+       std_errs_per <- c(std_errs_per, reg_std_per)
+       
+       # calculate and store the coefficients per index
+       reg_out_ind <- lm(formula=foo~paee_sample_ind, data=study_data)
+       reg_coeff_ind <- reg_out_ind$coefficients["paee_sample_ind"]
+       reg_std_ind <- (summary(reg_out_ind)$coefficients[,"Std. Error"])["paee_sample_ind"]
+       betas_ind <- c(betas_ind, reg_coeff_ind)
+       std_errs_ind <- c(std_errs_ind, reg_std_ind)
   
-     # calculate and store the coefficients per person
-     reg_out_per <- lm(formula=foo~paee_sample_per, data=study_data)
-     reg_coeff_per <- reg_out_per$coefficients["paee_sample_per"]
-     reg_std_per <- (summary(reg_out_per)$coefficients[,"Std. Error"])["paee_sample_per"]
-     betas_per <- c(betas_per, reg_coeff_per)
-     std_errs_per <- c(std_errs_per, reg_std_per)
-     
-     # calculate and store the coefficients per index
-     reg_out_ind <- lm(formula=foo~paee_sample_ind, data=study_data)
-     reg_coeff_ind <- reg_out_ind$coefficients["paee_sample_ind"]
-     reg_std_ind <- (summary(reg_out_ind)$coefficients[,"Std. Error"])["paee_sample_ind"]
-     betas_ind <- c(betas_ind, reg_coeff_ind)
-     std_errs_ind <- c(std_errs_ind, reg_std_ind)
-
-     
-     
-     #blah_per = lm(formula=foo~paee_sample_per, data=study_data)
-     #abline(reg_out_per)
-
-     
-   }
+       
+       
+       #blah_per = lm(formula=foo~paee_sample_per, data=study_data)
+       #abline(reg_out_per)
   
+       
+     }
   
-  print(ggplot(study_data,aes(x=paee_sample_per,group=index,fill=index))+
+  print(ggplot(study_data,aes(x=paee_sample_per,group=index,fill=factor(index)))+
           geom_histogram(position="identity",alpha=0.5,binwidth=1)+theme_bw()+
-          ggtitle(label = paste(" PAEE person - validation study size = ",validation_index_size[i])))
+          ggtitle(label = paste("PAEE person - validation study size = ",validation_index_size[i]))+
+          scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
   
   
-  print(ggplot(study_data,aes(x=paee_sample_ind,group=index,fill=index))+
+  print(ggplot(study_data,aes(x=paee_sample_ind,group=index,fill=factor(index)))+
           geom_histogram(position="identity",alpha=0.5,binwidth=1)+theme_bw()+
-          ggtitle(label = paste(" PAEE index - validation study size = ",validation_index_size[i])))
+          ggtitle(label = paste(" PAEE index - validation study size = ",validation_index_size[i]))+
+          scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
   
    
    # Do the regression using validation study means (for comparison)
