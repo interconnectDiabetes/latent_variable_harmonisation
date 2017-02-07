@@ -26,16 +26,21 @@ library(ggplot2)
   constant <- 20
 
 
-  # Index properties (Assumption that they are Gaussian)
+  # Index properties (Assumption that they are Gaussian).
+  # Indicator is just a name
   
   indices <- data.frame (mean = c(30, 40, 50, 60)
                         ,std_dev = c(5, 5, 5, 5)
                          ,index_indicator = c(1,2,3,4))
   
   # Defines runs to do with different sizes of validation study
+  # So if there a 5 numbers in the vector c(5,10,25,50,100)
+  # Then a simulation of x trials will be run for each of these
+  # different sized validation studies
+
  # validation_index_size <- c(seq(5,95, 10), seq(100, 1000, 100))
   validation_index_size <- c(5,100, 1000)  
-#validation_index_size <- 5
+  #validation_index_size <- 5
 
   study_index_size = 5000
   
@@ -44,10 +49,10 @@ library(ggplot2)
   
   results_df <- data.frame()
   
-#get our study data
+#build empty data frame for our study data
 study_data = data.frame(index = rep(x = indices$index_indicator,each = study_index_size ))
 
-# for each index, pick all the values at once
+# for each index, pick all the values (defined by study_index_size) at once
 study_data$paee = unlist(unname(lapply(X = split(x = indices, f = as.factor(indices$index_indicator)), 
                                        FUN = function(x){
                                          
@@ -55,10 +60,10 @@ study_data$paee = unlist(unname(lapply(X = split(x = indices, f = as.factor(indi
                                          return (output)
                                        })))
 
+# generate our outcome variable plus some noise
 study_data$foo <-   rnorm(length(study_data$paee),(set_beta*study_data$paee) + constant,10)
 
-# plot it
-
+# plot the study data so we can see what it looks like
 
 print(ggplot(study_data,aes(x=paee,group=index,fill=factor(index)))+
         geom_histogram(position="identity",alpha=0.5,binwidth=1)+
@@ -80,6 +85,7 @@ print(ggplot(study_data,aes(x=paee,group=index,fill=factor(index)))+
                                 return (output)
                               })))
    
+   # plot the validation study so we can see what it looks like
    print(ggplot(validation_study,aes(x=paee,group=index,fill=factor(index)))+
      geom_histogram(position="identity",alpha=0.5,binwidth=1)+theme_bw()+
      ggtitle(label = paste("validation study size = ",validation_index_size[i]))+
@@ -94,24 +100,22 @@ print(ggplot(study_data,aes(x=paee,group=index,fill=factor(index)))+
    betas_ind <- vector("numeric")
    std_errs_ind <- vector("numeric")
    
-   # plot.new()
-  # plot(x = study_data$paee, y= study_data$foo)
    
      for (j in 1:numtrials){
        # we assign random values from each category list of the validation set for each participant in the
        # study data set and then find the regression equation using this data. 
        # store the regression coefficient into list to create a dataframe afterwards
      
-       #this is a draw per person, although it is done on a per index basis
+       # this is a draw per person, although it is done on a per index basis
        # for example if there are 100 people in the index it draws 100
-       # values from the appropriate validation study index
+       # values from the appropriate validation study index at once
        study_data$paee_sample_per <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)),
                                                       FUN = sample, size = study_index_size,replace=TRUE)))
        
-       #this is a draw per index
+       # this is a value per index
        # for example if there are 100 people in the index it draws one
        # value from the appropriate validation study index
-       # and replicates this 100 times
+       # and duplicates this same value 100 times for each person
        study_data$paee_sample_ind <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)),
                                                       FUN = function(paee_vals){
                                                           output = rep(x = sample(x = paee_vals, size = 1), times = study_index_size)
@@ -132,28 +136,24 @@ print(ggplot(study_data,aes(x=paee,group=index,fill=factor(index)))+
        reg_std_ind <- (summary(reg_out_ind)$coefficients[,"Std. Error"])["paee_sample_ind"]
        betas_ind <- c(betas_ind, reg_coeff_ind)
        std_errs_ind <- c(std_errs_ind, reg_std_ind)
-  
-       
-       
-       #blah_per = lm(formula=foo~paee_sample_per, data=study_data)
-       #abline(reg_out_per)
-  
        
      }
   
+   
+  #for visualisation, plot the last per person set of values
   print(ggplot(study_data,aes(x=paee_sample_per,group=index,fill=factor(index)))+
           geom_histogram(position="identity",alpha=0.5,binwidth=1)+theme_bw()+
           ggtitle(label = paste("PAEE person - validation study size = ",validation_index_size[i]))+
           scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
   
-  
+  #for visualisation, plot the last per index set of values
   print(ggplot(study_data,aes(x=paee_sample_ind,group=index,fill=factor(index)))+
           geom_histogram(position="identity",alpha=0.5,binwidth=1)+theme_bw()+
           ggtitle(label = paste(" PAEE index - validation study size = ",validation_index_size[i]))+
           scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
   
    
-   # Do the regression using validation study means (for comparison)
+  # Do the regression using validation study means (for comparison)
    
    study_data$paee_sample_ind_mean <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)),
                                                       FUN = function(paee_vals){
