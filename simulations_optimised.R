@@ -11,11 +11,14 @@
 ###############################################################################
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
+setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
 library(ggplot2)
 
-## Seed
-set.seed(66)
-
+## Seed and directory for plots of seed
+seed <- 252
+set.seed(seed)
+seedPath <- paste0('seed_',seed,sep="")
+dir.create(seedPath)
 ## Parameters
 # The linear correlation coefficient between exposure and outcome.
 set_beta <- 0.5
@@ -52,11 +55,14 @@ study_data$paee = unlist(unname(lapply(X = split(x = indices, f = as.factor(indi
 # generate our outcome variable plus some noise
 study_data$foo <-   rnorm(length(study_data$paee),(set_beta*study_data$paee) + constant,10)
 
+
 # plot the study data so we can see what it looks like
+mypath <- file.path(getwd(),seedPath,paste0('studyData',indices$std_dev[1],'.png',sep=""))
+png(file=mypath, width = 1260, height = 940, res = 300)
 print(ggplot(study_data,aes(x=paee,group=index,fill=factor(index)))+
         geom_histogram(position="identity",alpha=0.5,binwidth=1)+
         ggtitle(label = "Study data")+scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
-
+dev.off()
 
 # this loop is for the different sizes of validation study
 for (i in 1:length(validation_index_size)) {
@@ -72,11 +78,13 @@ for (i in 1:length(validation_index_size)) {
     })))
 
   # plot the validation study so we can see what it looks like
+  mypath <- file.path(getwd(),seedPath,paste0('validationData',validation_index_size[i],'_stdev',indices$std_dev[1],'.png',sep=""))
+  png(file=mypath, width = 1260, height = 940, res = 300)
   print(ggplot(validation_study,aes(x=paee,group=index,fill=factor(index)))+
     geom_histogram(position="identity",alpha=0.5,binwidth=1)+
     theme_bw()+ggtitle(label = paste("validation study size = ",validation_index_size[i]))+
     scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
-
+  dev.off()
 
   # Initialise some structures to store coeffcients
   betas_per <- vector("numeric")
@@ -123,17 +131,22 @@ for (i in 1:length(validation_index_size)) {
   }
 
   #for visualisation, plot the last per person set of values
+  mypath <- file.path(getwd(),seedPath,paste0('perPerson',validation_index_size[i],'_stdev',indices$std_dev[1],'.png',sep=""))
+  png(file=mypath, width = 1260, height = 940, res = 300)
   print(ggplot(study_data,aes(x=paee_sample_per,group=index,fill=factor(index)))+
     geom_histogram(position="identity",alpha=0.5,binwidth=1)+theme_bw()+
     ggtitle(label = paste("PAEE person - validation study size = ",validation_index_size[i]))+
     scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
+  dev.off()
 
   #for visualisation, plot the last per index set of values
+  mypath <- file.path(getwd(),seedPath,paste0('perIndex',validation_index_size[i],'_stdev',indices$std_dev[1],'.png',sep=""))
+  png(file=mypath, width = 1260, height = 940, res = 300)
   print(ggplot(study_data,aes(x=paee_sample_ind,group=index,fill=factor(index)))+
     geom_histogram(position="identity",alpha=0.5,binwidth=1)+theme_bw()+
     ggtitle(label = paste(" PAEE index - validation study size = ",validation_index_size[i]))+
     scale_fill_manual(values = c("red", "grey", "seagreen3","blue")))
-
+  dev.off()
 
   # Do the regression using validation study means (for comparison)
   study_data$paee_sample_ind_mean <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)),
