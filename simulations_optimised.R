@@ -15,7 +15,7 @@ setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
 library(ggplot2)
 
 ## Seed and directory for plots of seed
-seed <- 700
+seed <- 54
 set.seed(seed)
 seedPath <- paste0('seed_',seed,sep="")
 dir.create(seedPath)
@@ -29,6 +29,8 @@ constant <- 20
 stdDevs <- c(5,10,15)
 final_output_list <- vector("list", length(stdDevs))
 for (s in 1:length(stdDevs)){
+  set.seed(seed)
+
   indices <- data.frame (mean=c(30, 40, 50, 60), std_dev = c(stdDevs[s], stdDevs[s], stdDevs[s], stdDevs[s]), index_indicator = c(1,2,3,4))
 
   # Defines runs to do with different sizes of validation study
@@ -42,7 +44,7 @@ for (s in 1:length(stdDevs)){
   study_index_size = 5000
 
 
-  numtrials <- 10 # number of draws
+  numtrials <- 1000 # number of draws
 
   results_df <- data.frame()
 
@@ -69,6 +71,7 @@ for (s in 1:length(stdDevs)){
 
   # this loop is for the different sizes of validation study
   for (i in 1:length(validation_index_size)) {
+    set.seed(seed) # reset the seed to create the same validation set
 
     #create index column
     validation_study = data.frame(index = rep(x = indices$index_indicator,each = validation_index_size[i]))
@@ -177,7 +180,7 @@ for (s in 1:length(stdDevs)){
   }
   # Summarizing the results dataframe
   temp_output <- aggregate(results_df[,3:8], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.05,0.5,0.95), names=TRUE)
-  final_output = data.frame(trials = temp_output[,1])
+  final_output = data.frame(validation_size = temp_output[,1])
 
   for (k in 2:ncol(temp_output)){
     temp = as.data.frame(temp_output[,k])
