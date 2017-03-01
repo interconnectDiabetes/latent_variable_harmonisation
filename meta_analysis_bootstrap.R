@@ -23,6 +23,7 @@ constant <- 20
 stdDevs <- c(5,10,15)
 
 # Validation Data specific properties
+validation_sizes <- c(25,50,100)
 
 # Study Data Specific properties
 study_index_size <- 5000
@@ -89,23 +90,20 @@ studyListCreate <- function(indices, stdDev_list, index_size){
 ###############################################################################
 ## Cohort1
 indices1 <- data.frame(mean=c(30,40,50,60), std_dev = stdDevs, index_indicator = c(1,2,3,4))
-study_list1 <- vector("list", length(stdDevs))
-validation_list1 <- vector("list", length(stdDevs))
-study_data1 <- studyCreate(indices1, 5, study_index_size)
-validation_data1 <- validationCreate(indices1, 5, 25)
+# study_data1 <- studyCreate(indices1, 5, study_index_size)
+# validation_data1 <- validationCreate(indices1, 5, 25)
+study_list1 <- studyListCreate(indices1, stdDevs, study_index_size)
+validation_list1 <- validationListCreate(indices1, stdDevs, validation_sizes)
 
 ## Cohort2
 indices2 <- data.frame(mean=c(25,35,45,55,65), std_dev = stdDevs, index_indicator = c(1,2,3,4,5))
-
-study_data2 <- studyCreate(indices2, 5, study_index_size)
-validation_data2 <- validationCreate(indices2, 5, 25)
+study_list2 <- studyListCreate(indices2, stdDevs, study_index_size)
+validation_list2 <- validationListCreate(indices2, stdDevs, validation_sizes)
 
 ## Cohort3
 indices3 <- data.frame(mean=c(30,35,40,45,50,55), std_dev = stdDevs, index_indicator = c(1,2,3,4,5,6))
-
-study_data3 <- studyCreate(indices3, 5, study_index_size)
-validation_data3 <- validationCreate(indices3, 5, 25)
-
+study_list3 <- studyListCreate(indices3, stdDevs, study_index_size)
+validation_list3 <- validationListCreate(indices3, stdDevs, validation_sizes)
 
 
 ## Cohort definition (should change to class if possible)
