@@ -66,15 +66,27 @@ studyCreate <- function(indices, stdDev, index_size){
 ###############################################################################
 ## Cohort1
 indices1 <- data.frame(mean=c(30,40,50,60), std_dev = c(5,5,5,5), index_indicator = c(1,2,3,4))
+study_data1 <- studyCreate(indices1, 5, study_index_size)
+validation_data1 <- validationCreate(indices1, 5, 25)
 
 ## Cohort2
 indices2 <- data.frame(mean=c(25,35,45,55,65), std_dev = c(5,5,5,5,5), index_indicator = c(1,2,3,4,5))
+study_data2 <- studyCreate(indices2, 5, study_index_size)
+validation_data2 <- validationCreate(indices2, 5, 25)
 
 ## Cohort3
 indices3 <- data.frame(mean=c(30,35,40,45,50,55), std_dev = c(5,5,5,5,5,5), index_indicator = c(1,2,3,4,5,6))
+study_data3 <- studyCreate(indices3, 5, study_index_size)
+validation_data3 <- validationCreate(indices3, 5, 25)
 
-## Validation sets for each of the studies 
+## Cohort definition (should change to class if possible)
+cohort1 <- list(indices = indices1, validation_index_size = c(25,50,100), validation_data = validation_data1, study_index_size = study_index_size, study_data = study_data1)
+cohort2 <- list(indices = indices1, validation_index_size = c(25,50,100), validation_data = validation_data2, study_index_size = study_index_size, study_data = study_data2)
+cohort3 <- list(indices = indices1, validation_index_size = c(25,50,100), validation_data = validation_data3, study_index_size = study_index_size, study_data = study_data3)
 
-cohort1 <- list(indices = indices1, validation_index_size = c(25,50,100), validation_data = NULL, study_index_size = study_index_size, study_data = study_data1)
-cohort2 <- list(indices = indices1, validation_index_size = c(25,50,100), validation_data = NULL, study_index_size = study_index_size, study_data = study_data2)
-cohort3 <- list(indices = indices1, validation_index_size = c(25,50,100), validation_data = NULL, study_index_size = study_index_size, study_data = study_data3)
+###############################################################################
+########################### Bootstrapping #####################################
+###############################################################################
+# We 'bootstrap' sampled distributions of the validation sets and perform regressions 
+# with the means of those resampled distributions
+
