@@ -68,3 +68,8 @@ study_data = createStudyData(coh_base, study_index_size)
 validation_data = createValidationData(coh_base, validation_index_size)
 
 # spawn the bootstrap of the validation
+# Resampling step (ie create the bootstrap)
+boostrap_index_size <- 10
+bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= boostrap_index_size))
+bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
+	FUN = sample, size = boostrap_index_size,replace=TRUE)))
