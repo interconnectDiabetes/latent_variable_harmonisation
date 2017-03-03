@@ -111,6 +111,7 @@ cohort1 <- list(indices = indices1, validation_index_size = c(25,50,100), valida
 cohort2 <- list(indices = indices2, validation_index_size = c(25,50,100), validation_data = validation_list2, study_data = study_list2)
 cohort3 <- list(indices = indices3, validation_index_size = c(25,50,100), validation_data = validation_list3, study_data = study_list3)
 
+
 ###############################################################################
 ########################### Bootstrapping #####################################
 ###############################################################################
@@ -118,8 +119,18 @@ cohort3 <- list(indices = indices3, validation_index_size = c(25,50,100), valida
 # with the means of those resampled distributions
 num_resample_samples <- 5
 
+cohortList <- list(cohort1, cohort2, cohort3)
+
 # per cohort
-# per validation set of cohort
+for (i in 1:length(cohortList)) {
+  # per validation set of cohort which is a two step (stddev to validation size)
+  for (j in 1:length(cohortList[i]$validation_data)){ #per stddev
+    for (k in 1:length(cohortList[i]$validation_data[j])) { # per validation index size (I dont like this struct anymore)
+      # we do the resampling in here.
+    }
+  }
+}
+
 
 # Initialise some structures to store coeffcients
 results_df <- data.frame()
@@ -144,28 +155,6 @@ reg_std_ind_mean <- (summary(reg_out_ind_mean)$coefficients[,"Std. Error"])["pae
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Store values into dataframe
 results <- as.data.frame(c(1:numtrials))
 colnames(results) <- c("Trial")
@@ -175,12 +164,12 @@ results$reg_stdError_per_mean <- reg_std_ind_mean
 results_df <- rbind(results_df, results)
 
 
-# Summarizing the results dataframe
-temp_output <- aggregate(results_df[,3:8], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.05,0.5,0.95), names=TRUE)
-final_output = data.frame(validation_size = temp_output[,1])
+# # Summarizing the results dataframe
+# temp_output <- aggregate(results_df[,3:8], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.05,0.5,0.95), names=TRUE)
+# final_output = data.frame(validation_size = temp_output[,1])
 
-for (k in 2:ncol(temp_output)){
-  temp = as.data.frame(temp_output[,k])
-  colnames(temp) <- paste(colnames(temp_output)[k], colnames(temp), sep = "_")
-  final_output = cbind(final_output, temp)
-}
+# for (k in 2:ncol(temp_output)){
+#   temp = as.data.frame(temp_output[,k])
+#   colnames(temp) <- paste(colnames(temp_output)[k], colnames(temp), sep = "_")
+#   final_output = cbind(final_output, temp)
+# }
