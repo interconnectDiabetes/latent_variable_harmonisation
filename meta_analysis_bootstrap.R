@@ -89,9 +89,9 @@ studyListCreate <- function(indices, stdDev_list, index_size){
 ########################### COHORT CREATION ###################################
 ###############################################################################
 ## Cohort1
-indices1 <- data.frame(mean=c(30,40,50,60), std_dev = stdDevs, index_indicator = c(1,2,3,4))
-# study_data1 <- studyCreate(indices1, 5, study_index_size)
-# validation_data1 <- validationCreate(indices1, 5, 25)
+indices1 <- data.frame(mean=c(30,40,50,60), std_dev = 5, index_indicator = c(1,2,3,4))
+study_data1 <- studyCreate(indices1, 5, study_index_size)
+validation_data1 <- validationCreate(indices1, 5, 25)
 study_list1 <- studyListCreate(indices1, stdDevs, study_index_size)
 validation_list1 <- validationListCreate(indices1, stdDevs, validation_sizes)
 
@@ -119,17 +119,17 @@ cohort3 <- list(indices = indices3, validation_index_size = c(25,50,100), valida
 # with the means of those resampled distributions
 num_resample_samples <- 5
 
-cohortList <- list(cohort1, cohort2, cohort3)
+# cohortList <- list(cohort1, cohort2, cohort3)
 
-# per cohort
-for (i in 1:length(cohortList)) {
-  # per validation set of cohort which is a two step (stddev to validation size)
-  for (j in 1:length(cohortList[i]$validation_data)){ #per stddev
-    for (k in 1:length(cohortList[i]$validation_data[j])) { # per validation index size (I dont like this struct anymore)
-      # we do the resampling in here.
-    }
-  }
-}
+# # per cohort
+# for (i in 1:length(cohortList)) {
+#   # per validation set of cohort which is a two step (stddev to validation size)
+#   for (j in 1:length(cohortList[i]$validation_data)){ #per stddev
+#     for (k in 1:length(cohortList[i]$validation_data[j])) { # per validation index size (I dont like this struct anymore)
+#       # we do the resampling in here.
+#     }
+#   }
+# }
 
 
 # Initialise some structures to store coeffcients
@@ -153,11 +153,10 @@ reg_coeff_ind_mean <- reg_out_ind_mean$coefficients["paee_sample_ind_mean"]
 reg_std_ind_mean <- (summary(reg_out_ind_mean)$coefficients[,"Std. Error"])["paee_sample_ind_mean"]
 
 
-
-
 # Store values into dataframe
 results <- as.data.frame(c(1:numtrials))
-colnames(results) <- c("Trial")
+colnames(results) <- c("Trial Num")
+validation_index_size = c(25,50,100)
 results$valid_size <- rep(x=validation_index_size[i], times = numtrials)
 results$reg_coeff_per_mean <- reg_coeff_ind_mean
 results$reg_stdError_per_mean <- reg_std_ind_mean
