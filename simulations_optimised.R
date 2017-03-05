@@ -5,13 +5,15 @@
 # 3. number of index levels,
 # 4. Type of draw - per person or per index etc.
 
-## Author: Tom Bishop
+## Edit: Now includes bootstrap method
+
+## Author: Tom Bishop and Paul Scherer
 ## Date: 23.01.2017
 
 ###############################################################################
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
-setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
+#setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
 library(ggplot2)
 
 ## Seed and directory for plots of seed
@@ -23,6 +25,8 @@ dir.create(seedPath)
 # The linear correlation coefficient between exposure and outcome.
 set_beta <- 0.5
 constant <- 20
+
+bootstrap_index_size <- 100
 
 # Index properties (Assumption that they are Gaussian).
 # Indicator is just a name
@@ -44,7 +48,7 @@ for (s in 1:length(stdDevs)){
   study_index_size = 5000
 
 
-  numtrials <- 1000 # number of draws
+  numtrials <- 100 # number of draws
 
   results_df <- data.frame()
 
@@ -99,6 +103,10 @@ for (s in 1:length(stdDevs)){
     betas_ind <- vector("numeric")
     std_errs_ind <- vector("numeric")
 
+    betas_boot <- vector("numeric")
+    std_errs_boot <- vector("numeric")
+
+
     for (j in 1:numtrials){
       # we assign random values from each category list of the validation set for each participant in the
       # study data set and then find the regression equation using this data. 
@@ -121,6 +129,17 @@ for (s in 1:length(stdDevs)){
                                   
                                  })))
 
+      # bootstrapped validation set
+      bootstrap_validation <- data.frame(index = rep(x = indices$index_indicator, each= bootstrap_index_size))
+      bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_study$paee, f= as.factor(validation_study$index)), 
+        FUN = sample, size = bootstrap_index_size,replace=TRUE)))
+
+      study_data$paee_sample_boot <- unlist(unname(lapply(X = split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)), 
+        FUN = function(paee_vals){
+          output = rep(x = mean(paee_vals), times = study_index_size)
+          return(output)
+        })))
+
       # calculate and store the coefficients per person
       reg_out_per <- lm(formula=foo~paee_sample_per, data=study_data)
       reg_coeff_per <- reg_out_per$coefficients["paee_sample_per"]
@@ -134,6 +153,13 @@ for (s in 1:length(stdDevs)){
       reg_std_ind <- (summary(reg_out_ind)$coefficients[,"Std. Error"])["paee_sample_ind"]
       betas_ind <- c(betas_ind, reg_coeff_ind)
       std_errs_ind <- c(std_errs_ind, reg_std_ind)
+
+      # calculate and store the coefficients per bootstrap run
+      reg_out_boot <- lm(formula=foo~paee_sample_boot, data=study_data)
+      reg_coeff_boot <- reg_out_boot$coefficients["paee_sample_boot"]
+      reg_std_boot <- (summary(reg_out_boot)$coefficients[,"Std. Error"])["paee_sample_boot"]
+      betas_boot <- c(betas_boot, reg_coeff_boot)
+      std_errs_boot <- c(std_errs_boot, reg_std_boot)
     }
 
     #for visualisation, plot the last per person set of values
@@ -175,6 +201,8 @@ for (s in 1:length(stdDevs)){
     results$reg_stdError_ind <- std_errs_ind
     results$reg_coeff_per_mean <- reg_coeff_ind_mean
     results$reg_stdError_per_mean <- reg_std_ind_mean
+    results$reg_coeff_boot <- betas_boot
+    results$reg_stdError_boot <- std_errs_boot
     results_df <- rbind(results_df, results)
 
   }
