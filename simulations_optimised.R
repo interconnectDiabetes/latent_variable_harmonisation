@@ -17,7 +17,7 @@ setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
 library(ggplot2)
 
 ## Seed and directory for plots of seed
-seed <- 540
+seed <- 66
 set.seed(seed)
 seedPath <- paste0('seed_',seed,sep="")
 dir.create(seedPath)
@@ -207,9 +207,13 @@ for (s in 1:length(stdDevs)){
 
   }
   # Summarizing the results dataframe
-  temp_output <- aggregate(results_df[,3:10], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.05,0.5,0.95), names=TRUE)
+  temp_output <- aggregate(results_df[,3:10], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.025,0.5,0.975), names=TRUE)
   final_output = data.frame(validation_size = temp_output[,1])
 
+  # # Summarizing the results dataframe
+  # temp_output <- aggregate(results_df[,3:10], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.5), names=TRUE)
+  # final_output = data.frame(validation_size = temp_output[,1])
+  
   for (k in 2:ncol(temp_output)){
     temp = as.data.frame(temp_output[,k])
     colnames(temp) <- paste(colnames(temp_output)[k], colnames(temp), sep = "_")
