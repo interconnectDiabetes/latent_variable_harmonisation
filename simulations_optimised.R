@@ -13,11 +13,11 @@
 ###############################################################################
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
-#setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
+setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
 library(ggplot2)
 
 ## Seed and directory for plots of seed
-seed <- 54
+seed <- 540
 set.seed(seed)
 seedPath <- paste0('seed_',seed,sep="")
 dir.create(seedPath)
@@ -43,7 +43,7 @@ for (s in 1:length(stdDevs)){
   # different sized validation studies
   # validation_index_size <- c(seq(5,95, 10), seq(100, 1000, 100)) 
   # validation_index_size <- 5
-  validation_index_size <- c(5,100, 1000)  
+  validation_index_size <- c(25,50,100)  
 
   study_index_size = 5000
 
@@ -207,7 +207,7 @@ for (s in 1:length(stdDevs)){
 
   }
   # Summarizing the results dataframe
-  temp_output <- aggregate(results_df[,3:8], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.05,0.5,0.95), names=TRUE)
+  temp_output <- aggregate(results_df[,3:10], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.05,0.5,0.95), names=TRUE)
   final_output = data.frame(validation_size = temp_output[,1])
 
   for (k in 2:ncol(temp_output)){
