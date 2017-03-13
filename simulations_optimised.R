@@ -17,7 +17,7 @@ setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
 library(ggplot2)
 
 ## Seed and directory for plots of seed
-seed <- 66
+seed <- 234587
 set.seed(seed)
 seedPath <- paste0('seed_',seed,sep="")
 dir.create(seedPath)
@@ -48,7 +48,7 @@ for (s in 1:length(stdDevs)){
   study_index_size = 5000
 
 
-  numtrials <- 100 # number of draws
+  numtrials <- 1000 # number of draws
 
   results_df <- data.frame()
 
@@ -62,7 +62,7 @@ for (s in 1:length(stdDevs)){
                                             return (output)
                                         })))
   # generate our outcome variable plus some noise
-  study_data$foo <-   rnorm(length(study_data$paee),(set_beta*study_data$paee) + constant,10)
+  study_data$foo <-   rnorm(length(study_data$paee),(set_beta*study_data$paee) + constant, 0)
 
 
   # plot the study data so we can see what it looks like
@@ -106,7 +106,7 @@ for (s in 1:length(stdDevs)){
     betas_boot <- vector("numeric")
     std_errs_boot <- vector("numeric")
 
-
+    bootstrap_index_size <- validation_index_size[i]
     for (j in 1:numtrials){
       # we assign random values from each category list of the validation set for each participant in the
       # study data set and then find the regression equation using this data. 

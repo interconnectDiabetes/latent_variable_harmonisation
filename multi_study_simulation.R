@@ -7,6 +7,9 @@
 ###############################################################################
 setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
 library(ggplot2)
+library(reshape2)
+
+
 
 ###############################################################################
 ########################### DATA AND SETTINGS #################################
@@ -22,13 +25,14 @@ constant <- 20
 study_index_size <- 5000
 
 # Validation Data properties
-validation_index_sizes <- c(25,50,100)
-validation_index_size <- 25 # temp
+validation_index_size <- 25 
 
 # Bootstrapping properties
 bootstrap_trials <- 100
 boostrap_index_size <- 10
 
+# Test Properties
+num_trials <- 100
 ###############################################################################
 ########################### Functions #########################################
 ###############################################################################
@@ -41,7 +45,7 @@ createStudyData <- function(coh_base, study_index_size){
 			output = rnorm(n =study_index_size, mean = x$means, sd = x$std_dev)
 			return (output)
 		})))
-	study_data$foo <- rnorm(length(study_data$paee), (set_beta*study_data$paee) + constant, 10)
+	study_data$foo <- rnorm(length(study_data$paee), (set_beta*study_data$paee) + constant, 0) #note 0 noise
 	return(study_data)
 }
 
@@ -55,53 +59,97 @@ createValidationData <- function(coh_base, validation_index_size) {
 	return (validation_data)
 }
 
-###############################################################################
-########################### COHORT CREATION ###################################
-###############################################################################
-# overall results dataframe
-results_df <- data.frame()
+bootstrapRun <- function(coh_base, study_index_size, validation_index_size) {
+	# spawn the study data
+	study_data = createStudyData(coh_base, study_index_size)
+	# spawn the validation data
+	validation_data = createValidationData(coh_base, validation_index_size)
 
+	# per cohort base result vector
+	betas <- vector("numeric")
+	std_errs <- vector("numeric")
+	# overall results dataframe
+	results_df <- data.frame()
 
+	for (i in 1:num_trials){
+		bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= boostrap_index_size))
+		bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
+			FUN = sample, size = boostrap_index_size,replace=TRUE)))
 
-# Defining a base generator for one cohort (which spawns validation, study data)
-coh_base = data.frame(means = c(30,40,50,60), indices = c(1,2,3,4), std_dev = 5) # change stddev and index size to variables later
+		# Regression and storing of regression coefficients and stderrs
+		study_data$paee_sample_ind_mean <- unlist(unname(lapply(X = split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)),
+		  FUN = function(paee_vals){
+		    output = rep(x = mean(paee_vals), times = study_index_size)
+		    return(output)
+		  })))
+		reg_out_ind_mean <- lm(formula=foo~paee_sample_ind_mean, data=study_data)
+		reg_coeff_ind_mean <- reg_out_ind_mean$coefficients["paee_sample_ind_mean"]
+		reg_std_ind_mean <- (summary(reg_out_ind_mean)$coefficients[,"Std. Error"])["paee_sample_ind_mean"]
 
-# spawn the study data
-study_data = createStudyData(coh_base, study_index_size)
+		betas <- c(betas, reg_coeff_ind_mean)
+		std_errs <- c(std_errs, reg_std_ind_mean)
+	}
 
-# spawn the validation data
-validation_data = createValidationData(coh_base, validation_index_size)
+	results <- as.data.frame(c(1:num_trials))
+	colnames(results) <- c("NumTrial")
+	results$valid_size <- rep(x=validation_index_size, times = num_trials)
+	results$standard_deviation <- rep(x=coh_base$std_dev[1], times = num_trials)
+	results$reg_coeff_per_mean <- betas
+	results$reg_stdError_per_mean <- std_errs
+	results_df <- rbind(results_df, results)
 
-# per cohort base result vector
-betas <- vector("numeric")
-std_errs <- vector("numeric")
+	# Summarizing the results dataframe
+	temp_output <- aggregate(results_df[,4:5], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.025,0.5,0.975), names=TRUE)
+	final_output = data.frame(validation_size = temp_output[,1])
 
-# bootstrapping trials times
-# spawn the bootstrap of the validation
-# Resampling step (ie create the bootstrap)#
-for (i in 1:bootstrap_trials){
-	bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= boostrap_index_size))
-	bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
-		FUN = sample, size = boostrap_index_size,replace=TRUE)))
+	# # Summarizing the results dataframe
+	# temp_output <- aggregate(results_df[,3:10], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.5), names=TRUE)
+	# final_output = data.frame(validation_size = temp_output[,1])
 
-	# Regression and storing of regression coefficients and stderrs
-	study_data$paee_sample_ind_mean <- unlist(unname(lapply(X = split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)),
-	  FUN = function(paee_vals){
-	    output = rep(x = mean(paee_vals), times = study_index_size)
-	    return(output)
-	  })))
-	reg_out_ind_mean <- lm(formula=foo~paee_sample_ind_mean, data=study_data)
-	reg_coeff_ind_mean <- reg_out_ind_mean$coefficients["paee_sample_ind_mean"]
-	reg_std_ind_mean <- (summary(reg_out_ind_mean)$coefficients[,"Std. Error"])["paee_sample_ind_mean"]
-
-	betas <- c(betas, reg_coeff_ind_mean)
-	std_errs <- c(std_errs, reg_std_ind_mean)
+	for (k in 2:ncol(temp_output)){
+	temp = as.data.frame(temp_output[,k])
+	colnames(temp) <- paste(colnames(temp_output)[k], colnames(temp), sep = "_")
+	final_output = cbind(final_output, temp)
+	}
+	return (final_output)
 }
 
-results <- as.data.frame(c(1:bootstrap_trials))
-colnames(results) <- c("BootStrap Trial")
-results$valid_size <- rep(x=validation_index_size, times = bootstrap_trials)
-results$reg_coeff_per_mean <- betas
-results$reg_stdError_per_mean <- std_errs
-results_df <- rbind(results_df, results)
+absDiff <- function(x,y){
+	return (abs(x-y))
+}
 
+###############################################################################
+########################### Simulation Section ################################
+###############################################################################
+# Get a large dataframe of results
+results = data.frame()
+
+# coh_base = data.frame(means = c(30,40,50,60), indices = c(1,2,3,4), std_dev = 5) # change stddev and index size to variables later
+# bootRunResult = bootstrapRun(coh_base, study_index_size, 25)
+
+for (i in seq(from=25, to=100, by=5)){
+	for (standard_dev in 5:15){
+		# Defining a base generator for one cohort (which spawns validation, study data)
+		coh_base = data.frame(means = c(30,40,50,60), indices = c(1,2,3,4), std_dev = standard_dev) # change stddev and index size to variables later
+		bootRunResult = bootstrapRun(coh_base, study_index_size, i)
+		bootRunResult = cbind(bootRunResult, standard_dev)
+		results = rbind(results, bootRunResult)
+	}
+}
+
+
+# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
+# create that difference column
+results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`reg_coeff_per_mean_2.5%`, results$`reg_coeff_per_mean_97.5%`)))
+
+ggplot(results, aes(validation_size, standard_dev )) +
+  geom_tile(aes(fill = minMaxDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red") +
+  ylab("Standard Deviation") +
+  xlab("Validation Index Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Range of Confidence")
