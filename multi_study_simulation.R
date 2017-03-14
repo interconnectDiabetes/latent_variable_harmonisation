@@ -14,7 +14,7 @@ library(reshape2)
 ###############################################################################
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
-seed <- 66
+seed <- 52
 set.seed(seed)
 
 # Base Data set properties
@@ -32,7 +32,7 @@ bootstrap_trials <- 100
 boostrap_index_size <- 10
 
 # Test Properties
-num_trials <- 100
+num_trials <- 1000
 ###############################################################################
 ########################### Functions #########################################
 ###############################################################################
@@ -45,7 +45,7 @@ createStudyData <- function(coh_base, study_index_size){
 			output = rnorm(n =study_index_size, mean = x$means, sd = x$std_dev)
 			return (output)
 		})))
-	study_data$foo <- rnorm(length(study_data$paee), (set_beta*study_data$paee) + constant, 0) #note 0 noise
+	study_data$foo <- rnorm(length(study_data$paee), (set_beta*study_data$paee) + constant, 10) #note 0 noise
 	return(study_data)
 }
 
@@ -118,29 +118,35 @@ absDiff <- function(x,y){
 	return (abs(x-y))
 }
 
+
+
 ###############################################################################
 ########################### Simulation Section ################################
 ###############################################################################
-# Get a large dataframe of results
-results = data.frame()
+# for later summation of values in the results dataframe
+minmax_list = vector(mode="list", length = 5) 
 
-# coh_base = data.frame(means = c(30,40,50,60), indices = c(1,2,3,4), std_dev = 5) # change stddev and index size to variables later
-# bootRunResult = bootstrapRun(coh_base, study_index_size, 25)
-
-for (i in seq(from=25, to=100, by=5)){
-	for (standard_dev in 5:15){
-		# Defining a base generator for one cohort (which spawns validation, study data)
-		coh_base = data.frame(means = c(30,40,50,60), indices = c(1,2,3,4), std_dev = standard_dev) # change stddev and index size to variables later
-		bootRunResult = bootstrapRun(coh_base, study_index_size, i)
-		bootRunResult = cbind(bootRunResult, standard_dev)
-		results = rbind(results, bootRunResult)
+for (seeds in 1:25){
+  set.seed(seeds)
+	# Get a large dataframe of results
+	results = data.frame()
+	for (i in seq(from=25, to=100, by=5)){
+		for (standard_dev in 5:15){
+			# Defining a base generator for one cohort (which spawns validation, study data)
+			coh_base = data.frame(means = c(30,40,50,60), indices = c(1,2,3,4), std_dev = standard_dev) # change stddev and index size to variables later
+			bootRunResult = bootstrapRun(coh_base, study_index_size, i)
+			bootRunResult = cbind(bootRunResult, standard_dev)
+			results = rbind(results, bootRunResult)
+		}
 	}
+	# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
+	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`reg_coeff_per_mean_2.5%`, results$`reg_coeff_per_mean_97.5%`)))
+
+	minmax_list[[seeds]] <- (results$minMaxDiff)
 }
 
-
-# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
-# create that difference column
-results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`reg_coeff_per_mean_2.5%`, results$`reg_coeff_per_mean_97.5%`)))
+# Then put the sum of the minmaxes together into the results dataframe
+results$minMaxDiff <- Reduce("+", x = minmax_list)
 
 ggplot(results, aes(validation_size, standard_dev )) +
   geom_tile(aes(fill = minMaxDiff), color = "white") +
