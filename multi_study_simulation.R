@@ -32,7 +32,7 @@ bootstrap_trials <- 100
 boostrap_index_size <- 10
 
 # Test Properties
-num_trials <- 1000
+num_trials <- 5
 ###############################################################################
 ########################### Functions #########################################
 ###############################################################################
@@ -124,12 +124,16 @@ absDiff <- function(x,y){
 ########################### Simulation Section ################################
 ###############################################################################
 # for later summation of values in the results dataframe
-minmax_list = vector(mode="list", length = 5) 
+numSeeds <- 5
+minmax_list = vector(mode="list", length = numSeeds) 
 
-for (seeds in 1:25){
+pbt <- txtProgressBar(min = 1, max = numSeeds, style = 3)
+for (seeds in 1:numSeeds){
   set.seed(seeds)
 	# Get a large dataframe of results
 	results = data.frame()
+	# progressbar
+	# pb <- txtProgressBar(min = 25, max = 100, style = 3)
 	for (i in seq(from=25, to=100, by=5)){
 		for (standard_dev in 5:15){
 			# Defining a base generator for one cohort (which spawns validation, study data)
@@ -138,12 +142,16 @@ for (seeds in 1:25){
 			bootRunResult = cbind(bootRunResult, standard_dev)
 			results = rbind(results, bootRunResult)
 		}
+		# setTxtProgressBar(pb,i)
 	}
+	# close(pb)
 	# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
 	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`reg_coeff_per_mean_2.5%`, results$`reg_coeff_per_mean_97.5%`)))
 
 	minmax_list[[seeds]] <- (results$minMaxDiff)
+	setTxtProgressBar(pbt, seeds)
 }
+close(pbt)
 
 # Then put the sum of the minmaxes together into the results dataframe
 results$minMaxDiff <- Reduce("+", x = minmax_list)
