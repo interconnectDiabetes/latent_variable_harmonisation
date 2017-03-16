@@ -14,9 +14,8 @@ library(parallel)
 ###############################################################################
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
-# Calculate the number of cores
+# Calculate the number of cores and initiate cluster
 no_cores <- detectCores() - 1
-# Initiate cluster
 cl <- makeCluster(no_cores)
 
 # Base Data set properties
@@ -27,7 +26,7 @@ constant <- 20
 study_index_size <- 5000
 
 # Test Properties
-num_trials <- 1000
+num_trials <- 250
 ###############################################################################
 ########################### Functions #########################################
 ###############################################################################
@@ -113,7 +112,7 @@ absDiff <- function(x,y){
 ########################### Simulation Section ################################
 ###############################################################################
 # for later summation of values in the results dataframe
-numSeeds <- 5
+numSeeds <- 25
 minmax_list = vector(mode="list", length = numSeeds) 
 
 #progress bar for seeds completed
@@ -130,8 +129,10 @@ for (seeds in 1:numSeeds){
 			results = rbind(results, bootRunResult)
 		}
 	}
-	# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
-	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`x_2.5%`, results$`x_97.5%`)))
+	# # Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
+	# results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`x_2.5%`, results$`x_97.5%`)))
+	# Create a heatmap of 'accuracy' through absolute difference of the true 0.5 and the reported median value
+	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, 0.5, results$`x_50%`)))
 
 	minmax_list[[seeds]] <- (results$minMaxDiff)
 	setTxtProgressBar(pbt, seeds)
@@ -154,5 +155,5 @@ ggplot(results, aes(validation_size, standard_dev )) +
         plot.title = element_text(size=16),
         axis.title=element_text(size=14,face="bold"),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(fill = "Range of Confidence")
+  labs(fill = "Range of Accuracy")
 
