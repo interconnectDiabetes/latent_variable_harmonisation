@@ -113,7 +113,8 @@ absDiff <- function(x,y){
 ###############################################################################
 # for later summation of values in the results dataframe
 numSeeds <- 25
-minmax_list = vector(mode="list", length = numSeeds) 
+minmax_list = vector(mode="list", length = numSeeds)
+accuracy_list = vector(mode="list", length = numSeeds)
 
 #progress bar for seeds completed
 pbt <- txtProgressBar(min = 1, max = numSeeds, style = 3)
@@ -129,12 +130,13 @@ for (seeds in 1:numSeeds){
 			results = rbind(results, bootRunResult)
 		}
 	}
-	# # Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
-	# results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`x_2.5%`, results$`x_97.5%`)))
+	# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
+	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`x_2.5%`, results$`x_97.5%`)))
 	# Create a heatmap of 'accuracy' through absolute difference of the true 0.5 and the reported median value
-	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, 0.5, results$`x_50%`)))
+	results$accuracyDiff <- unlist(unname(mapply(FUN=absDiff, 0.5, results$`x_50%`)))
 
 	minmax_list[[seeds]] <- (results$minMaxDiff)
+	accuracy_list[[seeds]] <- (results$accuracyDiff)
 	setTxtProgressBar(pbt, seeds)
 }
 close(pbt)
@@ -144,6 +146,7 @@ stopCluster(cl)
 
 # Then put the sum of the minmaxes together into the results dataframe
 results$minMaxDiff <- Reduce("+", x = minmax_list)
+results$accuracyDiff <- Reduce("+", x = accuracy_list)
 
 ggplot(results, aes(validation_size, standard_dev )) +
   geom_tile(aes(fill = minMaxDiff), color = "white") +
@@ -155,5 +158,16 @@ ggplot(results, aes(validation_size, standard_dev )) +
         plot.title = element_text(size=16),
         axis.title=element_text(size=14,face="bold"),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(fill = "Range of Accuracy")
+  labs(fill = "Range of Confidence")
 
+ggplot(results, aes(validation_size, standard_dev )) +
+  geom_tile(aes(fill = accuracyDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red") +
+  ylab("Standard Deviation") +
+  xlab("Validation Index Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Range of Accuracy")
