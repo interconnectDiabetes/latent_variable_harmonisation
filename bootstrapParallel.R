@@ -148,6 +148,7 @@ stopCluster(cl)
 results$minMaxDiff <- Reduce("+", x = minmax_list)
 results$accuracyDiff <- Reduce("+", x = accuracy_list)
 
+# heatmap confidence
 ggplot(results, aes(validation_size, standard_dev )) +
   geom_tile(aes(fill = minMaxDiff), color = "white") +
   scale_fill_gradient(low = "green", high = "red") +
@@ -160,6 +161,7 @@ ggplot(results, aes(validation_size, standard_dev )) +
         axis.text.x = element_text(angle = 90, hjust = 1)) +
   labs(fill = "Range of Confidence")
 
+# heatmap accuracy
 ggplot(results, aes(validation_size, standard_dev )) +
   geom_tile(aes(fill = accuracyDiff), color = "white") +
   scale_fill_gradient(low = "green", high = "red") +
