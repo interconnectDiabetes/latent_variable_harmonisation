@@ -53,7 +53,8 @@ createValidationData <- function(coh_base, validation_index_size) {
 	return (validation_data)
 }
 
-bootstrapRun <- function(coh_base, study_index_size, validation_index_size) {
+bootstrapRun <- function(coh_base, study_index_size, val_size) {
+	validation_index_size <- round(val_size/length(coh_base$means))
 	# spawn the study data
 	study_data = createStudyData(coh_base, study_index_size)
 	# spawn the validation data
@@ -99,6 +100,7 @@ bootstrapRun <- function(coh_base, study_index_size, validation_index_size) {
 	colnames(temp) <- paste(colnames(temp_output)[k], colnames(temp), sep = "_")
 	final_output = cbind(final_output, temp)
 	}
+	final_output$val_size <- val_size
 	return (final_output)
 }
 
@@ -113,47 +115,234 @@ absDiff <- function(x,y){
 ###############################################################################
 # for later summation of values in the results dataframe
 numSeeds <- 25
-minmax_list = vector(mode="list", length = numSeeds) 
+minmax_list = vector(mode="list", length = numSeeds)
+accuracy_list = vector(mode="list", length = numSeeds)
+
+# Study Data properties
+study_index_size <- 5000
 
 #progress bar for seeds completed
 pbt <- txtProgressBar(min = 1, max = numSeeds, style = 3)
 for (seeds in 1:numSeeds){
   set.seed(seeds)
 	results = data.frame()
-	for (validation_index_size in seq(from=25, to=100, by=5)){
+	for (val_size in seq(from=100, to=400, by=20)){
 		for (standard_dev in 5:15){
 			# Defining a base generator for one cohort (which spawns validation, study data)
 			coh_base = data.frame(means = c(30,40,50,60), indices = c(1,2,3,4), std_dev = standard_dev) # change stddev and index size to variables later
-			bootRunResult = bootstrapRun(coh_base, study_index_size, validation_index_size)
+			bootRunResult = bootstrapRun(coh_base, study_index_size, val_size)
 			bootRunResult = cbind(bootRunResult, standard_dev)
 			results = rbind(results, bootRunResult)
 		}
 	}
-	# # Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
-	# results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`x_2.5%`, results$`x_97.5%`)))
+	# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
+	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`x_2.5%`, results$`x_97.5%`)))
 	# Create a heatmap of 'accuracy' through absolute difference of the true 0.5 and the reported median value
-	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, 0.5, results$`x_50%`)))
+	results$accuracyDiff <- unlist(unname(mapply(FUN=absDiff, 0.5, results$`x_50%`)))
 
 	minmax_list[[seeds]] <- (results$minMaxDiff)
+	accuracy_list[[seeds]] <- (results$accuracyDiff)
 	setTxtProgressBar(pbt, seeds)
 }
 close(pbt)
 
-# #stop our cluster
-stopCluster(cl)
-
 # Then put the sum of the minmaxes together into the results dataframe
 results$minMaxDiff <- Reduce("+", x = minmax_list)
+results$accuracyDiff <- Reduce("+", x = accuracy_list)
 
-ggplot(results, aes(validation_size, standard_dev )) +
+# Divide by number of seed for scaling
+results$minMaxDiff <- unlist(unname(lapply(X = results$minMaxDiff, FUN = function(x){
+	output = x/numSeeds
+	return(output)
+	})))
+
+results$accuracyDiff <- unlist(unname(lapply(X = results$accuracyDiff, FUN = function(x){
+	output = x/numSeeds
+	return(output)
+	})))
+
+# heatmap confidence
+ggplot(results, aes(val_size, standard_dev )) +
   geom_tile(aes(fill = minMaxDiff), color = "white") +
   scale_fill_gradient(low = "green", high = "red") +
   ylab("Standard Deviation") +
-  xlab("Validation Index Size") +
+  xlab("Validation Size") +
   theme(legend.title = element_text(size = 10),
         legend.text = element_text(size = 12),
         plot.title = element_text(size=16),
         axis.title=element_text(size=14,face="bold"),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(fill = "Range of Accuracy")
+  labs(fill = "Absolute Difference of 95% Interval")
 
+# heatmap accuracy
+ggplot(results, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = accuracyDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red") +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference from Truth")
+
+
+####### 2 ########
+
+# for later summation of values in the results dataframe
+numSeeds <- 25
+minmax_list = vector(mode="list", length = numSeeds)
+accuracy_list = vector(mode="list", length = numSeeds)
+
+# Study Data properties
+study_index_size <- 10000
+
+#progress bar for seeds completed
+pbt <- txtProgressBar(min = 1, max = numSeeds, style = 3)
+for (seeds in 1:numSeeds){
+  set.seed(seeds)
+	results_2 = data.frame()
+	for (val_size in seq(from=100, to=400, by=20)){
+		for (standard_dev in 5:15){
+			# Defining a base generator for one cohort (which spawns validation, study data)
+			coh_base = data.frame(means = c(37.5,52.5), indices = c(1,2), std_dev = standard_dev) # change stddev and index size to variables later
+			bootRunResult = bootstrapRun(coh_base, study_index_size, val_size)
+			bootRunResult = cbind(bootRunResult, standard_dev)
+			results_2 = rbind(results_2, bootRunResult)
+		}
+	}
+	# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
+	results_2$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results_2$`x_2.5%`, results_2$`x_97.5%`)))
+	# Create a heatmap of 'accuracy' through absolute difference of the true 0.5 and the reported median value
+	results_2$accuracyDiff <- unlist(unname(mapply(FUN=absDiff, 0.5, results_2$`x_50%`)))
+
+	minmax_list[[seeds]] <- (results_2$minMaxDiff)
+	accuracy_list[[seeds]] <- (results_2$accuracyDiff)
+	setTxtProgressBar(pbt, seeds)
+}
+close(pbt)
+
+# Then put the sum of the minmaxes together into the results dataframe
+results_2$minMaxDiff <- Reduce("+", x = minmax_list)
+results_2$accuracyDiff <- Reduce("+", x = accuracy_list)
+
+# Divide by number of seed for scaling
+results_2$minMaxDiff <- unlist(unname(lapply(X = results_2$minMaxDiff, FUN = function(x){
+	output = x/numSeeds
+	return(output)
+	})))
+
+results_2$accuracyDiff <- unlist(unname(lapply(X = results_2$accuracyDiff, FUN = function(x){
+	output = x/numSeeds
+	return(output)
+	})))
+
+
+# heatmap confidence
+ggplot(results_2, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = minMaxDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red") +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference of 95% Interval")
+
+# heatmap accuracy
+ggplot(results_2, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = accuracyDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red") +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference from Truth")
+
+
+####### 8 ########
+
+# for later summation of values in the results dataframe
+numSeeds <- 25
+minmax_list = vector(mode="list", length = numSeeds)
+accuracy_list = vector(mode="list", length = numSeeds)
+
+# Study Data properties
+study_index_size <- 2500
+
+#progress bar for seeds completed
+pbt <- txtProgressBar(min = 1, max = numSeeds, style = 3)
+for (seeds in 1:numSeeds){
+  set.seed(seeds)
+	results_8 = data.frame()
+	for (val_size in seq(from=100, to=400, by=20)){
+		for (standard_dev in 5:15){
+			# Defining a base generator for one cohort (which spawns validation, study data)
+			coh_base = data.frame(means = c(30, 34.285, 38.571, 42.857, 47.142, 51.428, 55.714, 60), indices = c(1,2,3,4,5,6,7,8), std_dev = standard_dev) # change stddev and index size to variables later
+			bootRunResult = bootstrapRun(coh_base, study_index_size, val_size)
+			bootRunResult = cbind(bootRunResult, standard_dev)
+			results_8 = rbind(results_8, bootRunResult)
+		}
+	}
+	# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
+	results_8$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results_8$`x_2.5%`, results_8$`x_97.5%`)))
+	# Create a heatmap of 'accuracy' through absolute difference of the true 0.5 and the reported median value
+	results_8$accuracyDiff <- unlist(unname(mapply(FUN=absDiff, 0.5, results_8$`x_50%`)))
+
+	minmax_list[[seeds]] <- (results_8$minMaxDiff)
+	accuracy_list[[seeds]] <- (results_8$accuracyDiff)
+	setTxtProgressBar(pbt, seeds)
+}
+close(pbt)
+
+# Then put the sum of the minmaxes together into the results dataframe
+results_8$minMaxDiff <- Reduce("+", x = minmax_list)
+results_8$accuracyDiff <- Reduce("+", x = accuracy_list)
+
+# Divide by number of seed for scaling
+results_8$minMaxDiff <- unlist(unname(lapply(X = results_8$minMaxDiff, FUN = function(x){
+	output = x/numSeeds
+	return(output)
+	})))
+
+results_8$accuracyDiff <- unlist(unname(lapply(X = results_8$accuracyDiff, FUN = function(x){
+	output = x/numSeeds
+	return(output)
+	})))
+
+
+# heatmap confidence
+ggplot(results_8, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = minMaxDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red") +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference of 95% Interval")
+
+# heatmap accuracy
+ggplot(results_8, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = accuracyDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red") +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference from Truth")
+
+
+# #stop our cluster
+stopCluster(cl)
