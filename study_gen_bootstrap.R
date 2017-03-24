@@ -43,7 +43,6 @@ updateStudyData <- function(coh_base, study_data, number_of_indices){
 }
 
 createValidationData <- function(coh_base, val_size) {
-	# given a cohort base it generates the validation data
 	number_of_indices = length(coh_base$indices)
 
 	validation_data = data.frame(paee =  rnorm(n = val_size, mean = mean_paee, sd = std_dev_paee))
@@ -410,3 +409,119 @@ ggplot(results_16, aes(val_size, standard_dev )) +
 
 # #stop our cluster
 stopCluster(cl)
+
+
+
+
+
+
+
+
+
+
+#### LIMITED #######
+
+# heatmap confidence
+ggplot(results, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = minMaxDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red", limits = c(0,0.36)) +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference of 95% Interval")
+
+# heatmap accuracy
+ggplot(results, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = accuracyDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red", limits = c(0,0.12)) +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference from Truth")
+
+# heatmap confidence
+ggplot(results_2, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = minMaxDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red", limits = c(0,0.36)) +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference of 95% Interval")
+
+# heatmap accuracy
+ggplot(results_2, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = accuracyDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red", limits = c(0,0.12)) +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference from Truth")
+
+
+# heatmap confidence
+ggplot(results_8, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = minMaxDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red", limits = c(0,0.36)) +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference of 95% Interval")
+
+# heatmap accuracy
+ggplot(results_8, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = accuracyDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red", limits = c(0,0.12)) +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference from Truth")
+
+# heatmap confidence
+ggplot(results_16, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = minMaxDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red", limits = c(0,0.36)) +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference of 95% Interval")
+
+# heatmap accuracy
+ggplot(results_16, aes(val_size, standard_dev )) +
+  geom_tile(aes(fill = accuracyDiff), color = "white") +
+  scale_fill_gradient(low = "green", high = "red", limits = c(0,0.12)) +
+  ylab("Standard Deviation") +
+  xlab("Validation Size") +
+  theme(legend.title = element_text(size = 10),
+        legend.text = element_text(size = 12),
+        plot.title = element_text(size=16),
+        axis.title=element_text(size=14,face="bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Absolute Difference from Truth")
