@@ -25,7 +25,7 @@ study_size <- 20000
 mean_paee <- 45
 
 # Test Properties
-num_trials <- 2
+num_trials <- 250
 
 std_dev_paee = 15
 study_data = data.frame(paee =  rnorm(n = study_size, mean = mean_paee, sd = std_dev_paee))
@@ -72,6 +72,7 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 	colnames(results) <- c("NumTrial")
 	results$valid_size <- rep(x=validation_index_size, times = num_trials)
 	results$standard_deviation <- rep(x=coh_base$std_dev[1], times = num_trials)
+	
 	chickens  <- parLapply(cl, X=1:num_trials, fun=function(x){
 		bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= validation_index_size))
 		bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
@@ -95,35 +96,11 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		return (output)
 	})
 
-	# chickens  <- lapply(X=1:num_trials, FUN=function(x){
-	# 	bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= validation_index_size))
-	# 	bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
-	# 		FUN = sample, size = validation_index_size,replace=TRUE)))
-	# 	bootstrap_validation$paee_means <- unlist(unname(lapply(X = split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)),
-	# 	  FUN = function(paee_vals){
-	# 	    output = rep(x = mean(paee_vals), times = validation_index_size)
-	# 	    return(output)
-	# 	  })))
-	# 	# Regression and storing of regression coefficients and stderrs
-	# 	study_data_cp$paee_sample_ind_mean <- unlist(unname(lapply(X = split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)),
-	# 	  FUN = function(paee_vals){
-	# 	    output = rep(x = mean(paee_vals), times = study_index_size)
-	# 	    return(output)
-	# 	  })))
-	# 	reg_out_ind_mean <- lm(formula=foo~paee_sample_ind_mean, data=study_data_cp)
-
-	# 	# now do the lambda regression as well
-	# 	lambda <- lm(formula =paee~paee_means, data=bootstrap_validation)
-	# 	output = data.frame(c(reg_out_ind_mean$coefficients["paee_sample_ind_mean"], lambda$coefficients["paee_means"]))
-	# 	return (output)
-	# })
-
 	results$reg_cor_per_mean <- unlist(lapply(X = chickens, FUN = function(x){output = x[[1]][1]}))
 	results$lambda <- unlist(lapply(X = chickens, FUN = function(x){output = x[[1]][2]}))
 	results$corrected_cor <- results$reg_cor_per_mean/results$lambda
 	results_df <- rbind(results_df, results)
 	
-
 	# Summarizing the results dataframe
 	temp_output <- aggregate(results_df[,4:6], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.025,0.5,0.975), names=TRUE)
 	final_output = data.frame(validation_size = temp_output[,1])
@@ -151,7 +128,7 @@ absDiff <- function(x,y){
 ########################### Simulation Section ################################
 ###############################################################################
 # for later summation of values in the results dataframe
-numSeeds <- 1
+numSeeds <- 25
 minmax_list = vector(mode="list", length = numSeeds)
 accuracy_list = vector(mode="list", length = numSeeds)
 
