@@ -105,10 +105,6 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 	temp_output <- aggregate(results_df[,4:6], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.025,0.5,0.975), names=TRUE)
 	final_output = data.frame(validation_size = temp_output[,1])
 
-	# # Summarizing the results dataframe
-	# temp_output <- aggregate(results_df[,3:10], by=list(valid_size = results_df$valid_size), quantile, probs=c(0.5), names=TRUE)
-	# final_output = data.frame(validation_size = temp_output[,1])
-
 	for (k in 2:ncol(temp_output)){
 	temp = as.data.frame(temp_output[,k])
 	colnames(temp) <- paste(colnames(temp_output)[k], colnames(temp), sep = "_")
@@ -148,6 +144,7 @@ for (seeds in 1:numSeeds){
 			results = rbind(results, bootRunResult)
 		}
 	}
+	
 	# Create a heatmap of 'accuracy' through absolute difference in the 2.5% and 97.5% tiles
 	results$minMaxDiff <- unlist(unname(mapply(FUN=absDiff, results$`reg_cor_per_mean_2.5%`, results$`reg_cor_per_mean_97.5%`)))
 	# Create a heatmap of 'accuracy' through absolute difference of the true 0.5 and the reported median value
