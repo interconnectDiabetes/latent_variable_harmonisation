@@ -5,7 +5,7 @@
 ###############################################################################
 ###################### R Environment Settings #################################
 ###############################################################################
-setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
+# setwd('V:/Studies/InterConnect/Internal/Latent variable harmonisation/plots')
 library(ggplot2)
 library(reshape2)
 library(parallel)
@@ -14,7 +14,7 @@ library(parallel)
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
 # Calculate the number of cores and initiate cluster
-no_cores <- detectCores() - 1
+no_cores <- detectCores() - 2
 cl <- makeCluster(no_cores)
 
 # Base Data set properties
@@ -44,12 +44,10 @@ updateStudyData <- function(coh_base, study_data, number_of_indices){
 
 createValidationData <- function(coh_base, val_size) {
 	number_of_indices = length(coh_base$indices)
-
 	validation_data = data.frame(paee =  rnorm(n = val_size, mean = mean_paee, sd = std_dev_paee))
 	paee_errors = rnorm(n = val_size, mean = 0, sd = coh_base$std_dev[1])
 	validation_data$paee_error = validation_data$paee + paee_errors
 	validation_data$index = cut_number(x = validation_data$paee_error,n = number_of_indices, labels =FALSE)
-
 	return (validation_data)
 }
 
@@ -78,14 +76,6 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= validation_index_size))
 		bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
 			FUN = sample, size = validation_index_size,replace=TRUE)))
-
-		# # Regression and storing of regression coefficients and stderrs
-		# study_data_cp$paee_sample_ind_mean <- unlist(unname(lapply(X = split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)),
-		#   FUN = function(paee_vals){
-		#     output = rep(x = mean(paee_vals), times = study_index_size)
-		#     return(output)
-		#   })))
-		# reg_out_ind_mean <- lm(formula=foo~paee_sample_ind_mean, data=study_data_cp)
 
 		# new bootstrap study data as well through sampling rows
 		means_of_boots <- (split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)))
@@ -148,11 +138,9 @@ absDiff <- function(x,y){
 }
 
 
-
 ###############################################################################
 ########################### Simulation Section ################################
 ###############################################################################
-
 
 # for later summation of values in the results dataframe
 numSeeds <- 5
