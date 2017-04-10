@@ -89,17 +89,15 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		# Create the validation data copy (because of parallelization) for the lambda regression calculation		
 		validation_data_cp <- validation_data
 		validation_data_cp = validation_data_cp[with(validation_data_cp, order(index)),]
-		validation_data_cp$paee_means_bt <- unlist(unname(lapply(X = split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)),
-		  FUN = function(paee_vals){
-		    output = rep(x = mean(paee_vals), times = validation_index_size)
-		    return(output)
-		  })))
+		validation_data_cp$paee_means_bt <- unlist(lapply(X=validation_data_cp$index, FUN=function(index_val){
+			output =  means_boots_list[index_val]
+			}))
 		reg_lambda <- lm(formula =paee~paee_means_bt, data=validation_data_cp)
 
 		# Estimate the standard error of the corrected estimate as currently it doesnt take the 2nd order 
 		# variability of lambda using the delta method :=>  variance = stdError * sqrt(numberofpeople) all squared
-		var_lambda = (sqrt(val_size) * summary(reg_out_ind_mean)$coefficients["paee_sample_ind_mean","Std. Error"])^2
-		var_Beta = (sqrt(val_size) * summary(reg_lambda)$coefficients["paee_means_bt","Std. Error"])^2
+		var_lambda = (sqrt(val_size) * summary(reg_lambda)$coefficients["paee_means_bt","Std. Error"])^2
+		var_Beta = (sqrt(val_size) * summary(reg_out_ind_mean)$coefficients["paee_sample_ind_mean","Std. Error"])^2
 		lambda_pure = unlist(unname(reg_lambda$coefficients["paee_means_bt"]))
 		beta_lambda_div_sq = (unname(unlist(reg_out_ind_mean$coefficients["paee_sample_ind_mean"]/(reg_lambda$coefficients["paee_means_bt"])^2)))^2
 		delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
@@ -191,7 +189,8 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 		})))
 
 	# heatmap confidence
-	ggplot(results, aes(val_size, standard_dev )) +
+	plotTitle = paste(number_of_indices, "level", "Confidence for Uncorrected Beta", sep=" ")
+	print(ggplot(results, aes(val_size, standard_dev )) + ggtitle(plotTitle) + 
 	  geom_tile(aes(fill = minMaxDiff), color = "white") +
 	  scale_fill_gradient(low = "green", high = "red") +
 	  ylab("Standard Deviation") +
@@ -201,10 +200,11 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 	        plot.title = element_text(size=16),
 	        axis.title=element_text(size=14,face="bold"),
 	        axis.text.x = element_text(angle = 90, hjust = 1)) +
-	  labs(fill = "Absolute Difference of 95% Interval")
+	  labs(fill = "Absolute Difference of 95% Interval"))
 
 	# heatmap accuracy
-	ggplot(results, aes(val_size, standard_dev )) +
+	plotTitle = paste(number_of_indices, "level", "Accuracy for Uncorrected Beta", sep=" ")
+	print(ggplot(results, aes(val_size, standard_dev )) + ggtitle(plotTitle) + 
 	  geom_tile(aes(fill = accuracyDiff), color = "white") +
 	  scale_fill_gradient(low = "green", high = "red") +
 	  ylab("Standard Deviation") +
@@ -214,7 +214,7 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 	        plot.title = element_text(size=16),
 	        axis.title=element_text(size=14,face="bold"),
 	        axis.text.x = element_text(angle = 90, hjust = 1)) +
-	  labs(fill = "Absolute Difference from Truth")
+	  labs(fill = "Absolute Difference from Truth"))
 
 	# Then put the sum of the minmaxes together into the results dataframe
 	results$minMaxDiff_cor <- Reduce("+", x = minmax_list_cor)
@@ -241,7 +241,8 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 
 
 	# heatmap confidence corrected
-	ggplot(results, aes(val_size, standard_dev )) +
+	plotTitle = paste(number_of_indices, "level", "Confidence for Corrected Beta Bootstrapped", sep=" ")
+	print(ggplot(results, aes(val_size, standard_dev )) + ggtitle(plotTitle) + 
 	  geom_tile(aes(fill = minMaxDiff_cor), color = "white") +
 	  scale_fill_gradient(low = "green", high = "red") +
 	  ylab("Standard Deviation") +
@@ -251,10 +252,11 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 	        plot.title = element_text(size=16),
 	        axis.title=element_text(size=14,face="bold"),
 	        axis.text.x = element_text(angle = 90, hjust = 1)) +
-	  labs(fill = "Absolute Difference of 95% Interval")
+	  labs(fill = "Absolute Difference of 95% Interval"))
 
 	# heatmap of delta interval
-	ggplot(results, aes(val_size, standard_dev )) +
+	plotTitle = paste(number_of_indices, "level", "Estimated Confidence for Corrected Beta \n through Delta Method", sep=" ")
+	print(ggplot(results, aes(val_size, standard_dev )) + ggtitle(plotTitle) + 
 	  geom_tile(aes(fill = delta_error), color = "white") +
 	  scale_fill_gradient(low = "green", high = "red") +
 	  ylab("Standard Deviation") +
@@ -264,10 +266,11 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 	        plot.title = element_text(size=16),
 	        axis.title=element_text(size=14,face="bold"),
 	        axis.text.x = element_text(angle = 90, hjust = 1)) +
-	  labs(fill = "Delta Interval Calculation")
+	  labs(fill = "Delta Interval Calculation"))
 
 	# heatmap accuracy corrected
-	ggplot(results, aes(val_size, standard_dev )) +
+	plotTitle = paste(number_of_indices, "level", "Accuracy for Corrected Beta", sep=" ")
+	print(ggplot(results, aes(val_size, standard_dev )) + ggtitle(plotTitle) + 
 	  geom_tile(aes(fill = accuracyDiff_cor), color = "white") +
 	  scale_fill_gradient(low = "green", high = "red") +
 	  ylab("Standard Deviation") +
@@ -277,7 +280,7 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 	        plot.title = element_text(size=16),
 	        axis.title=element_text(size=14,face="bold"),
 	        axis.text.x = element_text(angle = 90, hjust = 1)) +
-	  labs(fill = "Absolute Difference from Truth")
+	  labs(fill = "Absolute Difference from Truth"))
 
 	return (results)
 }
@@ -285,8 +288,12 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 ###############################################################################
 ########################### Simulation Section ################################
 ###############################################################################
-num_trials <- 10
-results_4 = run_simulation(numSeeds = 5, number_of_indices=4)
+num_trials <- 5
+# results_4 = run_simulation(numSeeds = 5, number_of_indices=4)
+# results_2 = run_simulation(numSeeds = 2, number_of_indices=2)
+# results_8 = run_simulation(numSeeds = 8, number_of_indices=8)
+results_16 = run_simulation(numSeeds = 16, number_of_indices=16)
+
 
 
 # stopcluster
