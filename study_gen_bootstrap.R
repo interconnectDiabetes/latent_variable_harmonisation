@@ -23,12 +23,11 @@ constant <- 20
 
 study_size <- 20000
 mean_paee <- 45
+std_dev_paee = 15
+study_data = data.frame(paee =  rnorm(n = study_size, mean = mean_paee, sd = std_dev_paee))
 
 # Test Properties
 num_trials <- 10
-
-std_dev_paee = 15
-study_data = data.frame(paee =  rnorm(n = study_size, mean = mean_paee, sd = std_dev_paee))
 
 ###############################################################################
 ########################### Functions #########################################
@@ -55,32 +54,31 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 	number_of_indices = length(coh_base$indices)
 	validation_index_size <- round(val_size/number_of_indices)
 	study_index_size <- round(study_size/number_of_indices)
-	# spawn the study data
+	
+	# Make an 'updated' copy of the study database with the properties we want as in the validation data
 	study_data_cp = updateStudyData(coh_base, study_data, number_of_indices)
-	# spawn the validation data
 	validation_data = createValidationData(coh_base, val_size)
 
 	# per cohort base result vector
 	betas <- vector("numeric")
 	std_errs <- vector("numeric")
+	
 	# overall results dataframe
 	results_df <- data.frame()
-
 	results <- as.data.frame(c(1:num_trials))
 	colnames(results) <- c("NumTrial")
 	results$valid_size <- rep(x=validation_index_size, times = num_trials)
 	results$standard_deviation <- rep(x=coh_base$std_dev[1], times = num_trials)
 	
-	chickens  <- parLapply(cl, X=1:num_trials, fun=function(x){
+	bootstrap  <- parLapply(cl, X=1:num_trials, fun=function(x){
 		# Create the bootstrap, sampling from the validation data
 		bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= validation_index_size))
 		bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
 			FUN = sample, size = validation_index_size,replace=TRUE)))
 
 		# new bootstrap study data as well through sampling rows
-		means_of_boots <- (split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)))
-		means_boots_list = vector(mode="list", length = length(means_of_boots))
-		for (i in 1:length(means_of_boots)) {
+		means_boots_list = vector(mode="list", length = number_of_indices)
+		for (i in 1:number_of_indices) {
 			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)))[i])))
 		}
 		study_data_cp_bt = study_data_cp[sample(nrow(study_data_cp), 20000, replace=TRUE), ]
@@ -114,10 +112,10 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		return (output)
 	})
 
-	results$reg_cor_per_mean <- unlist(lapply(X = chickens, FUN = function(x){output = x[[1]][1]}))
-	results$lambda <- unlist(lapply(X = chickens, FUN = function(x){output = x[[1]][2]}))
+	results$reg_cor_per_mean <- unlist(lapply(X = bootstrap, FUN = function(x){output = x[[1]][1]}))
+	results$lambda <- unlist(lapply(X = bootstrap, FUN = function(x){output = x[[1]][2]}))
 	results$corrected_cor <- results$reg_cor_per_mean/results$lambda
-	results$delta_errors <- unlist(lapply(X = chickens, function(x){output = 2*1.96*(x[[1]][3])}))
+	results$delta_errors <- unlist(lapply(X = bootstrap, function(x){output = 2*1.96*(x[[1]][3])}))
 	results_df <- rbind(results_df, results)
 	
 	# Summarizing the results dataframe
