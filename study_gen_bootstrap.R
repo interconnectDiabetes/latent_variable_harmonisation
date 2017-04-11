@@ -25,6 +25,7 @@ study_size <- 20000
 mean_paee <- 45
 std_dev_paee = 15
 study_data = data.frame(paee =  rnorm(n = study_size, mean = mean_paee, sd = std_dev_paee))
+study_data$foo = rnorm(length(study_data$paee), (set_beta*study_data$paee) + constant, 10)
 
 ###############################################################################
 ########################### Functions #########################################
@@ -33,7 +34,6 @@ updateStudyData <- function(coh_base, study_data, number_of_indices){
 	paee_errors = rnorm(n = study_size, mean = 0, sd = coh_base$std_dev[1])
 	study_data$paee_error = study_data$paee + paee_errors
 	study_data$index = cut_number(x = study_data$paee_error,n = number_of_indices, labels =FALSE)
-	study_data$foo = rnorm(length(study_data$paee), (set_beta*study_data$paee) + constant, 10)
 	study_data = study_data[with(study_data, order(index)),]
 	return(study_data)
 }
@@ -288,13 +288,11 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 ###############################################################################
 ########################### Simulation Section ################################
 ###############################################################################
-num_trials <- 5
-# results_4 = run_simulation(numSeeds = 5, number_of_indices=4)
-# results_2 = run_simulation(numSeeds = 2, number_of_indices=2)
-# results_8 = run_simulation(numSeeds = 8, number_of_indices=8)
-results_16 = run_simulation(numSeeds = 16, number_of_indices=16)
-
-
+num_trials <- 500
+results_2 = run_simulation(numSeeds = 25, number_of_indices=2)
+results_4 = run_simulation(numSeeds = 25, number_of_indices=4)
+results_8 = run_simulation(numSeeds = 25, number_of_indices=8)
+results_16 = run_simulation(numSeeds = 25, number_of_indices=16)
 
 # stopcluster
 stopCluster(cl)
