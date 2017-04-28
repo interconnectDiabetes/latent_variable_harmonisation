@@ -14,7 +14,7 @@ library(parallel)
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
 # Calculate the number of cores and initiate cluster
-no_cores <- detectCores() - 2
+no_cores <- detectCores() - 1
 cl <- makeCluster(no_cores)
 
 # Base Data set properties
@@ -288,12 +288,13 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 ###############################################################################
 ########################### Simulation Section ################################
 ###############################################################################
-num_trials <- 500
+num_trials <- 250
 results_2 = run_simulation(numSeeds = 25, number_of_indices=2)
 results_4 = run_simulation(numSeeds = 25, number_of_indices=4)
 results_8 = run_simulation(numSeeds = 25, number_of_indices=8)
 results_16 = run_simulation(numSeeds = 25, number_of_indices=16)
-
+results_32 = run_simulation(numSeeds = 25, number_of_indices = 32)
+results_64 = run_simulation(numSeeds = 25, number_of_indices = 64)
 # stopcluster
 stopCluster(cl)
 
