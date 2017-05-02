@@ -63,7 +63,7 @@ createValidationData <- function(coh_base, val_size) {
 	validation_data$index = cut_number(x = validation_data$paee_error,n = number_of_indices, labels =FALSE)
 	
 	# the values of the second validation paee are dependent on the first measurement 
-	paee_errors2 = rnorm(n = val_size, mean = 0, sd = (coh_base$std_dev[1]/2))
+	paee_errors2 = rnorm(n = val_size, mean = 0, sd = ((coh_base$std_dev[1])/2))
 	validation_data$paee_error2 = validation_data$paee_error + paee_errors2
 	validation_data$index2 = cut_number(x = validation_data$paee_error2,n = number_of_indices, labels =FALSE)
 	return (validation_data)
@@ -311,19 +311,25 @@ num_trials <- 250
 
 number_of_indices = 4
 
-differences <- as.data.frame(c(5:15))
-colnames(differences) <- c("standard_deviation")
-difference_scores = vector("numeric")
+std_dev_range = 5:100
+results_df = data.frame()
 
-for (standard_deviation in 5:15) {
-	coh_base = data.frame(indices = c(1:number_of_indices), std_dev = standard_deviation)
-	val_data = createValidationData(coh_base, 100)
-	difference_total <- unlist(unname(mapply(FUN=absDiff,val_data$index,  val_data$index2)))
-	difference_total <- sum(difference_total)
-	difference_scores <- c(difference_scores, difference_total)
+for (val_size in seq(from=100, to=100, by=20)){
+	results <- as.data.frame(std_dev_range)
+	colnames(results) <- c("standard_deviation")
+	difference_scores = vector("numeric")
+	results$val_size = rep(x=val_size, times=length(std_dev_range))
+	for (standard_deviation in std_dev_range) {
+		coh_base = data.frame(indices = c(1:number_of_indices), std_dev = standard_deviation)
+		val_data = createValidationData(coh_base, val_size)
+		difference_list <- unlist(unname(mapply(FUN=absDiff,val_data$index,  val_data$index2)))
+		difference_total <- sum(difference_list)
+		difference_scores <- c(difference_scores, difference_total)
+	}
+	results$differenceScore <- difference_scores
+	results_df <- rbind(results_df, results)
 }
 
-differences$score <- difference_scores
 
 # # stopcluster
 # stopCluster(cl)
