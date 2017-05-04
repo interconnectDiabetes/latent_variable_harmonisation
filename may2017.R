@@ -10,7 +10,7 @@
 # 1. randomly draw with replacement the individuals from the validation study (time point 1)
 # 2. map from index level at time point 1 to mean PAEE for all individuals in that index level
 # 3. map from index level at time point 2 to mean PAEE for all individuals in that index level
-# 4. regress the mapped PAEE for time point 1 against the PAEE values for time point 2 to estimate lambda
+# 4. regress the mapped PAEE for time point 1 against the mapped PAEE values for time point 2 to estimate lambda inside validation
 # 5. For the large study, map each individual index to the index means calculated using the classifications at time point 1 to give an 
 # 	exposure on the conitnuous scale
 # 6. Regress the exposure against the outcome to estimate beta (now weve got both a lambda and a beta)
@@ -30,9 +30,9 @@ library(parallel)
 ###############################################################################
 ########################### DATA AND SETTINGS #################################
 ###############################################################################
-# # Calculate the number of cores and initiate cluster
-# no_cores <- detectCores() - 1
-# cl <- makeCluster(no_cores)
+# Calculate the number of cores and initiate cluster
+no_cores <- detectCores() - 1
+cl <- makeCluster(no_cores)
 
 # Base Data set properties
 set_beta <- 0.5
@@ -90,19 +90,25 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= validation_index_size))
 		bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
 			FUN = sample, size = validation_index_size, replace=TRUE)))
+		bootstrap_validation$paee_error2 <- unlist(unname(lapply(X = split(x=validation_data$paee_error2, f= as.factor(validation_data$index)), 
+			FUN = sample, size = validation_index_size, replace=TRUE)))
 
 		# new bootstrap study data as well through sampling rows
 		means_boots_list = vector(mode="list", length = number_of_indices)
 		for (i in 1:number_of_indices) {
 			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)))[i])))
 		}
+		# we calculate the means for timepoint as well to regress against the first means and obtain lambda
+		means_boots_list_2 = vector(mode="list", length = number_of_indices)
+		for (i in 1:number_of_indices){
+			means_boots_list_2[i] = mean(unname(unlist((split(x=bootstrap_validation$paee_error2, f= as.factor(bootstrap_validation$index)))[i])))
+		}
 
-		# Bootstrapping a study set through smapling with replacement
-		study_data_cp_bt = study_data_cp[sample(nrow(study_data_cp), 20000, replace=TRUE), ]
-		study_data_cp_bt$paee_sample_ind_mean <- unlist(lapply(X=study_data_cp_bt$index, FUN=function(index_val){
+		# we are no longer bootstrapping the study data set. so we caclulate our beta regression here
+		study_data_cp$paee_sample_ind_mean <- unlist(lapply(X=study_data_cp$index, FUN=function(index_val){
 			output =  means_boots_list[index_val]
 			}))
-		reg_out_ind_mean <- lm(formula=foo~paee_sample_ind_mean, data=study_data_cp_bt)
+		reg_out_ind_mean <- lm(formula=foo~paee_sample_ind_mean, data=study_data_cp)
 
 		# Create the validation data copy (because of parallelization) for the lambda regression calculation		
 		validation_data_cp <- validation_data
@@ -110,7 +116,10 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		validation_data_cp$paee_means_bt <- unlist(lapply(X=validation_data_cp$index, FUN=function(index_val){
 			output =  means_boots_list[index_val]
 			}))
-		reg_lambda <- lm(formula =paee~paee_means_bt, data=validation_data_cp)
+		validation_data_cp$paee_means_bt_2 <- unlist(lapply(X=validation_data_cp$index, FUN=function(index_val){
+			output =  means_boots_list_2[index_val]
+			}))
+		reg_lambda <- lm(formula =paee_means_bt_2~paee_means_bt, data=validation_data_cp)
 
 		# Estimate the standard error of the corrected estimate as currently it doesnt take the 2nd order 
 		# variability of lambda using the delta method :=>  variance = stdError * sqrt(numberofpeople) all squared
@@ -306,56 +315,56 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 ###############################################################################
 ########################### Simulation Section ################################
 ###############################################################################
-num_trials <- 250
-# results_4 = run_simulation(numSeeds = 25, number_of_indices=4)
+num_trials <- 20
+results_4 = run_simulation(numSeeds = 25, number_of_indices=4)
 
-number_of_indices = 4
+# number_of_indices = 4
 
-std_dev_range = 5:100
-results_df = data.frame()
+# std_dev_range = 5:100
+# results_df = data.frame()
 
-for (val_size in seq(from=100, to=100, by=20)){
-	results <- as.data.frame(std_dev_range)
-	colnames(results) <- c("standard_deviation")
-	# difference_scores = vector("numeric")
-	lambdas = vector("numeric")
-	results$val_size = rep(x=val_size, times=length(std_dev_range))
-	for (standard_deviation in std_dev_range) {
-		coh_base = data.frame(indices = c(1:number_of_indices), std_dev = standard_deviation)
-		val_data = createValidationData(coh_base, val_size)
-		# difference_list <- unlist(unname(mapply(FUN=absDiff,val_data$index,  val_data$index2)))
-		# difference_total <- sum(difference_list)
-		# difference_scores <- c(difference_scores, difference_total)
+# for (val_size in seq(from=100, to=100, by=20)){
+# 	results <- as.data.frame(std_dev_range)
+# 	colnames(results) <- c("standard_deviation")
+# 	# difference_scores = vector("numeric")
+# 	lambdas = vector("numeric")
+# 	results$val_size = rep(x=val_size, times=length(std_dev_range))
+# 	for (standard_deviation in std_dev_range) {
+# 		coh_base = data.frame(indices = c(1:number_of_indices), std_dev = standard_deviation)
+# 		val_data = createValidationData(coh_base, val_size)
+# 		# difference_list <- unlist(unname(mapply(FUN=absDiff,val_data$index,  val_data$index2)))
+# 		# difference_total <- sum(difference_list)
+# 		# difference_scores <- c(difference_scores, difference_total)
 
-		# find the means for number of indices of each paee measurement
-		means_list = vector(mode="list", length = number_of_indices)
-		for (i in 1:number_of_indices) {
-			means_list[i] = mean(unname(unlist((split(x=val_data$paee_error, f= as.factor(val_data$index)))[i])))
-		}
-		# attach those means to paees
-		val_data = val_data[with(val_data, order(index)),]
-		val_data$paee_means_bt_1 <- unlist(lapply(X=val_data$index, FUN=function(index_val){
-			output =  means_list[index_val]
-			}))
+# 		# find the means for number of indices of each paee measurement
+# 		means_list = vector(mode="list", length = number_of_indices)
+# 		for (i in 1:number_of_indices) {
+# 			means_list[i] = mean(unname(unlist((split(x=val_data$paee_error, f= as.factor(val_data$index)))[i])))
+# 		}
+# 		# attach those means to paees
+# 		val_data = val_data[with(val_data, order(index)),]
+# 		val_data$paee_means_bt_1 <- unlist(lapply(X=val_data$index, FUN=function(index_val){
+# 			output =  means_list[index_val]
+# 			}))
 
-		means_list_2 = vector(mode="list", length = number_of_indices)
-		for (i in 1:number_of_indices) {
-			means_list_2[i] = mean(unname(unlist((split(x=val_data$paee_error2, f= as.factor(val_data$index2)))[i])))
-		}
-		val_data = val_data[with(val_data, order(index2)),]
-		val_data$paee_means_bt_2 <- unlist(lapply(X=val_data$index2, FUN=function(index_val){
-			output =  means_list_2[index_val]
-			}))
+# 		means_list_2 = vector(mode="list", length = number_of_indices)
+# 		for (i in 1:number_of_indices) {
+# 			means_list_2[i] = mean(unname(unlist((split(x=val_data$paee_error2, f= as.factor(val_data$index2)))[i])))
+# 		}
+# 		val_data = val_data[with(val_data, order(index2)),]
+# 		val_data$paee_means_bt_2 <- unlist(lapply(X=val_data$index2, FUN=function(index_val){
+# 			output =  means_list_2[index_val]
+# 			}))
 
-		reg_lambda <- lm(formula =paee_error2~paee_means_bt_1, data=val_data)
-		lambda_pure = unlist(unname(reg_lambda$coefficients["paee_means_bt_1"]))
-		lambdas <- c(lambdas, lambda_pure)
-	}
-	# results$differenceScore <- difference_scores
-	results$lambda <- lambdas
-	results_df <- rbind(results_df, results)
-}
+# 		reg_lambda <- lm(formula =paee_error2~paee_means_bt_1, data=val_data)
+# 		lambda_pure = unlist(unname(reg_lambda$coefficients["paee_means_bt_1"]))
+# 		lambdas <- c(lambdas, lambda_pure)
+# 	}
+# 	# results$differenceScore <- difference_scores
+# 	results$lambda <- lambdas
+# 	results_df <- rbind(results_df, results)
+# }
 
 
-# # stopcluster
-# stopCluster(cl)
+# stopcluster
+stopCluster(cl)
