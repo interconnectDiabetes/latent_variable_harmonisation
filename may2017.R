@@ -58,14 +58,16 @@ updateStudyData <- function(coh_base, study_data, number_of_indices){
 createValidationData <- function(coh_base, val_size) {
 	number_of_indices = length(coh_base$indices)
 	validation_data = data.frame(paee =  rnorm(n = val_size, mean = mean_paee, sd = std_dev_paee))
+	validation_data$true_index = cut_number(x = validation_data$paee,n = number_of_indices, labels =FALSE)
+	
+	# 1st measurement
 	paee_errors = rnorm(n = val_size, mean = 0, sd = coh_base$std_dev[1])
 	validation_data$paee_error = validation_data$paee + paee_errors
-	validation_data$index = cut_number(x = validation_data$paee_error,n = number_of_indices, labels =FALSE)
-	
-	# the values of the second validation paee are dependent on the first measurement 
-	paee_errors2 = rnorm(n = val_size, mean = 0, sd = ((coh_base$std_dev[1])/2))
+	validation_data$index = binning process.
+	# 2nd measurement
+	paee_errors2 = rnorm(n = val_size, mean = 0, sd = coh_base$std_dev[1])
 	validation_data$paee_error2 = validation_data$paee_error + paee_errors2
-	validation_data$index2 = cut_number(x = validation_data$paee_error2,n = number_of_indices, labels =FALSE)
+
 	return (validation_data)
 }
 
@@ -90,18 +92,11 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= validation_index_size))
 		bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
 			FUN = sample, size = validation_index_size, replace=TRUE)))
-		bootstrap_validation$paee_error2 <- unlist(unname(lapply(X = split(x=validation_data$paee_error2, f= as.factor(validation_data$index)), 
-			FUN = sample, size = validation_index_size, replace=TRUE)))
 
 		# new bootstrap study data as well through sampling rows
 		means_boots_list = vector(mode="list", length = number_of_indices)
 		for (i in 1:number_of_indices) {
-			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)))[i])))
-		}
-		# we calculate the means for timepoint as well to regress against the first means and obtain lambda
-		means_boots_list_2 = vector(mode="list", length = number_of_indices)
-		for (i in 1:number_of_indices){
-			means_boots_list_2[i] = mean(unname(unlist((split(x=bootstrap_validation$paee_error2, f= as.factor(bootstrap_validation$index)))[i])))
+			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$paee_error, f= as.factor(bootstrap_validation$index)))[i])))
 		}
 
 		# we are no longer bootstrapping the study data set. so we caclulate our beta regression here
@@ -113,25 +108,19 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		# Create the validation data copy (because of parallelization) for the lambda regression calculation		
 		validation_data_cp <- validation_data
 		validation_data_cp = validation_data_cp[with(validation_data_cp, order(index)),]
-		validation_data_cp$paee_means_bt <- unlist(lapply(X=validation_data_cp$index, FUN=function(index_val){
-			output =  means_boots_list[index_val]
-			}))
-		validation_data_cp$paee_means_bt_2 <- unlist(lapply(X=validation_data_cp$index, FUN=function(index_val){
-			output =  means_boots_list_2[index_val]
-			}))
-		reg_lambda <- lm(formula =paee_means_bt_2~paee_means_bt, data=validation_data_cp)
+		reg_lambda <- lm(formula =paee_error2~paee_error, data=validation_data_cp)
 
 		# Estimate the standard error of the corrected estimate as currently it doesnt take the 2nd order 
 		# variability of lambda using the delta method :=>  variance = stdError * sqrt(numberofpeople) all squared
-		var_lambda = (sqrt(val_size) * summary(reg_lambda)$coefficients["paee_means_bt","Std. Error"])^2
+		var_lambda = (sqrt(val_size) * summary(reg_lambda)$coefficients["paee_error","Std. Error"])^2
 		var_Beta = (sqrt(val_size) * summary(reg_out_ind_mean)$coefficients["paee_sample_ind_mean","Std. Error"])^2
-		lambda_pure = unlist(unname(reg_lambda$coefficients["paee_means_bt"]))
-		beta_lambda_div_sq = (unname(unlist(reg_out_ind_mean$coefficients["paee_sample_ind_mean"]/(reg_lambda$coefficients["paee_means_bt"])^2)))^2
+		lambda_pure = unlist(unname(reg_lambda$coefficients["paee_error"]))
+		beta_lambda_div_sq = (unname(unlist(reg_out_ind_mean$coefficients["paee_sample_ind_mean"]/(reg_lambda$coefficients["paee_error"])^2)))^2
 		delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
 		delta_stdError = sqrt(delta_variance)/sqrt(val_size) 
 
 		# Return dual output into a list
-		output = data.frame(c(reg_out_ind_mean$coefficients["paee_sample_ind_mean"], reg_lambda$coefficients["paee_means_bt"], delta_stdError))
+		output = data.frame(c(reg_out_ind_mean$coefficients["paee_sample_ind_mean"], reg_lambda$coefficients["paee_error"], delta_stdError))
 		return (output)
 	})
 
