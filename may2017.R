@@ -317,16 +317,42 @@ results_df = data.frame()
 for (val_size in seq(from=100, to=100, by=20)){
 	results <- as.data.frame(std_dev_range)
 	colnames(results) <- c("standard_deviation")
-	difference_scores = vector("numeric")
+	# difference_scores = vector("numeric")
+	lambdas = vector("numeric")
 	results$val_size = rep(x=val_size, times=length(std_dev_range))
 	for (standard_deviation in std_dev_range) {
 		coh_base = data.frame(indices = c(1:number_of_indices), std_dev = standard_deviation)
 		val_data = createValidationData(coh_base, val_size)
-		difference_list <- unlist(unname(mapply(FUN=absDiff,val_data$index,  val_data$index2)))
-		difference_total <- sum(difference_list)
-		difference_scores <- c(difference_scores, difference_total)
+		# difference_list <- unlist(unname(mapply(FUN=absDiff,val_data$index,  val_data$index2)))
+		# difference_total <- sum(difference_list)
+		# difference_scores <- c(difference_scores, difference_total)
+
+		# find the means for number of indices of each paee measurement
+		means_list = vector(mode="list", length = number_of_indices)
+		for (i in 1:number_of_indices) {
+			means_list[i] = mean(unname(unlist((split(x=val_data$paee_error, f= as.factor(val_data$index)))[i])))
+		}
+		# attach those means to paees
+		val_data = val_data[with(val_data, order(index)),]
+		val_data$paee_means_bt_1 <- unlist(lapply(X=val_data$index, FUN=function(index_val){
+			output =  means_list[index_val]
+			}))
+
+		means_list_2 = vector(mode="list", length = number_of_indices)
+		for (i in 1:number_of_indices) {
+			means_list_2[i] = mean(unname(unlist((split(x=val_data$paee_error2, f= as.factor(val_data$index2)))[i])))
+		}
+		val_data = val_data[with(val_data, order(index2)),]
+		val_data$paee_means_bt_2 <- unlist(lapply(X=val_data$index2, FUN=function(index_val){
+			output =  means_list_2[index_val]
+			}))
+
+		reg_lambda <- lm(formula =paee_error2~paee_means_bt_1, data=val_data)
+		lambda_pure = unlist(unname(reg_lambda$coefficients["paee_means_bt_1"]))
+		lambdas <- c(lambdas, lambda_pure)
 	}
-	results$differenceScore <- difference_scores
+	# results$differenceScore <- difference_scores
+	results$lambda <- lambdas
 	results_df <- rbind(results_df, results)
 }
 
