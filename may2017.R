@@ -65,7 +65,7 @@ createValidationData <- function(coh_base, val_size) {
 	validation_data$paee_error = validation_data$paee + paee_errors
 	# 2nd measurement
 	paee_errors2 = rnorm(n = val_size, mean = 0, sd = coh_base$std_dev[1])
-	validation_data$paee_error2 = validation_data$paee_error + paee_errors2
+	validation_data$paee_error2 = validation_data$paee + paee_errors2
 
 	return (validation_data)
 }
