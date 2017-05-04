@@ -58,12 +58,11 @@ updateStudyData <- function(coh_base, study_data, number_of_indices){
 createValidationData <- function(coh_base, val_size) {
 	number_of_indices = length(coh_base$indices)
 	validation_data = data.frame(paee =  rnorm(n = val_size, mean = mean_paee, sd = std_dev_paee))
-	validation_data$true_index = cut_number(x = validation_data$paee,n = number_of_indices, labels =FALSE)
+	validation_data$index = cut_number(x = validation_data$paee,n = number_of_indices, labels =FALSE)
 	
 	# 1st measurement
 	paee_errors = rnorm(n = val_size, mean = 0, sd = coh_base$std_dev[1])
 	validation_data$paee_error = validation_data$paee + paee_errors
-	validation_data$index = binning process.
 	# 2nd measurement
 	paee_errors2 = rnorm(n = val_size, mean = 0, sd = coh_base$std_dev[1])
 	validation_data$paee_error2 = validation_data$paee_error + paee_errors2
@@ -89,11 +88,9 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 	
 	bootstrap  <- parLapply(cl, X=1:num_trials, fun=function(x){
 		# Create the bootstrap, sampling from the validation data
-		bootstrap_validation <- data.frame(index = rep(x = coh_base$indices, each= validation_index_size))
-		bootstrap_validation$paee <- unlist(unname(lapply(X = split(x=validation_data$paee, f= as.factor(validation_data$index)), 
-			FUN = sample, size = validation_index_size, replace=TRUE)))
+		bootstrap_validation <- validation_data[sample(nrow(validation_data), val_size, replace=TRUE),]
 
-		# new bootstrap study data as well through sampling rows
+		# calculating the means per index of bootstrap paee
 		means_boots_list = vector(mode="list", length = number_of_indices)
 		for (i in 1:number_of_indices) {
 			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$paee_error, f= as.factor(bootstrap_validation$index)))[i])))
@@ -106,9 +103,7 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		reg_out_ind_mean <- lm(formula=foo~paee_sample_ind_mean, data=study_data_cp)
 
 		# Create the validation data copy (because of parallelization) for the lambda regression calculation		
-		validation_data_cp <- validation_data
-		validation_data_cp = validation_data_cp[with(validation_data_cp, order(index)),]
-		reg_lambda <- lm(formula =paee_error2~paee_error, data=validation_data_cp)
+		reg_lambda <- lm(formula =paee_error2~paee_error, data=bootstrap_validation)
 
 		# Estimate the standard error of the corrected estimate as currently it doesnt take the 2nd order 
 		# variability of lambda using the delta method :=>  variance = stdError * sqrt(numberofpeople) all squared
