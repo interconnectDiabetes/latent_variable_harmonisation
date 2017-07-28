@@ -300,11 +300,8 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 ########################### Simulation Section ################################
 ###############################################################################
 num_trials <- 250
-results_2 = run_simulation(numSeeds = 25, number_of_indices=2)
-results_4 = run_simulation(numSeeds = 25, number_of_indices=4)
-results_16 = run_simulation(numSeeds = 25, number_of_indices=16)
-results_32 = run_simulation(numSeeds = 25, number_of_indices=32)
-results_64 = run_simulation(numSeeds = 25, number_of_indices=64)
+results_8 = run_simulation(numSeeds = 25, number_of_indices=8)
+
 
 
 # number_of_indices = 4
