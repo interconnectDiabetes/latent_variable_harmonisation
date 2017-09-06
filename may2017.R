@@ -93,7 +93,7 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		# calculating the means per index of bootstrap paee
 		means_boots_list = vector(mode="list", length = number_of_indices)
 		for (i in 1:number_of_indices) {
-			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$paee_error, f= as.factor(bootstrap_validation$index)))[i])))
+			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$paee, f= as.factor(bootstrap_validation$index)))[i])))
 		}
 
 		# we are no longer bootstrapping the study data set. so we caclulate our beta regression here
@@ -299,7 +299,7 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 ###############################################################################
 ########################### Simulation Section ################################
 ###############################################################################
-num_trials <- 250
+num_trials <- 10
 results_8 = run_simulation(numSeeds = 25, number_of_indices=8)
 
 
@@ -318,9 +318,9 @@ results_8 = run_simulation(numSeeds = 25, number_of_indices=8)
 # 	for (standard_deviation in std_dev_range) {
 # 		coh_base = data.frame(indices = c(1:number_of_indices), std_dev = standard_deviation)
 # 		val_data = createValidationData(coh_base, val_size)
-# 		# difference_list <- unlist(unname(mapply(FUN=absDiff,val_data$index,  val_data$index2)))
-# 		# difference_total <- sum(difference_list)
-# 		# difference_scores <- c(difference_scores, difference_total)
+# 		difference_list <- unlist(unname(mapply(FUN=absDiff,val_data$index,  val_data$index2)))
+# 		difference_total <- sum(difference_list)
+# 		difference_scores <- c(difference_scores, difference_total)
 
 # 		# find the means for number of indices of each paee measurement
 # 		means_list = vector(mode="list", length = number_of_indices)
