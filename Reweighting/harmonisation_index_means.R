@@ -78,7 +78,7 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		# calculating the means per index of bootstrap gold
 		means_boots_list = vector(mode="list", length = number_of_indices)
 		for (i in 1:number_of_indices) {
-			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$measured_exposure, f= as.factor(bootstrap_validation$index)))[i])))
+			means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$gold, f= as.factor(bootstrap_validation$index)))[i])))
 		}
 
 		# we are no longer bootstrapping the study data set. so we caclulate our beta regression here
@@ -88,7 +88,7 @@ bootstrapRun <- function(coh_base, study_size, val_size, study_data) {
 		reg_out_ind_mean <- lm(formula=foo~gold_sample_ind_mean, data=study_data_cp)
 
 		# Create the validation data copy (because of parallelization) for the lambda regression calculation		
-		reg_lambda <- lm(formula =gold_error2~measured_exposure, data=bootstrap_validation)
+		reg_lambda <- lm(formula =gold~measured_exposure, data=bootstrap_validation)
 
 		# Estimate the standard error of the corrected estimate as currently it doesnt take the 2nd order 
 		# variability of lambda using the delta method :=>  variance = stdError * sqrt(numberofpeople) all squared
@@ -284,8 +284,8 @@ run_simulation <- function(numSeeds=25, number_of_indices=4){
 ###############################################################################
 ########################### Simulation Section ################################
 ###############################################################################
-num_trials <- 250
-results_8 = run_simulation(numSeeds = 25, number_of_indices=8)
+num_trials <- 25
+results_8 = run_simulation(numSeeds = 10, number_of_indices=8)
 
 
 # stopcluster
