@@ -88,7 +88,9 @@ createMeansList <- function(data, number_of_indices) {
 #######################################################################################
 ########################### Motivation of the Problem #################################
 #######################################################################################
-
+# General Parameters
+numLevels = 4
+validation_size = 400
 
 ## Graphing Standard Error as a function of Measurement Error when using ordinal independent variable index
 upperbound = 100
@@ -115,27 +117,27 @@ for (measureError_status in 1:upperbound) {
     estimatesQuadratic[measureError_status] = estimate_graph_quadratic
 
     lm_graph_cubic <- lm(formula=outcome~index, data=studyData_graph)
-    estimate_graph_cubic = lm_graph_cubic$coefficients["index.L"]
-    stdError_graph_cubic = summary(lm_graph_cubic)$coefficients["index.L","Std. Error"]
+    estimate_graph_cubic = lm_graph_cubic$coefficients["index.C"]
+    stdError_graph_cubic = summary(lm_graph_cubic)$coefficients["index.C","Std. Error"]
     stdErrorCubic[measureError_status] = stdError_graph_cubic
     estimatesCubic[measureError_status] = estimate_graph_cubic
 
 }
-plot(x = (1:upperbound), y = stdErrorLinear, xlab = "measurement_error", ylab = "stderr")
-points(x = (1:upperbound), y = stdErrorQuadratic, xlab = "measurement_error", ylab = "estimates", col = "green")
-points(x = (1:upperbound), y = stdErrorCubic, xlab = "measurement_error", ylab = "estimates", col = "red")
 
+# Measurement vs. Std.Error
+plot(x = (1:upperbound), y = stdErrorLinear, xlab = "measurement_error_linear", ylab = "stderr")
+points(x = (1:upperbound), y = stdErrorQuadratic, xlab = "measurement_error", ylab = "stderr", col = "green")
+points(x = (1:upperbound), y = stdErrorCubic, xlab = "measurement_error", ylab = "stderr", col = "red")
 
+# Measurement vs. Estimates
 plot(x = (1:upperbound), y = estimatesLinear, xlab = "measurement_error", ylab = "estimates")
 points(x = (1:upperbound), y = estimatesQuadratic, xlab = "measurement_error", ylab = "estimates", col = "green")
 points(x = (1:upperbound), y = estimatesCubic, xlab = "measurement_error", ylab = "estimates", col = "red")
 
-
-plot(x = (1:upperbound), y = stdErrorLinear, xlab = "measurement_error", ylab = "stderr", col = "red")
-points(x = (1:upperbound), y = estimatesLinear, xlab = "measurement_error", ylab = "estimates", col = "green")
-
-
-
+# Estimates vs. Std.Error
+plot (x = estimatesLinear, y = stdErrorLinear, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error")
+points(x = estimatesQuadratic, y = stdErrorQuadratic, xlab = "measurement_error", ylab = "estimates", col = "green")
+points(x = estimatesCubic, y = stdErrorCubic, xlab = "measurement_error", ylab = "estimates", col = "red")
 
 
 ## Setting up the Studies
@@ -173,7 +175,6 @@ stdError_C = summary(lm_C)$coefficients["index.L","Std. Error"]
 
 
 ## Random Effects Model Forest Plot Before Reweighting
-
 estimates = c(estimate_A, estimate_B, estimate_C)
 stand_errs = c(stdError_A, stdError_B, stdError_C)
 labels = c("A","B","C")
@@ -182,22 +183,67 @@ weights_res <- weights.rma.uni(res)
 
 # Forest Plot
 res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
-fmla = as.formula(outcome~ind_mean)
+fmla = as.formula(y~measured_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
 xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
-    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1)
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Before Any Changes to Process")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
 
 
+##########################################################################################
+##########################################################################################
+## Same as Basic Process except indexes are transformed into scale of gold measure using the model.
+
+numLevels = 4
+validation_size = 400
+# Study A
+measureError_A = 5
+studyData_A = createStudyData(raw_data = raw_data, measurement_error = measureError_A, number_of_indices = numLevels)
+validation_data_A = createValidationData(val_size = validation_size, measurement_error = measureError_A, number_of_indices = numLevels )
+# Study B
+measureError_B = 10
+studyData_B = createStudyData(raw_data = raw_data, measurement_error = measureError_B, number_of_indices = numLevels)
+validation_data_B = createValidationData(val_size = validation_size, measurement_error = measureError_B, number_of_indices = numLevels )
+# Study C
+measureError_C = 60
+studyData_C = createStudyData(raw_data = raw_data, measurement_error = measureError_C, number_of_indices = numLevels)
+validation_data_C = createValidationData(val_size = validation_size, measurement_error = measureError_C, number_of_indices = numLevels )
+
+## Transformation of Indexes to Gold Scale
+index_transformation = as.formula(gold ~ index)
+# Study A
+lambda_lm_A <- lm(formula=index_transformation, data=validation_data_A)
+studyData_A$index = as.numeric(studyData_A$index)
+new = data.frame(index = studyData_A$index)
+studyData_A$index_scaled = predict(lambda_lm_A, newdata = new)
+# Study B
+lambda_lm_B <- lm(formula=index_transformation, data=validation_data_B)
+new = data.frame(index = studyData_B$index)
+studyData_B$index_scaled = predict(lambda_lm_B, newdata = new)
+# Study C
+lambda_lm_C <- lm(formula=index_transformation, data=validation_data_C)
+new = data.frame(index = studyData_C$index)
+studyData_C$index_scaled = predict(lambda_lm_C, newdata = new)
 
 
+# Study A
+lm_A <- lm(formula=outcome~index, data=studyData_A)
+estimate_A = lm_A$coefficients["index.L"]
+stdError_A = summary(lm_A)$coefficients["index.L","Std. Error"]
 
+# Study B
+lm_B <- lm(formula=outcome~index, data=studyData_B)
+estimate_B = lm_B$coefficients["index.L"]
+stdError_B = summary(lm_B)$coefficients["index.L","Std. Error"]
 
-
-
+# Study C
+lm_C <- lm(formula=outcome~index, data=studyData_C)
+estimate_C = lm_C$coefficients["index.L"]
+stdError_C = summary(lm_C)$coefficients["index.L","Std. Error"]
 
 
 
