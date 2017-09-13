@@ -13,7 +13,7 @@ library(stats)
 library(metafor)
 
 # Raw Data Set Properties
-set.seed(1234)
+set.seed(123)
 
 trueBeta = 0.5
 constant = 20
@@ -47,7 +47,7 @@ createValidationData <- function(val_size, measurement_error, number_of_indices)
 ########################### Motivation of the Problem #################################
 #######################################################################################
 ## Graphing Standard Error as a function of Measurement Error
-error_upperbound = 500
+error_upperbound = 250
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
 
@@ -121,10 +121,126 @@ text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
 
+
 ################################################################################################
 ################################################################################################
 ################################################################################################
 ################################################################################################
+
+# Using real regression calibration.
+## Modeling x ~ measured_x in validation
+fmla_harmonisation = as.formula(x~measured_x)
+# Study A
+lambda_lm_A <- lm(formula=fmla_harmonisation, data=validation_data_A)
+lambda_A = lambda_lm_A$coefficients["measured_x"]
+stdError_lambda_A = summary(lambda_lm_A)$coefficients["measured_x","Std. Error"]
+
+# Study B
+lambda_lm_B <- lm(formula=fmla_harmonisation, data=validation_data_B)
+lambda_B = lambda_lm_B$coefficients["measured_x"]
+stdError_lambda_B = summary(lambda_lm_B)$coefficients["measured_x","Std. Error"]
+
+# Study C
+lambda_lm_C <- lm(formula=fmla_harmonisation, data=validation_data_C)
+lambda_C = lambda_lm_C$coefficients["measured_x"]
+stdError_lambda_C = summary(lambda_lm_C)$coefficients["measured_x","Std. Error"]
+
+
+lm_A <- lm(formula=y~measured_x, data=studyData_A)
+estimate_A = lm_A$coefficients["measured_x"]
+stdError_A = summary(lm_A)$coefficients["measured_x","Std. Error"]
+
+lm_B <- lm(formula=y~measured_x, data=studyData_B)
+estimate_B = lm_B$coefficients["measured_x"]
+stdError_B = summary(lm_B)$coefficients["measured_x","Std. Error"]
+
+lm_C <- lm(formula=y~measured_x, data=studyData_C)
+estimate_C = lm_C$coefficients["measured_x"]
+stdError_C = summary(lm_C)$coefficients["measured_x","Std. Error"]
+
+corrected_estimate_A = estimate_A / lambda_A
+corrected_estimate_B = estimate_B / lambda_B
+corrected_estimate_C = estimate_C / lambda_C
+
+# calculate the corrected standard error
+var_Beta = (sqrt(validation_size) * summary(lm_A)$coefficients["measured_x","Std. Error"])^2
+#var_Beta = summary(lm_A)$sigma**2
+# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
+lambda_pure = unlist(unname(lambda_lm_A$coefficients["measured_x"]))
+beta_lambda_div_sq = (unname(unlist(lm_A$coefficients["measured_x"]/(lambda_lm_A$coefficients["measured_x"])^2)))^2
+var_lambda = (sqrt(validation_size) * summary(lambda_lm_A)$coefficients["measured_x","Std. Error"])^2
+delta_variance = (var_Beta / (lambda_pure)^2) + (beta_lambda_div_sq * var_lambda)
+delta_stdError_A = sqrt(delta_variance)/sqrt(validation_size) 
+delta_stdError_A = sqrt(delta_variance)
+
+var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["measured_x","Std. Error"])^2
+var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["measured_x","Std. Error"])^2
+#var_Beta = summary(lm_A)$sigma**2
+# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
+lambda_pure = unlist(unname(lambda_lm_B$coefficients["measured_x"]))
+beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["measured_x"]/(lambda_lm_B$coefficients["measured_x"])^2)))^2
+delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
+delta_stdError_B = sqrt(delta_variance)/sqrt(validation_size) 
+delta_stdError_B = sqrt(delta_variance)
+
+
+var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["measured_x","Std. Error"])^2
+var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["measured_x","Std. Error"])^2
+#var_Beta = summary(lm_A)$sigma**2
+# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
+lambda_pure = unlist(unname(lambda_lm_B$coefficients["measured_x"]))
+beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["measured_x"]/(lambda_lm_B$coefficients["measured_x"])^2)))^2
+delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
+delta_stdError_C = sqrt(delta_variance)/sqrt(validation_size) 
+delta_stdError_C = sqrt(delta_variance)
+
+## Random Effects Model Forest Plot After Regression Calibration
+estimates = c(corrected_estimate_A, corrected_estimate_B, corrected_estimate_C)
+stand_errs = c(delta_stdError_A, delta_stdError_B, delta_stdError_C)
+labels = c("A","B","C")
+res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
+weights_res <- weights.rma.uni(res)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~harmonised_x)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+    .(sprintf("%.3f", round(res$QEp,3))),')')),
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Regression Calibration")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+
+## Graphing Standard Error as a function of Measurement Error
+error_upperbound = 250
+std_error = vector("numeric", length = error_upperbound)
+estimates = vector("numeric", length = error_upperbound)
+
+for (measurement_error in 1:error_upperbound){
+    studyData_A = createStudyData(raw_data = raw_data, measurement_error = measurement_error, number_of_indices = numLevels)
+    validation_data_A = createValidationData(val_size = validation_size, measurement_error = measurement_error, number_of_indices = numLevels )
+
+    fmla = as.formula(y ~ measured_x)
+    linear_model = lm(formula = fmla, data = raw_data)
+    x_estimate = linear_model$coefficients["measured_x"]
+    x_stdErr = summary(linear_model)$coefficients["measured_x", "Std. Error"]
+    std_error[measurement_error] = x_stdErr
+    estimates[measurement_error] = x_estimate
+}
+plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error")
+plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error)")
+
+plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error")
+
+
+
+################################################################################################
+################################################################################################
+################################################################################################
+################################################################################################
+## PREDICT (ERROR IN VARIABLES MODELS)
 
 ## Modeling x ~ measured_x in validation
 fmla_harmonisation = as.formula(x~measured_x)
@@ -186,164 +302,11 @@ text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
 
-
-
-################################################################################################
-################################################################################################
-################################################################################################
-################################################################################################
-
-# Using real regression calibration.
-## Modeling x ~ measured_x in validation
-fmla_harmonisation = as.formula(x~measured_x)
-# Study A
-lambda_lm_A <- lm(formula=fmla_harmonisation, data=validation_data_A)
-lambda_A = lambda_lm_A$coefficients["measured_x"]
-stdError_lambda_A = summary(lambda_lm_A)$coefficients["measured_x","Std. Error"]
-
-# Study B
-lambda_lm_B <- lm(formula=fmla_harmonisation, data=validation_data_B)
-lambda_B = lambda_lm_B$coefficients["measured_x"]
-stdError_lambda_B = summary(lambda_lm_B)$coefficients["measured_x","Std. Error"]
-
-# Study C
-lambda_lm_C <- lm(formula=fmla_harmonisation, data=validation_data_C)
-lambda_C = lambda_lm_C$coefficients["measured_x"]
-stdError_lambda_C = summary(lambda_lm_C)$coefficients["measured_x","Std. Error"]
-
-
-lm_A <- lm(formula=y~measured_x, data=studyData_A)
-estimate_A = lm_A$coefficients["measured_x"]
-stdError_A = summary(lm_A)$coefficients["measured_x","Std. Error"]
-
-lm_B <- lm(formula=y~measured_x, data=studyData_B)
-estimate_B = lm_B$coefficients["measured_x"]
-stdError_B = summary(lm_B)$coefficients["measured_x","Std. Error"]
-
-lm_C <- lm(formula=y~measured_x, data=studyData_C)
-estimate_C = lm_C$coefficients["measured_x"]
-stdError_C = summary(lm_C)$coefficients["measured_x","Std. Error"]
-
-corrected_estimate_A = estimate_A / lambda_A
-corrected_estimate_B = estimate_B / lambda_B
-corrected_estimate_C = estimate_C / lambda_C
-
-# calculate the corrected standard error
-var_Beta = (sqrt(validation_size) * summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-lambda_pure = unlist(unname(lambda_lm_A$coefficients["measured_x"]))
-beta_lambda_div_sq = (unname(unlist(lm_A$coefficients["measured_x"]/(lambda_lm_A$coefficients["measured_x"])^2)))^2
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_A)$coefficients["measured_x","Std. Error"])^2
-delta_variance = (var_Beta / (lambda_pure)^2) + (beta_lambda_div_sq * var_lambda)
-delta_stdError_A = sqrt(delta_variance)/sqrt(validation_size) 
-delta_stdError_A = sqrt(delta_variance)
-
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["measured_x","Std. Error"])^2
-var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["measured_x","Std. Error"])^2
-var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-lambda_pure = unlist(unname(lambda_lm_B$coefficients["measured_x"]))
-beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["measured_x"]/(lambda_lm_B$coefficients["measured_x"])^2)))^2
-delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
-delta_stdError_B = sqrt(delta_variance)/sqrt(validation_size) 
-delta_stdError_B = sqrt(delta_variance)
-
-
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["measured_x","Std. Error"])^2
-var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["measured_x","Std. Error"])^2
-var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-lambda_pure = unlist(unname(lambda_lm_B$coefficients["measured_x"]))
-beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["measured_x"]/(lambda_lm_B$coefficients["measured_x"])^2)))^2
-delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
-delta_stdError_C = sqrt(delta_variance)/sqrt(validation_size) 
-delta_stdError_C = sqrt(delta_variance)
-
-## Random Effects Model Forest Plot After Regression Calibration
-estimates = c(corrected_estimate_A, corrected_estimate_B, corrected_estimate_C)
-stand_errs = c(delta_stdError_A, delta_stdError_B, delta_stdError_C)
-labels = c("A","B","C")
-res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
-weights_res <- weights.rma.uni(res)
-
-# Forest Plot
-res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
-fmla = as.formula(y~harmonised_x)
-forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
-    .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
-    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Regression Calibration")
-usr <- par("usr")
-text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
-text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
-abline(v = 0.5, col = "lightgray")
-
-
 ################################################################################################
 ################################################################################################
 ################################################################################################
 ################################################################################################# 
-
-##Using real regression calibration. MODIFIED TO DIVIDE LAMBDA EVERYWHERE
-## Modeling x ~ measured_x in validation
-fmla_harmonisation = as.formula(x~measured_x)
-# Study A
-lambda_lm_A <- lm(formula=fmla_harmonisation, data=validation_data_A)
-lambda_A = lambda_lm_A$coefficients["measured_x"]
-stdError_lambda_A = summary(lambda_lm_A)$coefficients["measured_x","Std. Error"]
-
-# Study B
-lambda_lm_B <- lm(formula=fmla_harmonisation, data=validation_data_B)
-lambda_B = lambda_lm_B$coefficients["measured_x"]
-stdError_lambda_B = summary(lambda_lm_B)$coefficients["measured_x","Std. Error"]
-
-# Study C
-lambda_lm_C <- lm(formula=fmla_harmonisation, data=validation_data_C)
-lambda_C = lambda_lm_C$coefficients["measured_x"]
-stdError_lambda_C = summary(lambda_lm_C)$coefficients["measured_x","Std. Error"]
-
-studyData_A$lambdadx = studyData_A$measured_x/lambda_A
-lm_A <- lm(formula=y~lambdadx, data=studyData_A)
-estimate_A = lm_A$coefficients["lambdadx"]
-stdError_A = summary(lm_A)$coefficients["lambdadx","Std. Error"]
-
-studyData_B$lambdadx = studyData_B$measured_x/lambda_B
-lm_B <- lm(formula=y~lambdadx, data=studyData_B)
-estimate_B = lm_B$coefficients["lambdadx"]
-stdError_B = summary(lm_B)$coefficients["lambdadx","Std. Error"]
-
-studyData_C$lambdadx = studyData_C$measured_x/lambda_C
-lm_C <- lm(formula=y~lambdadx, data=studyData_C)
-estimate_C = lm_C$coefficients["lambdadx"]
-stdError_C = summary(lm_C)$coefficients["lambdadx","Std. Error"]
-
-
-## Random Effects Model Forest Plot After Regression Calibration in all members of measured x
-estimates = c(estimate_A, estimate_B, estimate_C)
-stand_errs = c(stdError_A, stdError_B, stdError_C)
-labels = c("A","B","C")
-res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
-weights_res <- weights.rma.uni(res)
-
-# Forest Plot
-res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
-fmla = as.formula(y~harmonised_x)
-forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
-    .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
-    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Members Calibration")
-usr <- par("usr")
-text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
-text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
-abline(v = 0.5, col = "lightgray")
-
-
-################################################################################################
-################################################################################################
-################################################################################################
-################################################################################################# 
-##Using real regression calibration. MODIFIED TO DIVIDE LAMBDA EVERYWHERE
+## By manually predicting values using the model created
 ## Modeling x ~ measured_x in validation
 fmla_harmonisation = as.formula(x~measured_x)
 # Study A
