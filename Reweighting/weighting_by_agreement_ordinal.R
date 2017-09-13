@@ -43,6 +43,8 @@ library(parallel)
 library(stats)
 library(metafor)
 
+set.seed(123)
+
 # Raw Data Set Properties
 trueBeta = 0.5
 constant = 20
@@ -125,19 +127,19 @@ for (measureError_status in 1:upperbound) {
 }
 
 # Measurement vs. Std.Error
-plot(x = (1:upperbound), y = stdErrorLinear, xlab = "measurement_error_linear", ylab = "stderr")
-points(x = (1:upperbound), y = stdErrorQuadratic, xlab = "measurement_error", ylab = "stderr", col = "green")
-points(x = (1:upperbound), y = stdErrorCubic, xlab = "measurement_error", ylab = "stderr", col = "red")
+plot(x = (1:upperbound), y = stdErrorLinear, xlab = "Measurement Error", ylab = "Standard Error", main = "Assuming Linear Relationship")
+# plot(x = (1:upperbound), y = stdErrorQuadratic, xlab = "Measurement Error", ylab = "Standard Error", col = "green", main = "Assuming Quadratic Relationship")
+plot(x = (1:upperbound), y = stdErrorCubic, xlab = "Measurement Error", ylab = "Standard Error", col = "red", main = "Assuming Cubic Relationship")
 
 # Measurement vs. Estimates
-plot(x = (1:upperbound), y = estimatesLinear, xlab = "measurement_error", ylab = "estimates")
-points(x = (1:upperbound), y = estimatesQuadratic, xlab = "measurement_error", ylab = "estimates", col = "green")
-points(x = (1:upperbound), y = estimatesCubic, xlab = "measurement_error", ylab = "estimates", col = "red")
+plot(x = (1:upperbound), y = estimatesLinear, xlab = "Measurement Error", ylab = "Estimates", main = "Assuming Linear Relationship")
+# plot(x = (1:upperbound), y = estimatesQuadratic, xlab = "Measurement Error", ylab = "Estimates", col = "green", main = "Assuming Quadratic Relationship")
+plot(x = (1:upperbound), y = estimatesCubic, xlab = "Measurement Error", ylab = "Estimates", col = "red", main = "Assuming Cubic Relationship")
 
 # Estimates vs. Std.Error
-plot (x = estimatesLinear, y = stdErrorLinear, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error")
-points(x = estimatesQuadratic, y = stdErrorQuadratic, xlab = "measurement_error", ylab = "estimates", col = "green")
-points(x = estimatesCubic, y = stdErrorCubic, xlab = "measurement_error", ylab = "estimates", col = "red")
+plot(x = estimatesLinear, y = stdErrorLinear, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error")
+# plot(x = estimatesQuadratic, y = stdErrorQuadratic, xlab = "Estimates", ylab = "Standard Error", col = "green", main = "Assuming Quadratic Relationship")
+plot(x = estimatesCubic, y = stdErrorCubic, xlab = "Estimates", ylab = "Standard Error", col = "red", main = "Assuming Cubic Relationship")
 
 
 ## Setting up the Studies
