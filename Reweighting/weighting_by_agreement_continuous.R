@@ -122,6 +122,44 @@ abline(v = 0.5, col = "lightgray")
 #######################################################################################
 ######################## Using Regression Calibration Classic #########################
 #######################################################################################
+## Graphing Standard Error as a function of Measurement Error
+std_error = vector("numeric", length = error_upperbound)
+estimates = vector("numeric", length = error_upperbound)
+
+for (measurement_error in 1:error_upperbound){
+    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
+    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error)
+
+    # calculate the lambda
+    fmla_harmonisation = as.formula(x~measured_x)
+    lambda_lm_graph <- lm(formula=fmla_harmonisation, data=validation_data_graph)
+    lambda_graph = lambda_lm_graph$coefficients["measured_x"]
+    stdError_lambda_graph = summary(lambda_lm_graph)$coefficients["measured_x","Std. Error"]
+
+    # calculate the estimates using the normal study data
+    lm_graph <- lm(formula=y~measured_x, data=studyData_graph)
+    estimate_graph = lm_graph$coefficients["measured_x"]
+    stdError_graph = summary(lm_graph)$coefficients["measured_x","Std. Error"]
+
+    # Propagate Errors in Standard Error
+    var_lambda = (sqrt(validation_size) * summary(lambda_lm_graph)$coefficients["measured_x","Std. Error"])^2
+    var_Beta = (sqrt(validation_size) * summary(lm_graph)$coefficients["measured_x","Std. Error"])^2
+    #var_Beta = summary(lm_A)$sigma**2
+    # var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
+    lambda_pure = unlist(unname(lambda_lm_graph$coefficients["measured_x"]))
+    beta_lambda_div_sq = (unname(unlist(lm_graph$coefficients["measured_x"]/(lambda_lm_graph$coefficients["measured_x"])^2)))^2
+    delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
+    delta_stdError_B = sqrt(delta_variance)/sqrt(validation_size) 
+    delta_stdError_B = sqrt(delta_variance)
+
+    std_error[measurement_error] = delta_stdError_B
+    estimates[measurement_error] = estimate_graph/lambda_graph
+}
+plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Regression Calibration")
+plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Regression Calibration")
+plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error \n Regression Calibration")
+
+
 
 # Using real regression calibration.
 ## Modeling x ~ measured_x in validation
@@ -209,6 +247,13 @@ text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
 
+
+
+#######################################################################################
+######################## USING THE MODEL OF ERROR *PREDICT* ###########################
+#######################################################################################
+## PREDICT (ERROR IN VARIABLES MODELS)
+
 ## Graphing Standard Error as a function of Measurement Error
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
@@ -217,41 +262,27 @@ for (measurement_error in 1:error_upperbound){
     studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
     validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error)
 
-    # calculate the lambda
-    fmla_harmonisation = as.formula(x~measured_x)
-    lambda_lm_graph <- lm(formula=fmla_harmonisation, data=validation_data_graph)
-    lambda_graph = lambda_lm_graph$coefficients["measured_x"]
-    stdError_lambda_graph = summary(lambda_lm_graph)$coefficients["measured_x","Std. Error"]
+    # calculate the Error Model
+    error_model_graph <- lm(formula=fmla_harmonisation, data=validation_data_graph)
+    lambda_graph = error_model_graph$coefficients["measured_x"]
+    stdError_lambda_graph = summary(error_model_graph)$coefficients["measured_x","Std. Error"]
 
     # calculate the estimates using the normal study data
-    lm_graph <- lm(formula=y~measured_x, data=studyData_graph)
-    estimate_graph = lm_graph$coefficients["measured_x"]
-    stdError_graph = summary(lm_graph)$coefficients["measured_x","Std. Error"]
+    new = data.frame(measured_x = studyData_graph$measured_x)
+    studyData_graph$harmonised_x = predict(error_model_graph, newdata = new)
+    lm_graph <- lm(formula=y~harmonised_x, data=studyData_graph)
+    estimate_graph = lm_graph$coefficients["harmonised_x"]
+    stdError_graph = summary(lm_graph)$coefficients["harmonised_x","Std. Error"]
 
-    # Propagate Errors in Standard Error
-    var_lambda = (sqrt(validation_size) * summary(lambda_lm_graph)$coefficients["measured_x","Std. Error"])^2
-    var_Beta = (sqrt(validation_size) * summary(lm_graph)$coefficients["measured_x","Std. Error"])^2
-    #var_Beta = summary(lm_A)$sigma**2
-    # var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-    lambda_pure = unlist(unname(lambda_lm_graph$coefficients["measured_x"]))
-    beta_lambda_div_sq = (unname(unlist(lm_graph$coefficients["measured_x"]/(lambda_lm_graph$coefficients["measured_x"])^2)))^2
-    delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
-    delta_stdError_B = sqrt(delta_variance)/sqrt(validation_size) 
-    delta_stdError_B = sqrt(delta_variance)
 
-    std_error[measurement_error] = delta_stdError_B
-    estimates[measurement_error] = estimate_graph/lambda_graph
+    std_error[measurement_error] = stdError_graph
+    estimates[measurement_error] = estimate_graph
 }
-plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Regression Calibration")
-plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Regression Calibration")
-plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error \n Regression Calibration")
+plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Error Model Pred")
+plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Error Model Pred")
+plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Monotonic Relationship Between \n Accuracy and Standard Error \n Error Model Pred")
 
 
-
-#######################################################################################
-######################## USING THE MODEL OF ERROR *PREDICT* ###########################
-#######################################################################################
-## PREDICT (ERROR IN VARIABLES MODELS)
 
 ## Modeling x ~ measured_x in validation
 fmla_harmonisation = as.formula(x~measured_x)
@@ -314,6 +345,12 @@ text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),c
 abline(v = 0.5, col = "lightgray")
 
 
+#######################################################################################
+######################## USING THE MODEL OF ERROR *PREDICT* ###########################
+################## DONE MANUALLY WITH MODEL PARAMETER ESTIMATES #######################
+#######################################################################################
+## PREDICT (ERROR IN VARIABLES MODELS)
+
 ## Graphing Standard Error as a function of Measurement Error
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
@@ -325,31 +362,20 @@ for (measurement_error in 1:error_upperbound){
     # calculate the Error Model
     error_model_graph <- lm(formula=fmla_harmonisation, data=validation_data_graph)
     lambda_graph = error_model_graph$coefficients["measured_x"]
-    stdError_lambda_graph = summary(error_model_graph)$coefficients["measured_x","Std. Error"]
+    intercept_lambda_graph = error_model_graph$coefficients["(Intercept)"]
 
     # calculate the estimates using the normal study data
-    new = data.frame(measured_x = studyData_graph$measured_x)
-    studyData_graph$harmonised_x = predict(error_model_graph, newdata = new)
-    lm_graph <- lm(formula=y~harmonised_x, data=studyData_graph)
-    estimate_graph = lm_graph$coefficients["harmonised_x"]
-    stdError_graph = summary(lm_graph)$coefficients["harmonised_x","Std. Error"]
+    studyData_graph$lambdadx = studyData_graph$measured_x*lambda_graph + intercept_lambda_graph
+    lm_graph <- lm(formula=y~lambdadx, data=studyData_graph)
+    estimate_graph = lm_graph$coefficients["lambdadx"]
+    stdError_graph = summary(lm_graph)$coefficients["lambdadx","Std. Error"]
 
-
-    std_error[measurement_error] = stdError_graph
     estimates[measurement_error] = estimate_graph
+    std_error[measurement_error] = stdError_graph
 }
 plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Error Model Pred")
 plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Error Model Pred")
 plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Monotonic Relationship Between \n Accuracy and Standard Error \n Error Model Pred")
-
-
-
-
-#######################################################################################
-######################## USING THE MODEL OF ERROR *PREDICT* ###########################
-################## DONE MANUALLY WITH MODEL PARAMETER ESTIMATES #######################
-#######################################################################################
-## PREDICT (ERROR IN VARIABLES MODELS)
 
 
 ## By manually predicting values using the model created
