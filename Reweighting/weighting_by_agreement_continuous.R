@@ -70,7 +70,6 @@ plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error",
 ######################## Exhibiting the Effects on Studies ############################
 #######################################################################################
 # General Parameters
-numLevels = 4
 validation_size = 400
 
 # Study A
@@ -219,19 +218,36 @@ std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
 
 for (measurement_error in 1:error_upperbound){
-    studyData_A = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
-    validation_data_A = createValidationData(val_size = validation_size, measurement_error = measurement_error )
+    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
+    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error)
 
-    fmla = as.formula(y ~ measured_x)
-    linear_model = lm(formula = fmla, data = raw_data)
-    x_estimate = linear_model$coefficients["measured_x"]
-    x_stdErr = summary(linear_model)$coefficients["measured_x", "Std. Error"]
-    std_error[measurement_error] = x_stdErr
-    estimates[measurement_error] = x_estimate
+    # calculate the lambda
+    fmla_harmonisation = as.formula(x~measured_x)
+    lambda_lm_graph <- lm(formula=fmla_harmonisation, data=validation_data_graph)
+    lambda_graph = lambda_lm_graph$coefficients["measured_x"]
+    stdError_lambda_graph = summary(lambda_lm_graph)$coefficients["measured_x","Std. Error"]
+
+    # calculate the estimates using the normal study data
+    lm_graph <- lm(formula=y~measured_x, data=studyData_graph)
+    estimate_graph = lm_graph$coefficients["measured_x"]
+    stdError_graph = summary(lm_graph)$coefficients["measured_x","Std. Error"]
+
+    # Propagate Errors in Standard Error
+    var_lambda = (sqrt(validation_size) * summary(lambda_lm_graph)$coefficients["measured_x","Std. Error"])^2
+    var_Beta = (sqrt(validation_size) * summary(lm_graph)$coefficients["measured_x","Std. Error"])^2
+    #var_Beta = summary(lm_A)$sigma**2
+    # var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
+    lambda_pure = unlist(unname(lambda_lm_graph$coefficients["measured_x"]))
+    beta_lambda_div_sq = (unname(unlist(lm_graph$coefficients["measured_x"]/(lambda_lm_graph$coefficients["measured_x"])^2)))^2
+    delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
+    delta_stdError_B = sqrt(delta_variance)/sqrt(validation_size) 
+    delta_stdError_B = sqrt(delta_variance)
+
+    std_error[measurement_error] = delta_stdError_B
+    estimates[measurement_error] = estimate_graph/lambda_graph
 }
 plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error")
 plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error)")
-
 plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error")
 
 
