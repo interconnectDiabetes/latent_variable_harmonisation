@@ -30,13 +30,13 @@ raw_data$y = (trueBeta*raw_data$x) + constant
 ########################### Functions #########################################
 ###############################################################################
 
-createStudyData <- function(raw_data, measurement_error, number_of_indices){
+createStudyData <- function(raw_data, measurement_error){
     x_error = rnorm(n = study_size, mean = 0, sd = measurement_error)
     raw_data$measured_x = raw_data$x + x_error
     return(raw_data)
 }
 
-createValidationData <- function(val_size, measurement_error, number_of_indices) {
+createValidationData <- function(val_size, measurement_error) {
     validation_data = data.frame(x =  rnorm(n = val_size, mean = raw_mean, sd = raw_stdev))
     x_error = rnorm(n = val_size, mean = 0, sd = measurement_error)
     validation_data$measured_x = validation_data$x + x_error
@@ -75,18 +75,18 @@ validation_size = 400
 
 # Study A
 measureError_A = 5
-studyData_A = createStudyData(raw_data = raw_data, measurement_error = measureError_A, number_of_indices = numLevels)
-validation_data_A = createValidationData(val_size = validation_size, measurement_error = measureError_A, number_of_indices = numLevels )
+studyData_A = createStudyData(raw_data = raw_data, measurement_error = measureError_A)
+validation_data_A = createValidationData(val_size = validation_size, measurement_error = measureError_A )
 
 # Study B
 measureError_B = 10
-studyData_B = createStudyData(raw_data = raw_data, measurement_error = measureError_B, number_of_indices = numLevels)
-validation_data_B = createValidationData(val_size = validation_size, measurement_error = measureError_B, number_of_indices = numLevels )
+studyData_B = createStudyData(raw_data = raw_data, measurement_error = measureError_B)
+validation_data_B = createValidationData(val_size = validation_size, measurement_error = measureError_B )
 
 # Study C
 measureError_C = 200
-studyData_C = createStudyData(raw_data = raw_data, measurement_error = measureError_C, number_of_indices = numLevels)
-validation_data_C = createValidationData(val_size = validation_size, measurement_error = measureError_C, number_of_indices = numLevels )
+studyData_C = createStudyData(raw_data = raw_data, measurement_error = measureError_C)
+validation_data_C = createValidationData(val_size = validation_size, measurement_error = measureError_C )
 
 
 lm_A <- lm(formula=y~measured_x, data=studyData_A)
@@ -219,8 +219,8 @@ std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
 
 for (measurement_error in 1:error_upperbound){
-    studyData_A = createStudyData(raw_data = raw_data, measurement_error = measurement_error, number_of_indices = numLevels)
-    validation_data_A = createValidationData(val_size = validation_size, measurement_error = measurement_error, number_of_indices = numLevels )
+    studyData_A = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
+    validation_data_A = createValidationData(val_size = validation_size, measurement_error = measurement_error )
 
     fmla = as.formula(y ~ measured_x)
     linear_model = lm(formula = fmla, data = raw_data)
