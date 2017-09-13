@@ -13,8 +13,6 @@ library(stats)
 library(metafor)
 
 # Raw Data Set Properties
-set.seed(123)
-
 trueBeta = 0.5
 constant = 20
 
@@ -47,7 +45,7 @@ createValidationData <- function(val_size, measurement_error) {
 ########################### Motivation of the Problem #################################
 #######################################################################################
 ## Graphing Standard Error as a function of Measurement Error
-error_upperbound = 250
+error_upperbound = 50
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
 
@@ -61,10 +59,10 @@ for (measurement_error in 1:error_upperbound){
 	std_error[measurement_error] = x_stdErr
 	estimates[measurement_error] = x_estimate
 }
-plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error")
-plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error)")
+plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Before Changes")
+plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Before Changes")
 
-plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error")
+plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error \n Before Changes")
 
 #######################################################################################
 ######################## Before Any Changes to the Process ############################
@@ -212,7 +210,6 @@ text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),c
 abline(v = 0.5, col = "lightgray")
 
 ## Graphing Standard Error as a function of Measurement Error
-error_upperbound = 250
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
 
@@ -245,9 +242,9 @@ for (measurement_error in 1:error_upperbound){
     std_error[measurement_error] = delta_stdError_B
     estimates[measurement_error] = estimate_graph/lambda_graph
 }
-plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error")
-plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error)")
-plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error")
+plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Regression Calibration")
+plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Regression Calibration")
+plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error \n Regression Calibration")
 
 
 
@@ -310,11 +307,41 @@ fmla = as.formula(y~harmonised_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
 xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
-    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Validation Regression")
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Using Predict aka 'Error Model'")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
+
+
+## Graphing Standard Error as a function of Measurement Error
+std_error = vector("numeric", length = error_upperbound)
+estimates = vector("numeric", length = error_upperbound)
+
+for (measurement_error in 1:error_upperbound){
+    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
+    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error)
+
+    # calculate the Error Model
+    error_model_graph <- lm(formula=fmla_harmonisation, data=validation_data_graph)
+    lambda_graph = error_model_graph$coefficients["measured_x"]
+    stdError_lambda_graph = summary(error_model_graph)$coefficients["measured_x","Std. Error"]
+
+    # calculate the estimates using the normal study data
+    new = data.frame(measured_x = studyData_graph$measured_x)
+    studyData_graph$harmonised_x = predict(error_model_graph, newdata = new)
+    lm_graph <- lm(formula=y~harmonised_x, data=studyData_graph)
+    estimate_graph = lm_graph$coefficients["harmonised_x"]
+    stdError_graph = summary(lm_graph)$coefficients["harmonised_x","Std. Error"]
+
+
+    std_error[measurement_error] = stdError_graph
+    estimates[measurement_error] = estimate_graph
+}
+plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Error Model Pred")
+plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Error Model Pred")
+plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Monotonic Relationship Between \n Accuracy and Standard Error \n Error Model Pred")
+
 
 
 
@@ -375,7 +402,7 @@ fmla = as.formula(y~harmonised_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
 xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
-    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Members Modification Paul Edition")
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Using 'Error Model'")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
