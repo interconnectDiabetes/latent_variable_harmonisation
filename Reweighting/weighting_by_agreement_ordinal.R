@@ -66,41 +66,42 @@ stdErrorQuadratic = vector("numeric", length = upperbound)
 estimatesQuadratic = vector("numeric", length = upperbound)
 stdErrorCubic = vector("numeric", length = upperbound)
 estimatesCubic = vector("numeric", length = upperbound)
-for (measureError_status in 1:upperbound) {
-    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measureError_status, number_of_indices = numLevels)
-    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measureError_status, number_of_indices = numLevels )
+for (measurement_error_counter in 1:upperbound) {
+    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
 
     lm_graph_linear <- lm(formula=outcome~index, data=studyData_graph)
     estimate_graph_linear = lm_graph_linear$coefficients["index.L"]
     stdError_graph_linear = summary(lm_graph_linear)$coefficients["index.L","Std. Error"]
-    stdErrorLinear[measureError_status] = stdError_graph_linear
-    estimatesLinear[measureError_status] = estimate_graph_linear
+    estimatesLinear[measurement_error_counter] = estimate_graph_linear
+    stdErrorLinear[measurement_error_counter] = stdError_graph_linear
 
     lm_graph_quadratic <- lm(formula=outcome~index, data=studyData_graph)
     estimate_graph_quadratic = lm_graph_quadratic$coefficients["index.Q"]
     stdError_graph_quadratic = summary(lm_graph_quadratic)$coefficients["index.Q","Std. Error"]
-    stdErrorQuadratic[measureError_status] = stdError_graph_quadratic
-    estimatesQuadratic[measureError_status] = estimate_graph_quadratic
+    estimatesQuadratic[measurement_error_counter] = estimate_graph_quadratic
+    stdErrorQuadratic[measurement_error_counter] = stdError_graph_quadratic
 
     lm_graph_cubic <- lm(formula=outcome~index, data=studyData_graph)
     estimate_graph_cubic = lm_graph_cubic$coefficients["index.C"]
     stdError_graph_cubic = summary(lm_graph_cubic)$coefficients["index.C","Std. Error"]
-    stdErrorCubic[measureError_status] = stdError_graph_cubic
-    estimatesCubic[measureError_status] = estimate_graph_cubic
+    estimatesCubic[measurement_error_counter] = estimate_graph_cubic
+    stdErrorCubic[measurement_error_counter] = stdError_graph_cubic
+
 
 }
 # Measurement vs. Std.Error
 plot(x = (1:upperbound), y = stdErrorLinear, xlab = "Measurement Error", ylab = "Standard Error", main = "Assuming Linear Relationship")
 # plot(x = (1:upperbound), y = stdErrorQuadratic, xlab = "Measurement Error", ylab = "Standard Error", col = "green", main = "Assuming Quadratic Relationship")
-plot(x = (1:upperbound), y = stdErrorCubic, xlab = "Measurement Error", ylab = "Standard Error", col = "red", main = "Assuming Cubic Relationship")
+#plot(x = (1:upperbound), y = stdErrorCubic, xlab = "Measurement Error", ylab = "Standard Error", col = "red", main = "Assuming Cubic Relationship")
 # Measurement vs. Estimates
 plot(x = (1:upperbound), y = estimatesLinear, xlab = "Measurement Error", ylab = "Estimates", main = "Assuming Linear Relationship")
 # plot(x = (1:upperbound), y = estimatesQuadratic, xlab = "Measurement Error", ylab = "Estimates", col = "green", main = "Assuming Quadratic Relationship")
-plot(x = (1:upperbound), y = estimatesCubic, xlab = "Measurement Error", ylab = "Estimates", col = "red", main = "Assuming Cubic Relationship")
+#plot(x = (1:upperbound), y = estimatesCubic, xlab = "Measurement Error", ylab = "Estimates", col = "red", main = "Assuming Cubic Relationship")
 # Estimates vs. Std.Error
-plot(x = estimatesLinear, y = stdErrorLinear, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error")
+plot(x = estimatesLinear, y = stdErrorLinear, xlab = "Estimates", ylab = "Standard Error", main = "Relationship Between \n Accuracy and Standard Error \n Assuming Linear")
 # plot(x = estimatesQuadratic, y = stdErrorQuadratic, xlab = "Estimates", ylab = "Standard Error", col = "green", main = "Assuming Quadratic Relationship")
-plot(x = estimatesCubic, y = stdErrorCubic, xlab = "Estimates", ylab = "Standard Error", col = "red", main = "Assuming Cubic Relationship")
+#plot(x = estimatesCubic, y = stdErrorCubic, xlab = "Estimates", ylab = "Standard Error", col = "red", main = "Relationship Between \n Accuracy and Standard Error \n Assuming Cubic Relationship")
 
 ## Setting up the Studies
 # Study A
@@ -164,12 +165,11 @@ numLevels = 4
 validation_size = 400
 
 ## Graphing Standard Error as a function of Measurement Error
-upperbound = 80
-stdErrorNuggets = vector("numeric", length = upperbound)
-estimatesNuggets = vector("numeric", length = upperbound)
-for (measureError_Nuggets in 1:upperbound) {
-    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measureError_Nuggets, number_of_indices = numLevels)
-    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measureError_Nuggets, number_of_indices = numLevels )
+std_error = vector("numeric", length = upperbound)
+estimates_graph = vector("numeric", length = upperbound)
+for (measurement_error_counter in 1:upperbound) {
+    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
     validation_means_graph = createMeansList(validation_data_graph, numLevels)
 
     studyData_graph$ind_mean <- unlist(lapply(X=studyData_graph$index, FUN=function(index_val){
@@ -178,14 +178,14 @@ for (measureError_Nuggets in 1:upperbound) {
     lm_graph <- lm(formula=outcome~ind_mean, data=studyData_graph)
     estimate_graph = lm_graph$coefficients["ind_mean"]
     stdError_graph = summary(lm_graph)$coefficients["ind_mean","Std. Error"]
-    stdErrorNuggets[measureError_Nuggets] = stdError_graph
-    estimatesNuggets[measureError_Nuggets] = estimate_graph
+
+    estimates_graph[measurement_error_counter] = estimate_graph
+    std_error[measurement_error_counter] = stdError_graph
+
 }
-plot(x = (1:upperbound), y = stdErrorNuggets, xlab = "measurement_error", ylab = "stderr")
-plot(x = (1:upperbound), y = estimatesNuggets, xlab = "measurement_error", ylab = "estimates")
-plot(x = (1:upperbound), y = stdErrorNuggets, xlab = "measurement_error", ylab = "stderr", col = "red")
-points(x = (1:upperbound), y = estimatesNuggets, xlab = "measurement_error", ylab = "estimates", col = "green")
-plot(x = estimatesNuggets, y = stdErrorNuggets, xlab = "estimates", ylab = "stderror")
+plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Using Index Means")
+plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Using Index Means")
+plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Index Means")
 
 
 # Study A
@@ -248,40 +248,47 @@ xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p =
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##########################################################################################
-##########################################################################################
-## Same as Basic Process except indexes are transformed into scale of gold measure using the model.
-
+#######################################################################################
+######################## Using Error Model Esque Scale it to Gold ########################
+#######################################################################################
 numLevels = 4
 validation_size = 400
+
+## Plotting Bit
+## Graphing Standard Error as a function of Measurement Error
+std_error = vector("numeric", length = upperbound)
+estimates_graph = vector("numeric", length = upperbound)
+for (measurement_error_counter in 1:upperbound) {
+    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+
+    # Find Error Model
+    index_transformation = as.formula(gold ~ index)
+    lambda_lm_graph <- lm(formula=index_transformation, data=validation_data_graph)
+    new = data.frame(index = studyData_graph$index)
+    studyData_graph$index_scaled = predict(lambda_lm_graph, newdata = new)
+
+    # Use Error Model to Scale Index to Gold
+    lm_graph <- lm(formula=outcome~index_scaled, data=studyData_graph)
+    estimate_graph = lm_graph$coefficients["index_scaled"]
+    stdError_graph = summary(lm_graph)$coefficients["index_scaled","Std. Error"]
+
+    estimates_graph[measurement_error_counter] = estimate_graph
+    std_error[measurement_error_counter] = stdError_graph
+}
+plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Using Error Model Pred")
+plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Using Error Model Pred")
+plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Error Model Pred")
+
+
+
 # Study A
 measureError_A = 5
 studyData_A = createStudyData(raw_data = raw_data, measurement_error = measureError_A, number_of_indices = numLevels)
@@ -299,7 +306,6 @@ validation_data_C = createValidationData(val_size = validation_size, measurement
 index_transformation = as.formula(gold ~ index)
 # Study A
 lambda_lm_A <- lm(formula=index_transformation, data=validation_data_A)
-# studyData_A$index = as.numeric(studyData_A$index)
 new = data.frame(index = studyData_A$index)
 studyData_A$index_scaled = predict(lambda_lm_A, newdata = new)
 # Study B
@@ -313,22 +319,38 @@ studyData_C$index_scaled = predict(lambda_lm_C, newdata = new)
 
 
 # Study A
-lm_A <- lm(formula=outcome~index, data=studyData_A)
-estimate_A = lm_A$coefficients["index.L"]
-stdError_A = summary(lm_A)$coefficients["index.L","Std. Error"]
+lm_A <- lm(formula=outcome~index_scaled, data=studyData_A)
+estimate_A = lm_A$coefficients["index_scaled"]
+stdError_A = summary(lm_A)$coefficients["index_scaled","Std. Error"]
 
 # Study B
-lm_B <- lm(formula=outcome~index, data=studyData_B)
-estimate_B = lm_B$coefficients["index.L"]
-stdError_B = summary(lm_B)$coefficients["index.L","Std. Error"]
+lm_B <- lm(formula=outcome~index_scaled, data=studyData_B)
+estimate_B = lm_B$coefficients["index_scaled"]
+stdError_B = summary(lm_B)$coefficients["index_scaled","Std. Error"]
 
 # Study C
-lm_C <- lm(formula=outcome~index, data=studyData_C)
-estimate_C = lm_C$coefficients["index.L"]
-stdError_C = summary(lm_C)$coefficients["index.L","Std. Error"]
+lm_C <- lm(formula=outcome~index_scaled, data=studyData_C)
+estimate_C = lm_C$coefficients["index_scaled"]
+stdError_C = summary(lm_C)$coefficients["index_scaled","Std. Error"]
 
+## Random Effects Model Forest Plot Before Reweighting
+estimates = c(estimate_A, estimate_B, estimate_C)
+stand_errs = c(stdError_A, stdError_B, stdError_C)
+labels = c("A","B","C")
+res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
+weights_res <- weights.rma.uni(res)
 
-
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(outcome~ind_mean)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+    .(sprintf("%.3f", round(res$QEp,3))),')')),
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1)
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
 
 
 
