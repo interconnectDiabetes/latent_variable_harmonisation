@@ -142,7 +142,7 @@ weights_res <- weights.rma.uni(res)
 
 # Forest Plot
 res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
-fmla = as.formula(y~measured_x)
+fmla = as.formula(y~index)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
 xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
@@ -308,14 +308,28 @@ index_transformation = as.formula(gold ~ index)
 lambda_lm_A <- lm(formula=index_transformation, data=validation_data_A)
 new = data.frame(index = studyData_A$index)
 studyData_A$index_scaled = predict(lambda_lm_A, newdata = new)
+
+studyData_A$ind_mean <- unlist(lapply(X=studyData_A$index, FUN=function(index_val){
+    output =  validation_means_A[index_val]
+}))
+
 # Study B
 lambda_lm_B <- lm(formula=index_transformation, data=validation_data_B)
 new = data.frame(index = studyData_B$index)
 studyData_B$index_scaled = predict(lambda_lm_B, newdata = new)
+
+studyData_B$ind_mean <- unlist(lapply(X=studyData_B$index, FUN=function(index_val){
+    output =  validation_means_A[index_val]
+}))
+
 # Study C
 lambda_lm_C <- lm(formula=index_transformation, data=validation_data_C)
 new = data.frame(index = studyData_C$index)
 studyData_C$index_scaled = predict(lambda_lm_C, newdata = new)
+
+studyData_C$ind_mean <- unlist(lapply(X=studyData_C$index, FUN=function(index_val){
+    output =  validation_means_A[index_val]
+}))
 
 
 # Study A
@@ -342,7 +356,7 @@ weights_res <- weights.rma.uni(res)
 
 # Forest Plot
 res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
-fmla = as.formula(outcome~ind_mean)
+fmla = as.formula(outcome~index_scaled)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
 xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
@@ -354,11 +368,14 @@ abline(v = 0.5, col = "lightgray")
 
 
 
+plot(x = studyData_A$outcome, y = studyData_A$ind_mean, xlab = "outcome", ylab = "indexGolded", main = "Comparing Means and Pred A", col = "red")
+points(x = studyData_A$outcome, y = studyData_A$index_scaled, col = "green")
 
+plot(x = studyData_B$outcome, y = studyData_B$ind_mean, xlab = "outcome", ylab = "indexGolded", main = "Comparing Means and Pred B", col = "red")
+points(x = studyData_B$outcome, y = studyData_B$index_scaled, col = "green")
 
-
-
-
+plot(x = studyData_C$outcome, y = studyData_C$ind_mean, xlab = "outcome", ylab = "indexGolded", main = "Comparing Means and Pred C", col = "red")
+points(x = studyData_C$outcome, y = studyData_C$index_scaled, col = "green")
 
 
 
