@@ -341,6 +341,32 @@ plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab =
 plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Index Means Regression Calibration")
 
 
+## Transformation and Regression using Index Means
+# Study A
+studyData_A$ind_mean <- unlist(lapply(X=studyData_A$index, FUN=function(index_val){
+    output =  validation_means_A[index_val]
+}))
+lm_A <- lm(formula=outcome~ind_mean, data=studyData_A)
+estimate_A = lm_A$coefficients["ind_mean"]
+stdError_A = summary(lm_A)$coefficients["ind_mean","Std. Error"]
+
+# Study B
+studyData_B$ind_mean <- unlist(lapply(X=studyData_B$index, FUN=function(index_val){
+    output =  validation_means_B[index_val]
+}))
+lm_B <- lm(formula=outcome~ind_mean, data=studyData_B)
+estimate_B = lm_B$coefficients["ind_mean"]
+stdError_B = summary(lm_B)$coefficients["ind_mean","Std. Error"]
+
+# Study C
+studyData_C$ind_mean <- unlist(lapply(X=studyData_C$index, FUN=function(index_val){
+    output =  validation_means_C[index_val]
+}))
+lm_C <- lm(formula=outcome~ind_mean, data=studyData_C)
+estimate_C = lm_C$coefficients["ind_mean"]
+stdError_C = summary(lm_C)$coefficients["ind_mean","Std. Error"]
+
+
 ## Calculate the lambdas
 # Study A
 # all have study indmean already
@@ -348,12 +374,12 @@ lambda_lm_A = lm(formula = gold~ind_mean, data = validation_data_A)
 lambda_A = lambda_lm_A$coefficients["ind_mean"]
 
 # calculate the corrected standard error
-var_Beta = (sqrt(validation_size) * summary(lm_A)$coefficients["measured_x","Std. Error"])^2
+var_Beta = (sqrt(validation_size) * summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-lambda_pure = unlist(unname(lambda_lm_A$coefficients["measured_x"]))
-beta_lambda_div_sq = (unname(unlist(lm_A$coefficients["measured_x"]/(lambda_lm_A$coefficients["measured_x"])^2)))^2
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_A)$coefficients["measured_x","Std. Error"])^2
+# var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
+lambda_pure = unlist(unname(lambda_lm_A$coefficients["ind_mean"]))
+beta_lambda_div_sq = (unname(unlist(lm_A$coefficients["ind_mean"]/(lambda_lm_A$coefficients["ind_mean"])^2)))^2
+var_lambda = (sqrt(validation_size) * summary(lambda_lm_A)$coefficients["ind_mean","Std. Error"])^2
 delta_variance = (var_Beta / (lambda_pure)^2) + (beta_lambda_div_sq * var_lambda)
 delta_stdError_A = sqrt(delta_variance)/sqrt(validation_size) 
 delta_stdError_A = sqrt(delta_variance)
@@ -363,12 +389,12 @@ delta_stdError_A = sqrt(delta_variance)
 lambda_lm_B = lm(formula = gold~ind_mean, data = validation_data_B)
 lambda_B = lambda_lm_B$coefficients["ind_mean"]
 
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["measured_x","Std. Error"])^2
-var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["measured_x","Std. Error"])^2
+var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["ind_mean","Std. Error"])^2
+var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-lambda_pure = unlist(unname(lambda_lm_B$coefficients["measured_x"]))
-beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["measured_x"]/(lambda_lm_B$coefficients["measured_x"])^2)))^2
+# var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
+lambda_pure = unlist(unname(lambda_lm_B$coefficients["ind_mean"]))
+beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["ind_mean"]/(lambda_lm_B$coefficients["ind_mean"])^2)))^2
 delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
 delta_stdError_B = sqrt(delta_variance)/sqrt(validation_size) 
 delta_stdError_B = sqrt(delta_variance)
@@ -378,12 +404,12 @@ delta_stdError_B = sqrt(delta_variance)
 lambda_lm_C = lm(formula = gold~ind_mean, data = validation_data_C)
 lambda_C = lambda_lm_C$coefficients["ind_mean"]
 
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_C)$coefficients["measured_x","Std. Error"])^2
-var_Beta = (sqrt(validation_size) * summary(lm_C)$coefficients["measured_x","Std. Error"])^2
+var_lambda = (sqrt(validation_size) * summary(lambda_lm_C)$coefficients["ind_mean","Std. Error"])^2
+var_Beta = (sqrt(validation_size) * summary(lm_C)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-lambda_pure = unlist(unname(lambda_lm_C$coefficients["measured_x"]))
-beta_lambda_div_sq = (unname(unlist(lm_C$coefficients["measured_x"]/(lambda_lm_C$coefficients["measured_x"])^2)))^2
+# var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
+lambda_pure = unlist(unname(lambda_lm_C$coefficients["ind_mean"]))
+beta_lambda_div_sq = (unname(unlist(lm_C$coefficients["ind_mean"]/(lambda_lm_C$coefficients["ind_mean"])^2)))^2
 delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
 delta_stdError_C = sqrt(delta_variance)/sqrt(validation_size) 
 delta_stdError_C = sqrt(delta_variance)
@@ -398,11 +424,10 @@ estimates = c(corrected_estimate_A, corrected_estimate_B, corrected_estimate_C)
 stand_errs = c(delta_stdError_A, delta_stdError_B, delta_stdError_C)
 labels = c("A","B","C")
 res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
-weights_res <- weights.rma.uni(res)
 
 # Forest Plot
 res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
-fmla = as.formula(y~harmonised_x)
+fmla = as.formula(y~ind_mean)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
 xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
