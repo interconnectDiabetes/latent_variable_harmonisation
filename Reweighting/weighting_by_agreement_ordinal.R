@@ -58,6 +58,7 @@ createMeansList <- function(data, number_of_indices) {
 numLevels = 4
 validation_size = 400
 
+set.seed(1)
 ## Graphing Standard Error as a function of Measurement Error when using ordinal independent variable index
 upperbound = 100
 stdErrorLinear = vector("numeric", length = upperbound)
@@ -164,6 +165,7 @@ abline(v = 0.5, col = "lightgray")
 numLevels = 4
 validation_size = 400
 
+set.seed(1)
 ## Graphing Standard Error as a function of Measurement Error
 std_error = vector("numeric", length = upperbound)
 estimates_graph = vector("numeric", length = upperbound)
@@ -201,7 +203,7 @@ validation_data_B = createValidationData(val_size = validation_size, measurement
 validation_means_B = createMeansList(validation_data_B, numLevels)
 
 # Study C
-measureError_C = 15
+measureError_C = 60
 studyData_C = createStudyData(raw_data = raw_data, measurement_error = measureError_C, number_of_indices = numLevels)
 validation_data_C = createValidationData(val_size = validation_size, measurement_error = measureError_C, number_of_indices = numLevels )
 validation_means_C = createMeansList(validation_data_C, numLevels)
@@ -261,6 +263,7 @@ abline(v = 0.5, col = "lightgray")
 numLevels = 4
 validation_size = 400
 
+set.seed(1)
 ## Plotting Bit
 ## Graphing Standard Error as a function of Measurement Error
 std_error = vector("numeric", length = upperbound)
@@ -293,14 +296,17 @@ plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", 
 measureError_A = 5
 studyData_A = createStudyData(raw_data = raw_data, measurement_error = measureError_A, number_of_indices = numLevels)
 validation_data_A = createValidationData(val_size = validation_size, measurement_error = measureError_A, number_of_indices = numLevels )
+validation_means_A = createMeansList(validation_data_A, numLevels)
 # Study B
 measureError_B = 10
 studyData_B = createStudyData(raw_data = raw_data, measurement_error = measureError_B, number_of_indices = numLevels)
 validation_data_B = createValidationData(val_size = validation_size, measurement_error = measureError_B, number_of_indices = numLevels )
+validation_means_B = createMeansList(validation_data_B, numLevels)
 # Study C
 measureError_C = 60
 studyData_C = createStudyData(raw_data = raw_data, measurement_error = measureError_C, number_of_indices = numLevels)
 validation_data_C = createValidationData(val_size = validation_size, measurement_error = measureError_C, number_of_indices = numLevels )
+validation_means_C = createMeansList(validation_data_C, numLevels)
 
 ## Transformation of Indexes to Gold Scale
 index_transformation = as.formula(gold ~ index)
@@ -319,7 +325,7 @@ new = data.frame(index = studyData_B$index)
 studyData_B$index_scaled = predict(lambda_lm_B, newdata = new)
 
 studyData_B$ind_mean <- unlist(lapply(X=studyData_B$index, FUN=function(index_val){
-    output =  validation_means_A[index_val]
+    output =  validation_means_B[index_val]
 }))
 
 # Study C
@@ -328,7 +334,7 @@ new = data.frame(index = studyData_C$index)
 studyData_C$index_scaled = predict(lambda_lm_C, newdata = new)
 
 studyData_C$ind_mean <- unlist(lapply(X=studyData_C$index, FUN=function(index_val){
-    output =  validation_means_A[index_val]
+    output =  validation_means_C[index_val]
 }))
 
 
