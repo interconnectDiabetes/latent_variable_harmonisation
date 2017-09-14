@@ -12,6 +12,9 @@ library(parallel)
 library(stats)
 library(metafor)
 
+# Set save point for the plots
+setwd("U:/workspace/paee_harmonisation/Reweighting/plots")
+
 # Raw Data Set Properties
 trueBeta = 0.5
 constant = 20
@@ -61,13 +64,13 @@ for (measurement_error in 1:error_upperbound){
 	estimates[measurement_error] = x_estimate
 }
 plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Before Changes")
-dev.copy(png,'myplot1.png')
+dev.copy(png,'continous_plot1.png')
 dev.off()
 plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Before Changes")
-dev.copy(png,'myplot2.png')
+dev.copy(png,'continous_plot2.png')
 dev.off()
 plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error \n Before Changes")
-dev.copy(png,'myplot3.png')
+dev.copy(png,'continous_plot3.png')
 dev.off()
 #######################################################################################
 ######################## Before Any Changes to the Process ############################
@@ -122,7 +125,7 @@ usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
-dev.copy(png,'myplot4.png')
+dev.copy(png,'continous_plot4.png')
 dev.off()
 
 
@@ -164,13 +167,13 @@ for (measurement_error in 1:error_upperbound){
     estimates[measurement_error] = estimate_graph/lambda_graph
 }
 plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Regression Calibration")
-dev.copy(png,'myplot5.png')
+dev.copy(png,'continous_plot5.png')
 dev.off()
 plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Regression Calibration")
-dev.copy(png,'myplot6.png')
+dev.copy(png,'continous_plot6.png')
 dev.off()
 plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error \n Regression Calibration")
-dev.copy(png,'myplot7.png')
+dev.copy(png,'continous_plot7.png')
 dev.off()
 
 
@@ -210,20 +213,18 @@ corrected_estimate_B = estimate_B / lambda_B
 corrected_estimate_C = estimate_C / lambda_C
 
 # calculate the corrected standard error
-var_Beta = (sqrt(validation_size) * summary(lm_A)$coefficients["measured_x","Std. Error"])^2
+var_lambda = (summary(lambda_lm_A)$coefficients["measured_x","Std. Error"])^2
+var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_A$coefficients["measured_x"]))
 beta_lambda_div_sq = (unname(unlist(lm_A$coefficients["measured_x"]/(lambda_lm_A$coefficients["measured_x"])^2)))^2
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_A)$coefficients["measured_x","Std. Error"])^2
 delta_variance = (var_Beta / (lambda_pure)^2) + (beta_lambda_div_sq * var_lambda)
 delta_stdError_A = sqrt(delta_variance)/sqrt(validation_size) 
 delta_stdError_A = sqrt(delta_variance)
 
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["measured_x","Std. Error"])^2
+var_lambda = (summary(lambda_lm_B)$coefficients["measured_x","Std. Error"])^2
 var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["measured_x","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_B$coefficients["measured_x"]))
 beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["measured_x"]/(lambda_lm_B$coefficients["measured_x"])^2)))^2
 delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
@@ -231,10 +232,9 @@ delta_stdError_B = sqrt(delta_variance)/sqrt(validation_size)
 delta_stdError_B = sqrt(delta_variance)
 
 
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_C)$coefficients["measured_x","Std. Error"])^2
+var_lambda = (summary(lambda_lm_C)$coefficients["measured_x","Std. Error"])^2
 var_Beta = (sqrt(validation_size) * summary(lm_C)$coefficients["measured_x","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_C$coefficients["measured_x"]))
 beta_lambda_div_sq = (unname(unlist(lm_C$coefficients["measured_x"]/(lambda_lm_C$coefficients["measured_x"])^2)))^2
 delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
@@ -259,7 +259,7 @@ usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
-dev.copy(png,'myplot8.png')
+dev.copy(png,'continous_plot8.png')
 dev.off()
 
 
@@ -295,13 +295,13 @@ for (measurement_error in 1:error_upperbound){
     estimates[measurement_error] = estimate_graph
 }
 plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Error Model Pred")
-dev.copy(png,'myplot9.png')
+dev.copy(png,'continous_plot9.png')
 dev.off()
 plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Error Model Pred")
-dev.copy(png,'myplot10.png')
+dev.copy(png,'continous_plot10.png')
 dev.off()
 plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Monotonic Relationship Between \n Accuracy and Standard Error \n Error Model Pred")
-dev.copy(png,'myplot11.png')
+dev.copy(png,'continous_plot11.png')
 dev.off()
 
 
@@ -364,7 +364,7 @@ usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
-dev.copy(png,'myplot12.png')
+dev.copy(png,'continous_plot12.png')
 dev.off()
 
 
@@ -399,15 +399,15 @@ for (measurement_error in 1:error_upperbound){
     std_error[measurement_error] = stdError_graph
 }
 plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Error Model Pred")
-dev.copy(png,'myplot13.png')
+dev.copy(png,'continous_plot13.png')
 dev.off()
 
 plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Error Model Pred")
-dev.copy(png,'myplot14.png')
+dev.copy(png,'continous_plot14.png')
 dev.off()
 
 plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Monotonic Relationship Between \n Accuracy and Standard Error \n Error Model Pred")
-dev.copy(png,'myplot15.png')
+dev.copy(png,'continous_plot15.png')
 dev.off()
 
 
@@ -466,5 +466,5 @@ usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
-dev.copy(png,'myplot16.png')
+dev.copy(png,'continous_plot16.png')
 dev.off()
