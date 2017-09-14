@@ -377,7 +377,6 @@ lambda_lm_A = lm(formula = gold~ind_mean, data = validation_data_A)
 lambda_A = lambda_lm_A$coefficients["ind_mean"]
 
 # calculate the corrected standard error
-var_Beta = (sqrt(validation_size) * summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
 var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_A$coefficients["ind_mean"]))
@@ -397,7 +396,6 @@ lambda_lm_B = lm(formula = gold~ind_mean, data = validation_data_B)
 lambda_B = lambda_lm_B$coefficients["ind_mean"]
 
 var_lambda = ( summary(lambda_lm_B)$coefficients["ind_mean","Std. Error"])^2
-var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
 var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_B$coefficients["ind_mean"]))
@@ -416,7 +414,6 @@ lambda_lm_C = lm(formula = gold~ind_mean, data = validation_data_C)
 lambda_C = lambda_lm_C$coefficients["ind_mean"]
 
 var_lambda = (summary(lambda_lm_C)$coefficients["ind_mean","Std. Error"])^2
-var_Beta = (sqrt(validation_size) * summary(lm_C)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
 var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_C$coefficients["ind_mean"]))
@@ -434,6 +431,32 @@ corrected_estimate_C = estimate_C / lambda_C
 estimates = c(corrected_estimate_A, corrected_estimate_B, corrected_estimate_C)
 stand_errs = c(delta_stdError_A, delta_stdError_B, delta_stdError_C)
 labels = c("A","B","C")
+res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~ind_mean)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+    .(sprintf("%.3f", round(res$QEp,3))),')')),
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Regression Calibration")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+
+
+
+
+
+
+
+
+
+## Random Effects Model Forest Plot After Regression Calibration
+estimates = estimates_graph
+stand_errs = std_error
+labels = 1:length(estimates_graph)
 res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
 
 # Forest Plot
