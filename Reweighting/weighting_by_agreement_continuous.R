@@ -49,6 +49,7 @@ error_upperbound = 50
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
 
+set.seed(1)
 for (measurement_error in 1:error_upperbound){
 	x_error = rnorm(n = study_size, mean = 0, sd = measurement_error)
 	raw_data$measured_x = raw_data$x + x_error
@@ -132,6 +133,7 @@ dev.off()
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
 
+set.seed(1)
 for (measurement_error in 1:error_upperbound){
     studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
     validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error)
@@ -270,6 +272,8 @@ dev.off()
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
 
+set.seed(1)
+
 for (measurement_error in 1:error_upperbound){
     studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
     validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error)
@@ -373,6 +377,8 @@ dev.off()
 ## Graphing Standard Error as a function of Measurement Error
 std_error = vector("numeric", length = error_upperbound)
 estimates = vector("numeric", length = error_upperbound)
+
+set.seed(1)
 
 for (measurement_error in 1:error_upperbound){
     studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
