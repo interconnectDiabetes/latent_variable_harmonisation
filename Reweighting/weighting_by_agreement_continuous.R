@@ -229,12 +229,12 @@ delta_stdError_B = sqrt(delta_variance)/sqrt(validation_size)
 delta_stdError_B = sqrt(delta_variance)
 
 
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["measured_x","Std. Error"])^2
-var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["measured_x","Std. Error"])^2
+var_lambda = (sqrt(validation_size) * summary(lambda_lm_C)$coefficients["measured_x","Std. Error"])^2
+var_Beta = (sqrt(validation_size) * summary(lm_C)$coefficients["measured_x","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
 # var_Beta = (summary(lm_A)$coefficients["measured_x","Std. Error"])^2
-lambda_pure = unlist(unname(lambda_lm_B$coefficients["measured_x"]))
-beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["measured_x"]/(lambda_lm_B$coefficients["measured_x"])^2)))^2
+lambda_pure = unlist(unname(lambda_lm_C$coefficients["measured_x"]))
+beta_lambda_div_sq = (unname(unlist(lm_C$coefficients["measured_x"]/(lambda_lm_C$coefficients["measured_x"])^2)))^2
 delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
 delta_stdError_C = sqrt(delta_variance)/sqrt(validation_size) 
 delta_stdError_C = sqrt(delta_variance)
