@@ -324,10 +324,10 @@ for (measurement_error_counter in 1:upperbound) {
     # recalibrate the standard error using delta function
     variance_beta = (sqrt(validation_size) * summary(lm_graph)$coefficients["ind_mean","Std. Error"])^2
     #variance_beta = summary(lm_graph)$sigma**2
-    # variance_beta = (summary(lm_graph)$coefficients["ind_mean","Std. Error"])^2
+    variance_beta = (summary(lm_graph)$coefficients["ind_mean","Std. Error"])^2
     lambda_pure = unlist(unname(lambda_lm_graph$coefficients["ind_mean"]))
     beta_lambda_div_sq = (unname(unlist(lm_graph$coefficients["ind_mean"]/(lambda_lm_graph$coefficients["ind_mean"])^2)))^2
-    var_lambda = (sqrt(validation_size) * summary(lambda_lm_graph)$coefficients["ind_mean","Std. Error"])^2
+    var_lambda = (summary(lambda_lm_graph)$coefficients["ind_mean","Std. Error"])^2
     delta_variance = (variance_beta / (lambda_pure)^2) + (beta_lambda_div_sq * var_lambda)
     delta_stdError_graph = sqrt(delta_variance)/sqrt(validation_size) 
     delta_stdError_graph = sqrt(delta_variance)
@@ -369,30 +369,37 @@ stdError_C = summary(lm_C)$coefficients["ind_mean","Std. Error"]
 
 ## Calculate the lambdas
 # Study A
-# all have study indmean already
+validation_data_A$ind_mean <- unlist(lapply(X=validation_data_A$index, FUN=function(index_val){
+    output =  validation_means_A[index_val]
+}))
+
 lambda_lm_A = lm(formula = gold~ind_mean, data = validation_data_A)
 lambda_A = lambda_lm_A$coefficients["ind_mean"]
 
 # calculate the corrected standard error
 var_Beta = (sqrt(validation_size) * summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
+var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_A$coefficients["ind_mean"]))
 beta_lambda_div_sq = (unname(unlist(lm_A$coefficients["ind_mean"]/(lambda_lm_A$coefficients["ind_mean"])^2)))^2
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_A)$coefficients["ind_mean","Std. Error"])^2
+var_lambda = ( summary(lambda_lm_A)$coefficients["ind_mean","Std. Error"])^2
 delta_variance = (var_Beta / (lambda_pure)^2) + (beta_lambda_div_sq * var_lambda)
 delta_stdError_A = sqrt(delta_variance)/sqrt(validation_size) 
 delta_stdError_A = sqrt(delta_variance)
 
 
 # Study B
+validation_data_B$ind_mean <- unlist(lapply(X=validation_data_B$index, FUN=function(index_val){
+    output =  validation_means_B[index_val]
+}))
+
 lambda_lm_B = lm(formula = gold~ind_mean, data = validation_data_B)
 lambda_B = lambda_lm_B$coefficients["ind_mean"]
 
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_B)$coefficients["ind_mean","Std. Error"])^2
+var_lambda = ( summary(lambda_lm_B)$coefficients["ind_mean","Std. Error"])^2
 var_Beta = (sqrt(validation_size) * summary(lm_B)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
+var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_B$coefficients["ind_mean"]))
 beta_lambda_div_sq = (unname(unlist(lm_B$coefficients["ind_mean"]/(lambda_lm_B$coefficients["ind_mean"])^2)))^2
 delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
@@ -401,13 +408,17 @@ delta_stdError_B = sqrt(delta_variance)
 
 
 # Study C
+validation_data_C$ind_mean <- unlist(lapply(X=validation_data_C$index, FUN=function(index_val){
+    output =  validation_means_C[index_val]
+}))
+
 lambda_lm_C = lm(formula = gold~ind_mean, data = validation_data_C)
 lambda_C = lambda_lm_C$coefficients["ind_mean"]
 
-var_lambda = (sqrt(validation_size) * summary(lambda_lm_C)$coefficients["ind_mean","Std. Error"])^2
+var_lambda = (summary(lambda_lm_C)$coefficients["ind_mean","Std. Error"])^2
 var_Beta = (sqrt(validation_size) * summary(lm_C)$coefficients["ind_mean","Std. Error"])^2
 #var_Beta = summary(lm_A)$sigma**2
-# var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
+var_Beta = (summary(lm_A)$coefficients["ind_mean","Std. Error"])^2
 lambda_pure = unlist(unname(lambda_lm_C$coefficients["ind_mean"]))
 beta_lambda_div_sq = (unname(unlist(lm_C$coefficients["ind_mean"]/(lambda_lm_C$coefficients["ind_mean"])^2)))^2
 delta_variance = (var_Beta / (lambda_pure)^2) + beta_lambda_div_sq * var_lambda
