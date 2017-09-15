@@ -86,7 +86,7 @@ res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
 fmla = as.formula(y~harmonised_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
     .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Before Any Changes")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
@@ -142,7 +142,7 @@ res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
 fmla = as.formula(y~measured_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
     .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Before Any Changes to Process")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
@@ -211,7 +211,7 @@ res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
 fmla = as.formula(y~harmonised_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
     .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Regression Calibration")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
@@ -299,7 +299,7 @@ res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
 fmla = as.formula(y~harmonised_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
     .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Regression Calibration")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
@@ -362,7 +362,7 @@ res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
 fmla = as.formula(y~harmonised_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
     .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Error Model Predict Big Regression")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
@@ -425,7 +425,7 @@ res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
 fmla = as.formula(y~harmonised_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
     .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Using Predict aka 'Error Model'")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
