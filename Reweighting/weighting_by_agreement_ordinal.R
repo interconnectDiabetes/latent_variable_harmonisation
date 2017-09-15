@@ -386,6 +386,3 @@ points(x = studyData_C$outcome, y = studyData_C$index_scaled, col = "green")
 
 
 
-
-
-
