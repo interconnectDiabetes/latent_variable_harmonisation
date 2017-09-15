@@ -75,9 +75,9 @@ dev.off()
 
 
 ## Random Effects Model Forest Plot After Regression Calibration
-estimates_forRMA = estimates
-stand_errs = std_error
-labels = 1:length(estimates)
+estimates_forRMA = estimates[seq(1, length(estimates), 2)]
+stand_errs = std_error[seq(1, length(std_error), 2)]
+labels = 1:length(estimates_forRMA)
 res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
 weights_res <- weights.rma.uni(res)
 
@@ -200,9 +200,9 @@ dev.copy(png,'continous_plot7.png')
 dev.off()
 
 ## Random Effects Model Forest Plot After Regression Calibration
-estimates_forRMA = estimates
-stand_errs = std_error
-labels = 1:length(estimates)
+estimates_forRMA = estimates[seq(1, length(estimates), 2)]
+stand_errs = std_error[seq(1, length(std_error), 2)]
+labels = 1:length(estimates_forRMA)
 res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
 weights_res <- weights.rma.uni(res)
 
@@ -351,9 +351,9 @@ dev.copy(png,'continous_plot11.png')
 dev.off()
 
 ## Random Effects Model Forest Plot After Regression Calibration
-estimates_forRMA = estimates
-stand_errs = std_error
-labels = 1:length(estimates)
+estimates_forRMA = estimates[seq(1, length(estimates), 2)]
+stand_errs = std_error[seq(1, length(std_error), 2)]
+labels = 1:length(estimates_forRMA)
 res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
 weights_res <- weights.rma.uni(res)
 
