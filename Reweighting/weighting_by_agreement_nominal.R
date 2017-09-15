@@ -105,7 +105,7 @@ fmla = as.formula(y~harmonised_x)
 forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
     .(sprintf("%.3f", round(res$QEp,3))),')')),
 xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
-    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Before Any Changes")
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Before Any Changes (Just Index Means)")
 usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
@@ -220,13 +220,13 @@ for (measurement_error_counter in 1:upperbound) {
     estimates_graph[measurement_error_counter] = estimate_graph
     std_error[measurement_error_counter] = stdError_graph
 }
-plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Using Error Model Pred")
+plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Using Error Model Predict")
 dev.copy(png,'nominal_plot5.png')
 dev.off()
-plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Using Error Model Pred")
+plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Using Error Model Predict")
 dev.copy(png,'nominal_plot6.png')
 dev.off()
-plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Error Model Pred")
+plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Error Model Predict")
 dev.copy(png,'nominal_plot7.png')
 dev.off()
 
