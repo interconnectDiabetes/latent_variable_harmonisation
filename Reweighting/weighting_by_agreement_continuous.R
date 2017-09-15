@@ -72,6 +72,29 @@ dev.off()
 plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error \n Before Changes")
 dev.copy(png,'continous_plot3.png')
 dev.off()
+
+
+## Random Effects Model Forest Plot After Regression Calibration
+estimates_forRMA = estimates
+stand_errs = std_error
+labels = 1:length(estimates)
+res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
+weights_res <- weights.rma.uni(res)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~harmonised_x)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+    .(sprintf("%.3f", round(res$QEp,3))),')')),
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Before Any Changes")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+dev.copy(png,'continous_plot_big_no_changes.png')
+dev.off()
+
 #######################################################################################
 ######################## Before Any Changes to the Process ############################
 #######################################################################################
@@ -194,7 +217,7 @@ usr <- par("usr")
 text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
-dev.copy(png,'continous_plot42.png')
+dev.copy(png,'continous_plot_big_regression_calibration.png')
 dev.off()
 
 
@@ -327,6 +350,27 @@ plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error",
 dev.copy(png,'continous_plot11.png')
 dev.off()
 
+## Random Effects Model Forest Plot After Regression Calibration
+estimates_forRMA = estimates
+stand_errs = std_error
+labels = 1:length(estimates)
+res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
+weights_res <- weights.rma.uni(res)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~harmonised_x)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+    .(sprintf("%.3f", round(res$QEp,3))),')')),
+xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Error Model Predict Big Regression")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+dev.copy(png,'continous_plot_big_error_model.png')
+dev.off()
+
 
 ## Modeling x ~ measured_x in validation
 fmla_harmonisation = as.formula(x~measured_x)
@@ -391,103 +435,103 @@ dev.copy(png,'continous_plot12.png')
 dev.off()
 
 
-#######################################################################################
-######################## USING THE MODEL OF ERROR *PREDICT* ###########################
-################## DONE MANUALLY WITH MODEL PARAMETER ESTIMATES #######################
-#######################################################################################
-## PREDICT (ERROR IN VARIABLES MODELS)
+# #######################################################################################
+# ######################## USING THE MODEL OF ERROR *PREDICT* ###########################
+# ################## DONE MANUALLY WITH MODEL PARAMETER ESTIMATES #######################
+# #######################################################################################
+# ## PREDICT (ERROR IN VARIABLES MODELS)
 
-## Graphing Standard Error as a function of Measurement Error
-std_error = vector("numeric", length = error_upperbound)
-estimates = vector("numeric", length = error_upperbound)
+# ## Graphing Standard Error as a function of Measurement Error
+# std_error = vector("numeric", length = error_upperbound)
+# estimates = vector("numeric", length = error_upperbound)
 
-set.seed(1)
+# set.seed(1)
 
-for (measurement_error in 1:error_upperbound){
-    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
-    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error)
+# for (measurement_error in 1:error_upperbound){
+#     studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error)
+#     validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error)
 
-    # calculate the Error Model
-    error_model_graph <- lm(formula=fmla_harmonisation, data=validation_data_graph)
-    lambda_graph = error_model_graph$coefficients["measured_x"]
-    intercept_lambda_graph = error_model_graph$coefficients["(Intercept)"]
+#     # calculate the Error Model
+#     error_model_graph <- lm(formula=fmla_harmonisation, data=validation_data_graph)
+#     lambda_graph = error_model_graph$coefficients["measured_x"]
+#     intercept_lambda_graph = error_model_graph$coefficients["(Intercept)"]
 
-    # calculate the estimates using the normal study data
-    studyData_graph$lambdadx = studyData_graph$measured_x*lambda_graph + intercept_lambda_graph
-    lm_graph <- lm(formula=y~lambdadx, data=studyData_graph)
-    estimate_graph = lm_graph$coefficients["lambdadx"]
-    stdError_graph = summary(lm_graph)$coefficients["lambdadx","Std. Error"]
+#     # calculate the estimates using the normal study data
+#     studyData_graph$lambdadx = studyData_graph$measured_x*lambda_graph + intercept_lambda_graph
+#     lm_graph <- lm(formula=y~lambdadx, data=studyData_graph)
+#     estimate_graph = lm_graph$coefficients["lambdadx"]
+#     stdError_graph = summary(lm_graph)$coefficients["lambdadx","Std. Error"]
 
-    estimates[measurement_error] = estimate_graph
-    std_error[measurement_error] = stdError_graph
-}
-plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Error Model Pred")
-dev.copy(png,'continous_plot13.png')
-dev.off()
+#     estimates[measurement_error] = estimate_graph
+#     std_error[measurement_error] = stdError_graph
+# }
+# plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Error Model Pred")
+# dev.copy(png,'continous_plot13.png')
+# dev.off()
 
-plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Error Model Pred")
-dev.copy(png,'continous_plot14.png')
-dev.off()
+# plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Error Model Pred")
+# dev.copy(png,'continous_plot14.png')
+# dev.off()
 
-plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Monotonic Relationship Between \n Accuracy and Standard Error \n Error Model Pred")
-dev.copy(png,'continous_plot15.png')
-dev.off()
-
-
-## By manually predicting values using the model created
-## Modeling x ~ measured_x in validation
-fmla_harmonisation = as.formula(x~measured_x)
-# Study A
-lambda_lm_A <- lm(formula=fmla_harmonisation, data=validation_data_A)
-lambda_A = lambda_lm_A$coefficients["measured_x"]
-intercept_lambda_A = lambda_lm_A$coefficients["(Intercept)"]
-stdError_lambda_A = summary(lambda_lm_A)$coefficients["measured_x","Std. Error"]
-
-# Study B
-lambda_lm_B <- lm(formula=fmla_harmonisation, data=validation_data_B)
-lambda_B = lambda_lm_B$coefficients["measured_x"]
-intercept_lambda_B = lambda_lm_B$coefficients["(Intercept)"]
-stdError_lambda_B = summary(lambda_lm_B)$coefficients["measured_x","Std. Error"]
-
-# Study C
-lambda_lm_C <- lm(formula=fmla_harmonisation, data=validation_data_C)
-lambda_C = lambda_lm_C$coefficients["measured_x"]
-intercept_lambda_C = lambda_lm_C$coefficients["(Intercept)"]
-stdError_lambda_C = summary(lambda_lm_C)$coefficients["measured_x","Std. Error"]
-
-studyData_A$lambdadx = studyData_A$measured_x*lambda_A + intercept_lambda_A
-lm_A <- lm(formula=y~lambdadx, data=studyData_A)
-estimate_A = lm_A$coefficients["lambdadx"]
-stdError_A = summary(lm_A)$coefficients["lambdadx","Std. Error"]
-
-studyData_B$lambdadx = studyData_B$measured_x*lambda_B + intercept_lambda_B
-lm_B <- lm(formula=y~lambdadx, data=studyData_B)
-estimate_B = lm_B$coefficients["lambdadx"]
-stdError_B = summary(lm_B)$coefficients["lambdadx","Std. Error"]
-
-studyData_C$lambdadx = studyData_C$measured_x*lambda_C + intercept_lambda_C
-lm_C <- lm(formula=y~lambdadx, data=studyData_C)
-estimate_C = lm_C$coefficients["lambdadx"]
-stdError_C = summary(lm_C)$coefficients["lambdadx","Std. Error"]
+# plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Monotonic Relationship Between \n Accuracy and Standard Error \n Error Model Pred")
+# dev.copy(png,'continous_plot15.png')
+# dev.off()
 
 
-## Random Effects Model Forest Plot After Regression Calibration in all members of measured x
-estimates = c(estimate_A, estimate_B, estimate_C)
-stand_errs = c(stdError_A, stdError_B, stdError_C)
-labels = c("A","B","C")
-res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
-weights_res <- weights.rma.uni(res)
+# ## By manually predicting values using the model created
+# ## Modeling x ~ measured_x in validation
+# fmla_harmonisation = as.formula(x~measured_x)
+# # Study A
+# lambda_lm_A <- lm(formula=fmla_harmonisation, data=validation_data_A)
+# lambda_A = lambda_lm_A$coefficients["measured_x"]
+# intercept_lambda_A = lambda_lm_A$coefficients["(Intercept)"]
+# stdError_lambda_A = summary(lambda_lm_A)$coefficients["measured_x","Std. Error"]
 
-# Forest Plot
-res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
-fmla = as.formula(y~harmonised_x)
-forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
-    .(sprintf("%.3f", round(res$QEp,3))),')')),
-xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
-    .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Using 'Error Model'")
-usr <- par("usr")
-text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
-text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
-abline(v = 0.5, col = "lightgray")
-dev.copy(png,'continous_plot16.png')
-dev.off()
+# # Study B
+# lambda_lm_B <- lm(formula=fmla_harmonisation, data=validation_data_B)
+# lambda_B = lambda_lm_B$coefficients["measured_x"]
+# intercept_lambda_B = lambda_lm_B$coefficients["(Intercept)"]
+# stdError_lambda_B = summary(lambda_lm_B)$coefficients["measured_x","Std. Error"]
+
+# # Study C
+# lambda_lm_C <- lm(formula=fmla_harmonisation, data=validation_data_C)
+# lambda_C = lambda_lm_C$coefficients["measured_x"]
+# intercept_lambda_C = lambda_lm_C$coefficients["(Intercept)"]
+# stdError_lambda_C = summary(lambda_lm_C)$coefficients["measured_x","Std. Error"]
+
+# studyData_A$lambdadx = studyData_A$measured_x*lambda_A + intercept_lambda_A
+# lm_A <- lm(formula=y~lambdadx, data=studyData_A)
+# estimate_A = lm_A$coefficients["lambdadx"]
+# stdError_A = summary(lm_A)$coefficients["lambdadx","Std. Error"]
+
+# studyData_B$lambdadx = studyData_B$measured_x*lambda_B + intercept_lambda_B
+# lm_B <- lm(formula=y~lambdadx, data=studyData_B)
+# estimate_B = lm_B$coefficients["lambdadx"]
+# stdError_B = summary(lm_B)$coefficients["lambdadx","Std. Error"]
+
+# studyData_C$lambdadx = studyData_C$measured_x*lambda_C + intercept_lambda_C
+# lm_C <- lm(formula=y~lambdadx, data=studyData_C)
+# estimate_C = lm_C$coefficients["lambdadx"]
+# stdError_C = summary(lm_C)$coefficients["lambdadx","Std. Error"]
+
+
+# ## Random Effects Model Forest Plot After Regression Calibration in all members of measured x
+# estimates = c(estimate_A, estimate_B, estimate_C)
+# stand_errs = c(stdError_A, stdError_B, stdError_C)
+# labels = c("A","B","C")
+# res <- rma(yi = estimates, sei = stand_errs, method='DL', slab = labels)
+# weights_res <- weights.rma.uni(res)
+
+# # Forest Plot
+# res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+# fmla = as.formula(y~harmonised_x)
+# forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+#     .(sprintf("%.3f", round(res$QEp,3))),')')),
+# xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+#     .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Using 'Error Model'")
+# usr <- par("usr")
+# text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+# text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+# abline(v = 0.5, col = "lightgray")
+# dev.copy(png,'continous_plot16.png')
+# dev.off()
