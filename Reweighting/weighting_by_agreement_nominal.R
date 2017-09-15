@@ -83,8 +83,14 @@ for (measurement_error_counter in 1:upperbound) {
 
 }
 plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Using Index Means")
+dev.copy(png,'nominal_plot1.png')
+dev.off()
 plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Using Index Means")
+dev.copy(png,'nominal_plot2.png')
+dev.off()
 plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Index Means")
+dev.copy(png,'nominal_plot3.png')
+dev.off()
 
 ## Plot meta analysis for many studies
 estimates_forRMA = estimates_graph
@@ -178,7 +184,8 @@ text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1, main = "Using Index Means")
 abline(v = 0.5, col = "lightgray")
 
-
+dev.copy(png,'nominal_plot4.png')
+dev.off()
 
 
 
@@ -214,8 +221,14 @@ for (measurement_error_counter in 1:upperbound) {
     std_error[measurement_error_counter] = stdError_graph
 }
 plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Using Error Model Pred")
+dev.copy(png,'nominal_plot5.png')
+dev.off()
 plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Using Error Model Pred")
+dev.copy(png,'nominal_plot6.png')
+dev.off()
 plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Error Model Pred")
+dev.copy(png,'nominal_plot7.png')
+dev.off()
 
 
 ## Plot meta analysis for many studies
@@ -304,6 +317,10 @@ text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1, main = "Using Error Model of Gold~Index")
 abline(v = 0.5, col = "lightgray")
 
+dev.copy(png,'nominal_plot8.png')
+dev.off()
+
+
 
 # plot(x = studyData_A$outcome, y = studyData_A$ind_mean, xlab = "outcome", ylab = "indexGolded", main = "Comparing Means and Pred A", col = "red")
 # points(x = studyData_A$outcome, y = studyData_A$index_scaled, col = "green")
@@ -365,8 +382,14 @@ for (measurement_error_counter in 1:upperbound) {
 }
 
 plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Using Index Means Regression Calibration")
+dev.copy(png,'nominal_plot9.png')
+dev.off()
 plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Using Index Means Regression Calibration")
+dev.copy(png,'nominal_plot10.png')
+dev.off()
 plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Index Means Regression Calibration")
+dev.copy(png,'nominal_plot11.png')
+dev.off()
 
 ## Plot meta analysis for many studies
 estimates_forRMA = estimates_graph
@@ -495,7 +518,8 @@ text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
 text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
 abline(v = 0.5, col = "lightgray")
 
-
+dev.copy(png,'nominal_plot12.png')
+dev.off()
 
 
 # ## Random Effects Model Forest Plot After Regression Calibration
@@ -526,73 +550,82 @@ abline(v = 0.5, col = "lightgray")
 # #######################################################################################
 
 
-# numLevels = 4
-# validation_size = 400
-# imputations = 10
-# validation_index_size=validation_size/numLevels
-# ## Plotting Bit
-# ## Graphing Standard Error as a function of Measurement Error
-# std_error = vector("numeric", length = upperbound)
-# estimates_graph = vector("numeric", length = upperbound)
-# for (measurement_error_counter in 1:upperbound) {
-#   studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
-#   validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
-#   validation_means_graph = createMeansList(validation_data_graph, numLevels)
+numLevels = 4
+validation_size = 400
+imputations = 10
+validation_index_size=validation_size/numLevels
+## Plotting Bit
+## Graphing Standard Error as a function of Measurement Error
+std_error = vector("numeric", length = upperbound)
+estimates_graph = vector("numeric", length = upperbound)
+for (measurement_error_counter in 1:upperbound) {
+  studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+  validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+  validation_means_graph = createMeansList(validation_data_graph, numLevels)
   
-#   results <- data.frame()
-#   for (i in 1:imputations){
-#     bootstrap_validation <- data.frame(index = rep(x = c(1:numLevels), each= validation_index_size))
-#     bootstrap_validation$exp <- unlist(unname(lapply(X = split(x=validation_data_graph$gold, f= as.factor(validation_data_graph$index)), 
-#                                                      FUN = sample, size = validation_index_size, replace=TRUE)))
+  results <- data.frame()
+  for (i in 1:imputations){
+    bootstrap_validation <- data.frame(index = rep(x = c(1:numLevels), each= validation_index_size))
+    bootstrap_validation$exp <- unlist(unname(lapply(X = split(x=validation_data_graph$gold, f= as.factor(validation_data_graph$index)), 
+                                                     FUN = sample, size = validation_index_size, replace=TRUE)))
     
-#     means_boots_list = vector(mode="list", length = numLevels)
-#     for (i in 1:numLevels) {
-#       means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$exp, f= as.factor(bootstrap_validation$index)))[i])))
-#     }
+    means_boots_list = vector(mode="list", length = numLevels)
+    for (i in 1:numLevels) {
+      means_boots_list[i] = mean(unname(unlist((split(x=bootstrap_validation$exp, f= as.factor(bootstrap_validation$index)))[i])))
+    }
     
-#     studyData_graph$exp_ind_mean <- unlist(lapply(X=studyData_graph$index, FUN=function(index_val){
-#       output =  means_boots_list[index_val]
-#     }))
+    studyData_graph$exp_ind_mean <- unlist(lapply(X=studyData_graph$index, FUN=function(index_val){
+      output =  means_boots_list[index_val]
+    }))
     
-#     reg_out_ind_mean <- lm(formula=outcome~exp_ind_mean, data=studyData_graph)
-#     sum_res = summary(reg_out_ind_mean)
-#     results = rbind(results, sum_res$coefficients[2,1:2])
+    reg_out_ind_mean <- lm(formula=outcome~exp_ind_mean, data=studyData_graph)
+    sum_res = summary(reg_out_ind_mean)
+    results = rbind(results, sum_res$coefficients[2,1:2])
 
-#   }
-#   names(results) = c("est", "se")
+  }
+  names(results) = c("est", "se")
 
-#   rubin_est = sum(results$est)/imputations
-#   W = sum(results$se)/imputations
-#   B = sum((results$est-rubin_est)^2)/(imputations-1)
-#   rubin_var = W + (1+1/imputations)*B
-#   rubin_se = rubin_var^0.5
+  rubin_est = sum(results$est)/imputations
+  W = sum(results$se)/imputations
+  B = sum((results$est-rubin_est)^2)/(imputations-1)
+  rubin_var = W + (1+1/imputations)*B
+  rubin_se = rubin_var^0.5
   
-#   estimates_graph[measurement_error_counter] = rubin_est 
-#   std_error[measurement_error_counter] = rubin_se
-# }
+  estimates_graph[measurement_error_counter] = rubin_est 
+  std_error[measurement_error_counter] = rubin_se
+}
 
-# plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Using Index Means Regression Calibration")
-# plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Using Index Means Regression Calibration")
-# plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Using Index Means Regression Calibration")
+plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Bootstrap Means")
+dev.copy(png,'nominal_plot13.png')
+dev.off()
+plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Bootstrap Means")
+dev.copy(png,'nominal_plot14.png')
+dev.off()
+plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Bootstrap Means")
+dev.copy(png,'nominal_plot15.png')
+dev.off()
 
-# ## Random Effects Model Forest Plot After Regression Calibration
-# #estimates = estimates_graph
-# #stand_errs = std_error
-# estimates_REMA = estimates_graph[seq(1, length(estimates_graph), 2)]
-# #estimates_REMA = estimates[1:10]
-# stand_errs = std_error[seq(1, length(std_error), 2)]
 
-# labels = 1:length(estimates_REMA)
-# res <- rma(yi = estimates_REMA, sei = stand_errs, method='DL', slab = labels)
+## Random Effects Model Forest Plot After Regression Calibration
+#estimates = estimates_graph
+#stand_errs = std_error
+estimates_REMA = estimates_graph[seq(1, length(estimates_graph), 2)]
+#estimates_REMA = estimates[1:10]
+stand_errs = std_error[seq(1, length(std_error), 2)]
 
-# # Forest Plot
-# res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
-# fmla = as.formula(y~ind_mean)
-# forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
-#                               .(sprintf("%.3f", round(res$QEp,3))),')')),
-#        xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
-#                          .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "After Regression Calibration")
-# usr <- par("usr")
-# text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
-# text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
-# abline(v = 0.5, col = "lightgray")
+labels = 1:length(estimates_REMA)
+res <- rma(yi = estimates_REMA, sei = stand_errs, method='DL', slab = labels)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~ind_mean)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                              .(sprintf("%.3f", round(res$QEp,3))),')')),
+       xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+                         .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Bootstrap Means")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+dev.copy(png,'nominal_plot16.png')
+dev.off()
