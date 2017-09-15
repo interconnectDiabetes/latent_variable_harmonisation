@@ -179,7 +179,7 @@ dev.off()
 ## Random Effects Model Forest Plot After Regression Calibration
 estimates_forRMA = estimates
 stand_errs = std_error
-labels = c("A","B","C")
+labels = 1:length(estimates)
 res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
 weights_res <- weights.rma.uni(res)
 
