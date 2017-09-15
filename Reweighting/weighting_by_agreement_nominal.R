@@ -93,9 +93,9 @@ dev.copy(png,'nominal_plot3.png')
 dev.off()
 
 ## Plot meta analysis for many studies
-estimates_forRMA = estimates_graph
-stand_errs = std_error
-labels = 1:length(estimates_graph)
+estimates_forRMA = estimates_graph[seq(1, length(estimates_graph), 2)]
+stand_errs = std_error[seq(1, length(std_error), 2)]
+labels = 1:length(estimates_forRMA)
 res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
 weights_res <- weights.rma.uni(res)
 
@@ -232,9 +232,9 @@ dev.off()
 
 
 ## Plot meta analysis for many studies
-estimates_forRMA = estimates_graph
-stand_errs = std_error
-labels = 1:length(estimates_graph)
+estimates_forRMA = estimates_graph[seq(1, length(estimates_graph), 2)]
+stand_errs = std_error[seq(1, length(std_error), 2)]
+labels = 1:length(estimates_forRMA)
 res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
 weights_res <- weights.rma.uni(res)
 
@@ -392,9 +392,9 @@ dev.copy(png,'nominal_plot11.png')
 dev.off()
 
 ## Plot meta analysis for many studies
-estimates_forRMA = estimates_graph
-stand_errs = std_error
-labels = 1:length(estimates_graph)
+estimates_forRMA = estimates_graph[seq(1, length(estimates_graph), 2)]
+stand_errs = std_error[seq(1, length(std_error), 2)]
+labels = 1:length(estimates_forRMA)
 res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
 weights_res <- weights.rma.uni(res)
 
