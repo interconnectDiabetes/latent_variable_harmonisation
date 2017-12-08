@@ -67,13 +67,13 @@ for (measurement_error_counter in 1:error_upperbound){
   
   validation_data_cp = validation_data_graph[,c(1,3)]
   names(validation_data_cp) = c("exp", "index")
-    validation_data_cp$outcome = NA
-
+  validation_data_cp$outcome = NA
+  
   
   combined = rbind(study_data_cp,validation_data_cp)
   
   a.out <- amelia(combined, m=imputations, noms = 'index')
-
+  
   imp_est = vector()
   imp_se = vector()
   for (i in 1:imputations){
@@ -83,7 +83,7 @@ for (measurement_error_counter in 1:error_upperbound){
     imp_est = c(imp_est, output$coefficients[2,1])
     imp_se = c(imp_se, output$coefficients[2,2])
   }
-
+  
   rubin_est = sum(imp_est)/imputations
   W = sum(imp_se)/imputations
   B = sum((imp_est-rubin_est)^2)/(imputations-1)
@@ -130,3 +130,104 @@ dev.off()
 
 
 
+
+#######################################################################################
+######################## Even crazier Amelia ############################
+#######################################################################################
+## Graphing Standard Error as a function of Measurement Error
+error_upperbound = 10
+std_error = vector("numeric", length = error_upperbound)
+estimates = vector("numeric", length = error_upperbound)
+imputations = 5
+numLevels = 4
+validation_size = 400
+num_boots = 100
+
+
+  
+  for (measurement_error_counter in 1:error_upperbound){
+    studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+    validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+    #study_data_cp = studyData_graph[,c(2,4)]
+    study_data_cp = data.frame(index=studyData_graph[,c(4)])
+    study_data_cp$exp = NA
+    
+    validation_data_cp = validation_data_graph[,c(1,3)]
+    names(validation_data_cp) = c("exp", "index")
+    #  validation_data_cp$outcome = NA
+  
+
+    boot_est = vector()
+    
+   for (j in 1:num_boots){
+      
+      bootstrap_validation = validation_data_cp[sample(x = 1:validation_size, replace = TRUE),]
+      
+      combined = rbind(study_data_cp,bootstrap_validation)
+      
+      a.out <- Amelia::amelia(combined, m=imputations, noms = 'index')
+    
+      imp_est = vector()
+      imp_se = vector()
+      for (i in 1:imputations){
+        temp = a.out$imputations[[i]]
+        temp = temp[1:study_size,]
+        temp = cbind(temp, studyData_graph)
+        #results = lm(formula = outcome ~ exp, data = a.out$imputations[[i]])
+        results = lm(formula = outcome ~ exp, data = temp)
+        output = summary(results)
+        imp_est = c(imp_est, output$coefficients[2,1])
+        imp_se = c(imp_se, output$coefficients[2,2])
+      }
+    
+      rubin_est = sum(imp_est)/imputations
+      W = sum(imp_se)/imputations
+      B = sum((imp_est-rubin_est)^2)/(imputations-1)
+      rubin_var = W + (1+1/imputations)*B
+      rubin_se = rubin_var^0.5
+  
+
+      boot_est = c(boot_est, rubin_est)
+    }
+
+
+    std_error[measurement_error_counter] = var(boot_est)^0.5
+    estimates[measurement_error_counter] = mean(boot_est)
+
+  }
+
+
+
+plot (x = (1:error_upperbound), y = std_error, xlab = "Measurement Error", ylab = "Standard Error", main = "Standard Error based on Measurement Error \n Regression Calibration")
+dev.copy(png,'amelia1.png')
+dev.off()
+plot (x = (1:error_upperbound), y = estimates, xlab = "Measurement Error", ylab = "estimates", main = "Estimates (Accuracy based on Measurement Error) \n Regression Calibration")
+dev.copy(png,'amelia2.png')
+dev.off()
+plot (x = estimates, y = std_error, xlab = "Estimates", ylab = "Standard Error", main = "Non Monotonic Relationship Between \n Accuracy and Standard Error \n Regression Calibration")
+dev.copy(png,'amelia3.png')
+dev.off()
+
+
+## Random Effects Model Forest Plot After Regression Modeling
+estimates_REMA = estimates[seq(1, length(estimates), 1)]
+#estimates_REMA = estimates[1:10]
+stand_errs = std_error[seq(1, length(std_error), 1)]
+#stand_errs = std_error[1:10]
+labels = as.character(c(1:length(estimates_REMA)))
+res <- rma(yi = estimates_REMA, sei = stand_errs, method='DL', slab = labels)
+weights_res <- weights.rma.uni(res)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~harmonised_x)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                              .(sprintf("%.3f", round(res$QEp,3))),')')),
+       xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0.5, p = ',
+                         .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Using Predict aka 'Error Model'")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+dev.copy(png,'amelia4.png')
+dev.off()

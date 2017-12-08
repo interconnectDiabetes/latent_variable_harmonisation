@@ -435,6 +435,93 @@ dev.copy(png,'continous_plot12.png')
 dev.off()
 
 
+
+# #######################################################################################
+# ######################## Bootstrapped validation study #####################
+# #######################################################################################
+
+fmla_harmonisation = as.formula(x~measured_x)
+validation_size = 400
+imputations = 10
+upperbound = 50
+#validation_index_size=validation_size/numLevels
+## Plotting Bit
+## Graphing Standard Error as a function of Measurement Error
+std_error = vector("numeric", length = upperbound)
+estimates_graph = vector("numeric", length = upperbound)
+for (measurement_error_counter in 1:upperbound) {
+  studyData_graph = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter)
+  validation_data_graph = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter)
+  #validation_means_graph = createMeansList(validation_data_graph, numLevels)
+  
+  results <- data.frame()
+  for (i in 1:imputations){
+    temp_sample = sample(x =1:validation_size, replace = TRUE )
+    bootstrap_validation <- validation_data_graph[temp_sample,c("x", "measured_x")]
+    
+    # calculate the Error Model
+    error_model_graph <- lm(formula=fmla_harmonisation, data=bootstrap_validation)
+    lambda_graph = error_model_graph$coefficients["measured_x"]
+    stdError_lambda_graph = summary(error_model_graph)$coefficients["measured_x","Std. Error"]
+    
+    # calculate the estimates using the normal study data
+    new = data.frame(measured_x = studyData_graph$measured_x)
+    studyData_graph$harmonised_x = predict(error_model_graph, newdata = new)
+    lm_graph <- lm(formula=y~harmonised_x, data=studyData_graph)
+
+
+    sum_res = summary(lm_graph)
+    results = rbind(results, sum_res$coefficients[2,1:2])
+    
+  }
+  names(results) = c("est", "se")
+  
+  rubin_est = sum(results$est)/imputations
+  W = sum(results$se)/imputations
+  B = sum((results$est-rubin_est)^2)/(imputations-1)
+  rubin_var = W + (1+1/imputations)*B
+  rubin_se = rubin_var^0.5
+  
+  estimates_graph[measurement_error_counter] = rubin_est 
+  std_error[measurement_error_counter] = rubin_se
+}
+
+plot(x = (1:upperbound), y = std_error, xlab = "measurement_error", ylab = "stderr", main = "Bootstrap Means")
+dev.copy(png,'nominal_plot16.png')
+dev.off()
+plot(x = (1:upperbound), y = estimates_graph, xlab = "measurement_error", ylab = "estimates", main = "Bootstrap Means")
+dev.copy(png,'nominal_plot17.png')
+dev.off()
+plot(x = estimates_graph, y = std_error, xlab = "estimates", ylab = "stderror", main = "Bootstrap Means")
+dev.copy(png,'nominal_plot18.png')
+dev.off()
+
+
+## Random Effects Model Forest Plot After Regression Calibration
+#estimates = estimates_graph
+#stand_errs = std_error
+estimates_REMA = estimates_graph[seq(1, length(estimates_graph), 2)]
+#estimates_REMA = estimates[1:10]
+stand_errs = std_error[seq(1, length(std_error), 2)]
+
+labels = 1:length(estimates_REMA)
+res <- rma(yi = estimates_REMA, sei = stand_errs, method='DL', slab = labels)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~x_estimated)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                              .(sprintf("%.3f", round(res$QEp,3))),')')),
+       xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
+                         .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Bootstrap with continuous")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+dev.copy(png,'continuous_bootstrap_big.png')
+dev.off()
+
+
 # #######################################################################################
 # ######################## USING THE MODEL OF ERROR *PREDICT* ###########################
 # ################## DONE MANUALLY WITH MODEL PARAMETER ESTIMATES #######################

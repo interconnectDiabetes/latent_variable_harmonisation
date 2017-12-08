@@ -1,0 +1,662 @@
+# Investigation into Data Agreement as Weighting System
+## Author: Paul Scherer
+##         Tom Bishop
+## Institute: University of Cambridge MRC Epidemiology Unit 
+## Date: 4.09.2017
+
+# Set up the Data
+library(ggplot2)
+library(reshape2)
+library(parallel)
+library(stats)
+library(metafor)
+
+# Set save point for the plots
+setwd("U:/workspace/paee_harmonisation/Reweighting/plots")
+
+# Raw Data Set Properties
+trueBeta = 0.5
+constant = 20
+set.seed(666)
+study_size = 20000
+raw_mean = 40
+raw_stdev = 15
+
+# Simple creation of the raw data and the related outcome without error
+raw_data = data.frame(exp_true = rnorm(n = study_size, mean = raw_mean, sd = raw_stdev))
+raw_data$outcome = (trueBeta*raw_data$exp_true) + constant
+
+
+###############################################################################
+########################### Functions #########################################
+###############################################################################
+createStudyData <- function(raw_data, measurement_error, number_of_indices){
+  exposure_error = rnorm(n = study_size, mean = 0, sd = measurement_error)
+  raw_data$exposure_measured = raw_data$exp_true + exposure_error
+  raw_data$index = cut_number(x = raw_data$exposure_measured,n = number_of_indices, labels =FALSE)
+  raw_data$index = as.factor(raw_data$index)
+  raw_data = raw_data[with(raw_data, order(index)),]
+  return(raw_data)
+}
+
+createValidationData <- function(val_size, measurement_error, number_of_indices) {
+  validation_data = data.frame(exp_true =  rnorm(n = val_size, mean = raw_mean, sd = raw_stdev))
+  exposure_error = rnorm(n = val_size, mean = 0, sd = measurement_error)
+  validation_data$exposure_measured = validation_data$exp_true + exposure_error
+  validation_data$index = cut_number(x = validation_data$exposure_measured,n = number_of_indices, labels =FALSE)
+  validation_data$index = as.factor(validation_data$index)
+  return (validation_data)
+}
+
+createMeansList <- function(data, number_of_indices) {
+  meansList = vector(mode="list", length = number_of_indices)
+  for (i in 1:number_of_indices) {
+    meansList[i] = mean(unname(unlist((split(x=data$exp_true, f= as.factor(data$index)))[i])))
+  }
+  return(meansList)
+}
+
+
+
+#######################################################################################
+######################## Direct mapping with RC #####################
+#######################################################################################
+
+
+numLevels = 4
+validation_size = 400
+lowerbound = 10
+upperbound = 30
+set.seed(666)
+numbaselines = 25
+## Plotting Bit
+## Graphing Standard Error as a function of Measurement Error
+per_error_weights = list()
+per_error_est = list()
+per_error_se = list()
+
+png(filename = 'direct index mapping multi.png', width = 300*numbaselines^0.5, height = 300*numbaselines^0.5)
+old.par <- par(mfrow=c(numbaselines^0.5, numbaselines^0.5))
+
+for (i in 1:numbaselines){
+  std_errors = vector("numeric", length = upperbound - lowerbound)
+  estimates = vector("numeric", length = upperbound - lowerbound)
+  for (measurement_error_counter in lowerbound:upperbound) {
+    set.seed(i*measurement_error_counter)
+    studyData = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+    validation_data = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+    
+    # Find Error Model
+    mapping_formula = as.formula(exp_true ~ index + 0)
+    mapping_model <- lm(formula=mapping_formula, data=validation_data)
+    new = data.frame(index = studyData$index)
+    studyData$index_mapped = predict(mapping_model, newdata = new)
+    
+    # Use Error Model to Scale Index to Gold
+    corrected_model <- lm(formula=outcome~index_mapped, data=studyData)
+    estimate = corrected_model$coefficients["index_mapped"]
+    stdError = summary(corrected_model)$coefficients["index_mapped","Std. Error"]
+    
+    #assume lambda is 1
+    lambda = 1
+    lambda_stdError = summary(mapping_model)$coefficients[1,"Std. Error"]
+    
+    # recalibrate the standard error using delta function
+    
+    variance_beta = stdError^2
+    beta_lambda_div_sq = (unname(unlist(estimate/(lambda)^2)))^2
+    var_lambda = (lambda_stdError)^2
+    delta_variance = (variance_beta / (lambda)^2) + (beta_lambda_div_sq * var_lambda)
+    delta_stdError_graph = sqrt(delta_variance)
+    
+    estimates[measurement_error_counter-lowerbound+1] = estimate
+    std_errors[measurement_error_counter-lowerbound+1] = delta_stdError_graph
+  }
+  
+  
+  ## Plot meta analysis for many studies
+  estimates_forRMA = estimates[seq(1, length(estimates), 1)]
+  stand_errs = std_errors[seq(1, length(std_errors), 1)]
+  
+  labels = c(lowerbound:upperbound)
+  res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
+  weights_res <- weights.rma.uni(res)
+  
+  per_error_weights[[i]] = weights_res
+  per_error_est[[i]] = estimates_forRMA
+  per_error_se[[i]] = stand_errs
+  
+  # Forest Plot
+  res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+  fmla = as.formula(y~harmonised_x)
+  forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                .(sprintf("%.3f", round(res$QEp,3))),')')),
+         xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
+                           .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "1 stage mapping with RC")
+  usr <- par("usr")
+  text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+  text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+  abline(v = 0.5, col = "lightgray")
+  
+}
+
+#dev.copy(png,'direct index mapping multi.png')
+dev.off()
+
+par(old.par)
+
+per_error_weights_final  = do.call(rbind, per_error_weights)
+per_error_est_final  = do.call(rbind, per_error_est)
+per_error_se_final  = do.call(rbind, per_error_se)
+
+
+mean_weights = colMeans(per_error_weights_final)
+plot(x=labels, y=mean_weights, xlab='Amount of error in instrument', ylab='Mean weight given to study', main='Map to means with RC - average over 25 studies')
+dev.copy(png,'direct map to means with RC average weights.png')
+dev.off()
+#mean_est = colMeans(per_error_est_final)
+#plot(labels, mean_est)
+mean_se = colMeans(per_error_se_final)
+plot(labels, mean_se)
+plot(x=labels, y=mean_se, xlab='Amount of error in instrument', ylab='Mean se for study', main='Map to means with RC - average over 25 studies')
+dev.copy(png,'direct map to means with RC average se.png')
+dev.off()
+
+#######################################################################################
+######################## Map to means with RC #####################
+#######################################################################################
+
+# Concern is that there is no estimate of error in mapping, only at the calibration stage
+
+numLevels = 4
+validation_size = 400
+upperbound = 30
+lowerbound = 10
+numbaselines = 25
+
+per_error_weights = list()
+per_error_est = list()
+per_error_se = list()
+
+png(filename = 'index mapping example.png', width = 300*numbaselines^0.5, height = 300*numbaselines^0.5)
+old.par <- par(mfrow=c(numbaselines^0.5, numbaselines^0.5))
+
+
+for (i in 1:numbaselines){
+  std_errors = vector("numeric", length = upperbound - lowerbound)
+  estimates = vector("numeric", length = upperbound - lowerbound)
+  for (measurement_error_counter in lowerbound:upperbound) {
+    set.seed(i*measurement_error_counter)
+    studyData = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+    validation_data = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+    
+    # Find mapping Model
+    mapping_formula = as.formula(exp_true ~ index + 0)
+    mapping_model <- lm(formula=mapping_formula, data=validation_data)
+    new_study = data.frame(index = studyData$index)
+    new_validation = data.frame(index = validation_data$index)
+    validation_data$index_mapped = predict(mapping_model, newdata = new_validation)
+    studyData$index_mapped = predict(mapping_model, newdata = new_study)
+    
+    # Use mapped values in model - estimate beta
+    corrected_model <- lm(formula=outcome~index_mapped, data=studyData)
+    estimate = corrected_model$coefficients["index_mapped"]
+    std_error = summary(corrected_model)$coefficients[2,2]
+    
+    #RC model
+    
+    RC_model = lm(formula=exp_true~index_mapped, data=validation_data)
+    lambda = RC_model$coefficients["index_mapped"]
+    lambda_std_error = summary(RC_model)$coefficients[2,2]
+    
+    # recalibrate the standard error using delta function
+    
+    variance_beta = std_error^2
+    beta_lambda_div_sq = (unname(unlist(estimate/(lambda)^2)))^2
+    var_lambda = (lambda_std_error)^2
+    delta_variance = (variance_beta / (lambda)^2) + (beta_lambda_div_sq * var_lambda)
+    delta_stdError_graph = sqrt(delta_variance)
+    
+    estimates[measurement_error_counter-lowerbound+1] = estimate/lambda
+    std_errors[measurement_error_counter-lowerbound+1] = delta_stdError_graph
+  }
+  
+  
+  ## Plot meta analysis for many studies
+  estimates_forRMA = estimates[seq(1, length(estimates), 1)]
+  stand_errs = std_errors[seq(1, length(std_errors), 1)]
+  
+  labels = c(lowerbound:upperbound)
+  res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
+  weights_res <- weights.rma.uni(res)
+  
+  per_error_weights[[i]] = weights_res
+  per_error_est[[i]] = estimates_forRMA
+  per_error_se[[i]] = stand_errs
+  
+  # Forest Plot
+  res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+  fmla = as.formula(y~harmonised_x)
+  forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                .(sprintf("%.3f", round(res$QEp,3))),')')),
+         xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
+                           .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Example map to means with RC")
+  usr <- par("usr")
+  text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+  text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+  abline(v = 0.5, col = "lightgray")
+  
+}
+
+
+dev.off()
+par(old.par)
+
+per_error_weights_final  = do.call(rbind, per_error_weights)
+per_error_est_final  = do.call(rbind, per_error_est)
+per_error_se_final  = do.call(rbind, per_error_se)
+
+mean_weights = colMeans(per_error_weights_final)
+plot(x=labels, y=mean_weights, xlab='Amount of error in instrument', ylab='Mean weight given to study', main='Map to means with RC - average over 25 studies')
+dev.copy(png,'map to means with RC average weights.png')
+dev.off()
+#mean_est = colMeans(per_error_est_final)
+#plot(labels, mean_est)
+mean_se = colMeans(per_error_se_final)
+plot(labels, mean_se)
+plot(x=labels, y=mean_se, xlab='Amount of error in instrument', ylab='Mean se for study', main='Map to means with RC - average over 25 studies')
+dev.copy(png,'map to means with RC average se.png')
+dev.off()
+
+#######################################################################################
+######################## Bootstrapped direct mapping  #####################
+#######################################################################################
+# Obviously the same as the means.
+
+numLevels = 4
+validation_size = 400
+validation_index_size = validation_size/numLevels
+upperbound = 30
+num_boots = 100
+lowerbound = 10
+numbaselines=25
+set.seed(666)
+
+per_error_weights = list()
+per_error_est = list()
+per_error_se = list()
+
+svg(filename = 'bootstrap means multi.svg', width = 4*numbaselines^0.5, height = 4*numbaselines^0.5)
+old.par <- par(mfrow=c(numbaselines^0.5, numbaselines^0.5))
+
+for (i in 1:numbaselines){
+  std_errors = vector("numeric", length = upperbound - lowerbound)
+  estimates = vector("numeric", length = upperbound - lowerbound)
+  for (measurement_error_counter in lowerbound:upperbound) {
+    set.seed(i*measurement_error_counter)
+    studyData = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+    validation_data = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+    
+    boot_est = vector()
+    
+    for (j in 1:num_boots){
+  
+      bootstrap_validation <- data.frame(index = as.factor(rep(x = c(1:numLevels), each= validation_index_size)))
+      bootstrap_validation$exp_true <- unlist(unname(lapply(X = split(x=validation_data$exp_true, f= as.factor(validation_data$index)), 
+                                                       FUN = sample, size = validation_index_size, replace=TRUE)))
+      # Find mapping Model
+      mapping_formula = as.formula(exp_true ~ index + 0)
+      mapping_model <- lm(formula=mapping_formula, data=bootstrap_validation)
+      new_study = data.frame(index = studyData$index)
+      new_validation = data.frame(index = bootstrap_validation$index)
+      bootstrap_validation$index_mapped = predict(mapping_model, newdata = new_validation)
+      studyData$index_mapped = predict(mapping_model, newdata = new_study)
+      
+      # Use mapped values in model
+      corrected_model <- lm(formula=outcome~index_mapped, data=studyData)
+      estimate = corrected_model$coefficients["index_mapped"]
+      
+      boot_est = c(boot_est, estimate)
+    }
+    
+    estimates[measurement_error_counter-lowerbound+1] = mean(boot_est)
+    std_errors[measurement_error_counter-lowerbound+1] = var(boot_est)^0.5
+    print(measurement_error_counter)
+  }
+  
+  
+  ## Plot meta analysis for many studies
+  
+  estimates_forRMA = estimates[seq(1, length(estimates), 1)]
+  stand_errs = std_errors[seq(1, length(std_errors), 1)]
+  
+  labels = c(lowerbound:upperbound)
+  #labels = 1:length(estimates_forRMA)
+  res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
+  weights_res <- weights.rma.uni(res)
+  
+  per_error_weights[[i]] = weights_res
+  per_error_est[[i]] = estimates_forRMA
+  per_error_se[[i]] = stand_errs
+  
+  # Forest Plot
+  res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+  fmla = as.formula(y~harmonised_x)
+  forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                .(sprintf("%.3f", round(res$QEp,3))),')')),
+         xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
+                           .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Pure bootstrap")
+  usr <- par("usr")
+  text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+  text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+  abline(v = 0.5, col = "lightgray")
+
+  
+}  
+
+dev.off()
+par(old.par)
+
+per_error_weights_final  = do.call(rbind, per_error_weights)
+per_error_est_final  = do.call(rbind, per_error_est)
+per_error_se_final  = do.call(rbind, per_error_se)
+
+mean_weights = colMeans(per_error_weights_final)
+plot(x=labels, y=mean_weights, xlab='Amount of error in instrument', ylab='Mean weight given to study', main='Bootstrap means - average over 25 studies')
+dev.copy(png,'bs mean average weights.png')
+dev.off()
+mean_est = colMeans(per_error_est_final)
+plot(labels, mean_est, xlab='Amount of error in instrument', ylab='Mean estimate for to study', main='Bootstrap means - average over 25 studies')
+dev.copy(png,'bs mean average se.png')
+dev.off()
+mean_se = colMeans(per_error_se_final)
+plot(labels, mean_se)
+plot(x=labels, y=mean_se, xlab='Amount of error in instrument', ylab='Mean se for study', main='Bootstrap means - average over 25 studies')
+dev.copy(png,'bs mean average se.png')
+dev.off()
+
+
+
+#######################################################################################
+######################## Bootstrapped direct mapping with rubin #####################
+#######################################################################################
+# Obviously the same as the means.
+
+numLevels = 4
+validation_size = 400
+validation_index_size = validation_size/numLevels
+upperbound = 30
+num_boots = 25
+lowerbound = 10
+set.seed(666)
+
+per_error_weights = list()
+per_error_est = list()
+per_error_se = list()
+
+for (i in 1:10){
+  ## Plotting Bit
+  ## Graphing Standard Error as a function of Measurement Error
+  std_errors = vector("numeric", length = upperbound - lowerbound)
+  estimates = vector("numeric", length = upperbound - lowerbound)
+  for (measurement_error_counter in lowerbound:upperbound) {
+    studyData = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+    validation_data = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+    
+    boot_est = vector()
+    boot_se = vector()
+    
+    for (j in 1:num_boots){
+      
+      bootstrap_validation <- data.frame(index = as.factor(rep(x = c(1:numLevels), each= validation_index_size)))
+      bootstrap_validation$exp_true <- unlist(unname(lapply(X = split(x=validation_data$exp_true, f= as.factor(validation_data$index)), 
+                                                            FUN = sample, size = validation_index_size, replace=TRUE)))
+      # Find mapping Model
+      mapping_formula = as.formula(exp_true ~ index + 0)
+      mapping_model <- lm(formula=mapping_formula, data=bootstrap_validation)
+      new_study = data.frame(index = studyData$index)
+      new_validation = data.frame(index = bootstrap_validation$index)
+      bootstrap_validation$index_mapped = predict(mapping_model, newdata = new_validation)
+      studyData$index_mapped = predict(mapping_model, newdata = new_study)
+
+      # Use mapped values in model
+      corrected_model <- lm(formula=outcome~index_mapped, data=studyData)
+      estimate = corrected_model$coefficients["index_mapped"]
+      std_error = summary(corrected_model)$coefficients[2,2]
+      
+      boot_est = c(boot_est, estimate)
+      boot_se = c(boot_se, std_error)
+    }
+    
+    rubin_est = sum(boot_est)/num_boots
+    W = sum(boot_se)/num_boots
+    B = sum((boot_est-rubin_est)^2)/(num_boots-1)
+    rubin_var = W + (1+1/num_boots)*B
+    rubin_se = rubin_var^0.5
+    
+    estimates[measurement_error_counter-lowerbound+1] = rubin_est
+    std_errors[measurement_error_counter-lowerbound+1] = rubin_se
+    print(measurement_error_counter)
+  }
+  
+  
+  ## Plot meta analysis for many studies
+  
+  estimates_forRMA = estimates[seq(1, length(estimates), 1)]
+  stand_errs = std_errors[seq(1, length(std_errors), 1)]
+  
+  labels = c(lowerbound:upperbound)
+  #labels = 1:length(estimates_forRMA)
+  res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
+  weights_res <- weights.rma.uni(res)
+  
+  per_error_weights[[i]] = weights_res
+  per_error_est[[i]] = estimates_forRMA
+  per_error_se[[i]] = stand_errs
+  
+  # Forest Plot
+  res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+  fmla = as.formula(y~harmonised_x)
+  forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                                .(sprintf("%.3f", round(res$QEp,3))),')')),
+         xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
+                           .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Rubin imputations")
+  usr <- par("usr")
+  text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+  text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+  abline(v = 0.5, col = "lightgray")
+  dev.copy(png,'rubin_mean_imputes example.png')
+  dev.off()
+}  
+
+per_error_weights_final  = do.call(rbind, per_error_weights)
+per_error_est_final  = do.call(rbind, per_error_est)
+per_error_se_final  = do.call(rbind, per_error_se)
+
+mean_weights = colMeans(per_error_weights_final)
+plot(x=labels, y=mean_weights, xlab='Amount of error in instrument', ylab='Mean weight given to study', main='Baseline - average over 10 studies')
+dev.copy(png,'rubin mean average weights.png')
+dev.off()
+#mean_est = colMeans(per_error_est_final)
+#plot(labels, mean_est)
+mean_se = colMeans(per_error_se_final)
+plot(labels, mean_se)
+plot(x=labels, y=mean_se, xlab='Amount of error in instrument', ylab='Mean se for study', main='Baseline - average over 10 studies')
+dev.copy(png,'rubin mean average se.png')
+dev.off()
+
+#######################################################################################
+######################## Validate SE #####################
+#######################################################################################
+
+
+numLevels = 4
+validation_size = 400
+upperbound = 50
+set.seed(668)
+## Plotting Bit
+## Graphing Standard Error as a function of Measurement Error
+std_errors = vector("numeric", length = upperbound)
+estimates = vector("numeric", length = upperbound)
+for (measurement_error_counter in 1:upperbound) {
+  studyData = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+  validation_data = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+  
+  # Find Error Model
+  mapping_formula = as.formula(exp_true ~ exposure_measured)
+  mapping_model <- lm(formula=mapping_formula, data=validation_data)
+  new = data.frame(exposure_measured = studyData$exposure_measured)
+  studyData$exposure_corrected = predict(mapping_model, newdata = new)
+  
+  # Use Error Model to Scale Index to Gold
+  corrected_model <- lm(formula=outcome~exposure_corrected, data=studyData)
+  estimate = corrected_model$coefficients["exposure_corrected"]
+  stdError = summary(corrected_model)$coefficients["exposure_corrected","Std. Error"]
+  
+  #assume lambda is 1
+  lambda = summary(mapping_model)$coefficients["exposure_measured","Estimate"]
+  lambda_stdError = summary(mapping_model)$coefficients["exposure_measured","Std. Error"]
+  
+  # recalibrate the standard error using delta function
+  
+  variance_beta = stdError^2
+  beta_lambda_div_sq = (unname(unlist(estimate/(lambda)^2)))^2
+  var_lambda = (lambda_stdError)^2
+  delta_variance = (variance_beta / (lambda)^2) + (beta_lambda_div_sq * var_lambda)
+  delta_stdError_graph = sqrt(delta_variance)
+  
+  estimates[measurement_error_counter] = estimate
+  std_errors[measurement_error_counter] = delta_stdError_graph
+}
+
+
+## Plot meta analysis for many studies
+# estimates_forRMA = estimates[seq(1, length(estimates), 2)]
+# stand_errs = std_errors[seq(1, length(std_errors), 2)]
+estimates_forRMA = estimates[10:30]
+stand_errs = std_errors[10:30]
+labels = 1:length(estimates_forRMA)
+res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
+weights_res <- weights.rma.uni(res)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~harmonised_x)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                              .(sprintf("%.3f", round(res$QEp,3))),')')),
+       xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
+                         .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "raw SE baseline")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+dev.copy(png,'baseline 10 30 3.png')
+dev.off()
+
+
+#######################################################################################
+######################## 2 step Bootstrapped direct mapping  #####################
+#######################################################################################
+# Obviously the same as the means.
+
+numLevels = 4
+validation_size = 400
+validation_index_size = validation_size/numLevels
+study_index_size = study_size/numLevels
+lowerbound = 30
+upperbound = 10
+num_boots = 1000
+imputations = 1000
+set.seed(667)
+## Plotting Bit
+## Graphing Standard Error as a function of Measurement Error
+std_errors = vector("numeric", length = upperbound - lowerbound)
+estimates = vector("numeric", length = upperbound - lowerbound)
+for (measurement_error_counter in lowerbound:upperbound) {
+  studyData = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, number_of_indices = numLevels)
+  validation_data = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, number_of_indices = numLevels )
+  validation_data = validation_data[order(validation_data$index),]
+  boot_est = vector()
+  boot_se = vector()
+  
+  for (j in 1:imputations){
+    
+    #imputation_validation <- data.frame(index = rep(x = c(1:numLevels), each= validation_index_size))
+    imputation_validation = validation_data[,c('exp_true', 'index')]
+    #imputation_validation = imputation_validation[order(imputation_validation$index),]
+    
+    #Random mapping
+    imputation_validation$exp_measured <- unlist(unname(lapply(X = split(x=validation_data$exp_true, f= validation_data$index), 
+                                                      FUN = sample, size = validation_index_size, replace=TRUE)))
+    
+    studyData$exp_measured <- unlist(unname(lapply(X = split(x=validation_data$exp_true, f= as.factor(validation_data$index)), 
+                                                         FUN = sample, size = study_index_size, replace=TRUE)))
+    
+    # Find calib Model
+    calib_formula = as.formula(exp_true ~ exp_measured)
+    calib_model <- lm(formula=calib_formula, data=imputation_validation)
+    
+    #assume lambda is 1
+    lambda = summary(calib_model)$coefficients["exp_measured","Estimate"]
+    lambda_stdError = summary(calib_model)$coefficients["exp_measured","Std. Error"]
+
+    studyData$exp_calib = predict(calib_model, newdata = studyData)
+  
+    # Use mapped values in model
+    corrected_model <- lm(formula=outcome~exp_calib, data=studyData)
+    estimate = corrected_model$coefficients["exp_calib"]
+    std_error = summary(corrected_model)$coefficients[2,2]
+    
+    # recalibrate the standard error using delta function
+    
+    # variance_beta = std_error^2
+    # beta_lambda_div_sq = (unname(unlist(estimate/(lambda)^2)))^2
+    # var_lambda = (lambda_stdError)^2
+    # delta_variance = (variance_beta / (lambda)^2) + (beta_lambda_div_sq * var_lambda)
+    # delta_stdError_graph = sqrt(delta_variance)
+    
+    boot_est = c(boot_est, estimate)
+    #boot_se = c(boot_se, delta_stdError_graph)
+  }
+  
+  # rubin_est = sum(boot_est)/imputations
+  # W = sum(boot_se)/imputations
+  # B = sum((boot_est-rubin_est)^2)/(imputations-1)
+  # rubin_var = W + (1+1/imputations)*B
+  # rubin_se = rubin_var^0.5
+  # 
+  # estimates[measurement_error_counter] = rubin_est
+  # std_errors[measurement_error_counter] = rubin_se
+  estimates[measurement_error_counter] = mean(boot_est)
+  std_errors[measurement_error_counter] = sd(boot_est)
+  print(measurement_error_counter)
+
+}
+
+
+## Plot meta analysis for many studies
+estimates_forRMA = estimates[seq(1, length(estimates), 1)]
+stand_errs = std_errors[seq(1, length(std_errors), 1)]
+
+labels = c(lowerbound:upperbound)
+#labels = 1:length(estimates_forRMA)
+res <- rma(yi = estimates_forRMA, sei = stand_errs, method='DL', slab = labels)
+weights_res <- weights.rma.uni(res)
+
+# Forest Plot
+res$slab <- paste(res$slab, " (", round(weights.rma.uni(res),digits=1), "%)")
+fmla = as.formula(y~harmonised_x)
+forest(res, mlab=bquote(paste('Overall (I'^2*' = ', .(round(res$I2)),'%, p = ',
+                              .(sprintf("%.3f", round(res$QEp,3))),')')),
+       xlab=bquote(paste('Test of Association'[0.5]*': true beta association = 0, p = ',
+                         .(sprintf("%.3f", round(res$pval,3))))), cex=1, cex.lab=0.75, cex.axis=1, main = "Pure bootstrap")
+usr <- par("usr")
+text(usr[2], usr[4], "Beta [95% CI]", adj = c(1, 4),cex=1)
+text(usr[1], usr[4], paste0(gsub(paste0("Study Data","\\$"),"", deparse(fmla)),collapse="\n"), adj = c( 0, 1 ),cex=1)
+abline(v = 0.5, col = "lightgray")
+dev.copy(png,'3 layer MI RC non rubin100 10 to 30 667 1000.png')
+dev.off()
+
+
+
+

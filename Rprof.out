@@ -1,0 +1,4 @@
+line profiling: sample.interval=20000
+".External2" "model.matrix.default" "model.matrix" "predict.lm" "predict" 
+"as.character" "model.response" "lm" 
+".External2" "model.matrix.default" "model.matrix" "lm" 
