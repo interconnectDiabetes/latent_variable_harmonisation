@@ -93,14 +93,14 @@ createMeansList <- function(data, number_of_indices) {
 # set up parameters
 #numLevels = 2
 #cut_points = c(-Inf,40,Inf)
-numLevels = 4
-cut_points = c(-Inf,30,40,50,Inf)
+#numLevels = 4
+#cut_points = c(-Inf,30,40,50,Inf)
 #numLevels = 8
 #cut_points = c(-Inf,10,20,30,40,50,60,70,Inf)
 #numLevels = 16
 #cut_points = c(-Inf,0,10,16,22,26,30,35,40,45,50,54,58,64,70,78,Inf)
-#numLevels = 32
-#cut_points = c(-Inf,0,5,7,10,12,16,19,22,23,26,28,30,32,35,37,40,43,45,47,50,52,54,56,58,61,64,67,70,72,74,78,Inf)
+numLevels = 32
+cut_points = c(-Inf,0,5,7,10,12,16,19,22,23,26,28,30,32,35,37,40,43,45,47,50,52,54,56,58,61,64,67,70,72,74,78,Inf)
 validation_size = 800
 upperbound = 30
 lowerbound = 10
@@ -301,14 +301,14 @@ dev.off()
 # set up parameters
 #numLevels = 2
 #cut_points = c(-Inf,40,Inf)
-numLevels = 4
-cut_points = c(-Inf,30,40,50,Inf)
+#numLevels = 4
+#cut_points = c(-Inf,30,40,50,Inf)
 #numLevels = 8
 #cut_points = c(-Inf,10,20,30,40,50,60,70,Inf)
 #numLevels = 16
 #cut_points = c(-Inf,0,10,16,22,26,30,35,40,45,50,54,58,64,70,78,Inf)
-#numLevels = 32
-#cut_points = c(-Inf,0,5,7,10,12,16,19,22,23,26,28,30,32,35,37,40,43,45,47,50,52,54,56,58,61,64,67,70,72,74,78,Inf)
+numLevels = 32
+cut_points = c(-Inf,0,5,7,10,12,16,19,22,23,26,28,30,32,35,37,40,43,45,47,50,52,54,56,58,61,64,67,70,72,74,78,Inf)
 validation_size = 800
 upperbound = 30
 lowerbound = 10
@@ -567,6 +567,8 @@ for (i in 1:numbaselines){
   lambda_SE_cont = vector("numeric", length = upperbound - lowerbound)
   beta_SE_cont = vector("numeric", length = upperbound - lowerbound)
   
+  lambda_cat = numeric()
+  
   means = data.frame()
   sds = data.frame()
   sizes = data.frame()
@@ -691,6 +693,7 @@ for (i in 1:numbaselines){
     lambda_SE_cat[measurement_error_counter-lowerbound+1] = lambda_std_error
     beta_SE_cat[measurement_error_counter-lowerbound+1] = std_error
     
+    lambda_cat = c(lambda_cat, lambda)
   
   }
   
@@ -749,16 +752,16 @@ dev.off()
 # set up parameters
 #numLevels = 2
 #cut_points = c(-Inf,40,Inf)
-numLevels = 4
-cut_points = c(-Inf,30,40,50,Inf)
+#numLevels = 4
+#cut_points = c(-Inf,30,40,50,Inf)
 #numLevels = 8
 #cut_points = c(-Inf,10,20,30,40,50,60,70,Inf)
 #numLevels = 16
 #cut_points = c(-Inf,0,10,16,22,26,30,35,40,45,50,54,58,64,70,78,Inf)
 #numLevels = 32
 #cut_points = c(-Inf,0,5,7,10,12,16,19,22,23,26,28,30,32,35,37,40,43,45,47,50,52,54,56,58,61,64,67,70,72,74,78,Inf)
-validation_size = 800
-upperbound = 30
+validation_size = 400
+upperbound = 15
 lowerbound = 10
 numbaselines = 1
 set.seed(12345)
@@ -770,7 +773,7 @@ per_error_est = list()
 per_error_se = list()
 
 #set up plot
-svg(filename = paste0('boot_split_valid_cat_and_cont_with_RC_outcome_error_',outcome_error,'_', numLevels,'_level_',validation_size,'_valid.svg'), width = 10, height = 15)
+svg(filename = paste0('test_boot_split_valid_cat_and_cont_with_RC_outcome_error_',outcome_error,'_', numLevels,'_level_',validation_size,'_valid.svg'), width = 10, height = 15)
 old.par <- par(mfrow=c(numbaselines^0.5, numbaselines^0.5))
 
 # numbaselines parameter allows multiple runs of the whole loop - in case there are concerns that set of results
@@ -801,6 +804,15 @@ for (i in 1:numbaselines){
     studyData = createStudyData(raw_data = raw_data, measurement_error = measurement_error_counter, cut_points = cut_points)
     validation_data = createValidationData(val_size = validation_size, measurement_error = measurement_error_counter, cut_points = cut_points)
     
+    # experimental step
+    validation_data$split = unlist(lapply(X = split(x = validation_data, validation_data$index),FUN = function(X){
+      y1 = rep(x=1,times=ceiling(length(X$index)/2))
+      y2 = rep(x=2,times=length(X$index)-ceiling(length(X$index)/2))
+      y = c(y1,y2)
+      return(y)
+    }))
+    
+    
     boot_est_cat = vector()
     boot_est_cont = vector()
     
@@ -817,12 +829,12 @@ for (i in 1:numbaselines){
       # split the validation study in half
       
       
-      bootstrap_validation$split = unlist(lapply(X = split(x = bootstrap_validation, bootstrap_validation$index),FUN = function(X){
-        y1 = rep(x=1,times=ceiling(length(X$index)/2))
-        y2 = rep(x=2,times=length(X$index)-ceiling(length(X$index)/2))
-        y = c(y1,y2)
-        return(y)
-      }))
+      # bootstrap_validation$split = unlist(lapply(X = split(x = bootstrap_validation, bootstrap_validation$index),FUN = function(X){
+      #   y1 = rep(x=1,times=ceiling(length(X$index)/2))
+      #   y2 = rep(x=2,times=length(X$index)-ceiling(length(X$index)/2))
+      #   y = c(y1,y2)
+      #   return(y)
+      # }))
       
       
       validation_data_A = bootstrap_validation[bootstrap_validation$split == 1,]
