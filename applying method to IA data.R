@@ -827,6 +827,8 @@ og_women$index_mapped = predict(mapping_model_women, newdata = og_women)
 
 #get mapped exposure to outcome relationship (naive model)
 
+print('got here')
+
 mapped_model_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ index_mapped + bmi_adj + smoke_stat + l_school + alc_re + qe_energy + country, data = og_men, robust=TRUE)
 estimate_mapped_men = mapped_model_men$coefficients["index_mapped"]
 std_error_mapped_men = summary(mapped_model_men)$coefficients["index_mapped","robust se"]
@@ -1068,32 +1070,53 @@ lin_test_simple_women = lm(PAEE~as.numeric(cam_index), data=validation_data_wome
 
 IA_df_men = data.frame()
 IA_df_women = data.frame()
-set.seed(123456)
 
-for (i in 1:1){
 
+for (i in 1:1001){
+
+  set.seed(i)
+  
 validation_data$cam_index = as.factor(validation_data$cam_index)
 
-validation_data = validation_data[sample(nrow(validation_data),nrow(validation_data)),]
-
-validation_data = validation_data[order(validation_data$cam_index),]
+# validation_data = validation_data[sample(nrow(validation_data),nrow(validation_data)),]
+# 
+# validation_data = validation_data[order(validation_data$cam_index),]
 
 validation_data_men = validation_data[which(validation_data$sex == 1),]
 validation_data_women = validation_data[which(validation_data$sex == 0),]
 
-validation_data_men$split = unlist(lapply(X = split(x = validation_data_men, validation_data_men$cam_index),FUN = function(X){
-  y1 = rep(x=1,times=ceiling(length(X$cam_index)/2))
-  y2 = rep(x=2,times=length(X$cam_index)-ceiling(length(X$cam_index)/2))
+# validation_data_men$split = unlist(lapply(X = split(x = validation_data_men, validation_data_men$cam_index),FUN = function(X){
+#   y1 = rep(x=1,times=ceiling(length(X$cam_index)/2))
+#   y2 = rep(x=2,times=length(X$cam_index)-ceiling(length(X$cam_index)/2))
+#   y = c(y1,y2)
+#   return(y)
+# }))
+# 
+# validation_data_women$split = unlist(lapply(X = split(x = validation_data_women, validation_data_women$cam_index),FUN = function(X){
+#   y1 = rep(x=1,times=ceiling(length(X$cam_index)/2))
+#   y2 = rep(x=2,times=length(X$cam_index)-ceiling(length(X$cam_index)/2))
+#   y = c(y1,y2)
+#   return(y)
+# }))
+
+# split the validation study in half randomly
+set.seed(i)
+validation_data_men$split = unlist(lapply(X = split(x = validation_data_men, validation_data_men$index),FUN = function(X){
+  y1 = rep(x=1,times=ceiling(length(X$index)/2))
+  y2 = rep(x=2,times=length(X$index)-ceiling(length(X$index)/2))
   y = c(y1,y2)
+  y = y[sample(1:length(y))]
+  return(y)
+}))
+set.seed(i)
+validation_data_women$split = unlist(lapply(X = split(x = validation_data_women, validation_data_women$index),FUN = function(X){
+  y1 = rep(x=1,times=ceiling(length(X$index)/2))
+  y2 = rep(x=2,times=length(X$index)-ceiling(length(X$index)/2))
+  y = c(y1,y2)
+  y = y[sample(1:length(y))]
   return(y)
 }))
 
-validation_data_women$split = unlist(lapply(X = split(x = validation_data_women, validation_data_women$cam_index),FUN = function(X){
-  y1 = rep(x=1,times=ceiling(length(X$cam_index)/2))
-  y2 = rep(x=2,times=length(X$cam_index)-ceiling(length(X$cam_index)/2))
-  y = c(y1,y2)
-  return(y)
-}))
 
 validation_data_men_A = validation_data_men[validation_data_men$split == 1,]
 validation_data_men_B = validation_data_men[validation_data_men$split == 2,]
@@ -1117,11 +1140,13 @@ og_women$index_mapped = predict(mapping_model_women, newdata = og_women)
 
 #get mapped exposure to outcome relationship (naive model)
 
+print('gothere')
+
 mapped_model_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ index_mapped + bmi_adj + country + 0, data = og_men, robust=TRUE)
 estimate_mapped_men = mapped_model_men$coefficients["index_mapped"]
 std_error_mapped_men = summary(mapped_model_men)$coefficients["index_mapped","robust se"]
 
-mapped_model_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ index_mapped + bmi_adj + country + 1, data = og_women, robust=TRUE)
+mapped_model_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ index_mapped + bmi_adj + country + 0, data = og_women, robust=TRUE)
 estimate_mapped_women = mapped_model_women$coefficients["index_mapped"]
 std_error_mapped_women = summary(mapped_model_women)$coefficients["index_mapped","robust se"]
 
@@ -1194,12 +1219,29 @@ thing_to_store_women = data.frame(naive_estimate_women = estimate_mapped_women, 
                                   lambda_women = estimate_calib_women, lambda_se_women = std_error_calib_women)
 
 IA_df_men = rbind(IA_df_men, thing_to_store_men)
+print(i)
 IA_df_women = rbind(IA_df_women, thing_to_store_women)
+print(i)
 
 }
 
-#121 men  -0.02061232 0.003648329 -0.01983547 0.004866377 1.0391646  
-# women -0.02321586 0.005773226 -0.02624092 0.007835891 0.8847197
+
+IA_df_men[which((IA_df_men$corrected_estimate_men) == median(IA_df_men$corrected_estimate_men)),]
+IA_df_women[which((IA_df_women$corrected_estimate_women) == median(IA_df_women$corrected_estimate_women)),]
+
+# In previous loop, do it 100 times to account for split variation
+# Then take median
+#naive_estimate_men naive_se_men corrected_estimate_men corrected_se_men lambda_men
+#index_mapped34        -0.01845768  0.003349215            -0.01954376      0.004985866  0.9444284
+#lambda_se_men
+#index_mapped34     0.1693589
+
+#naive_estimate_women naive_se_women corrected_estimate_women corrected_se_women
+#index_mapped29          -0.02287536    0.005595674               -0.0258762        0.007435163
+#lambda_women lambda_se_women
+#index_mapped29    0.8840309       0.1332662
+
+
 
 ##
 # Investigating effects of sampling
@@ -1253,3 +1295,133 @@ for (i in 1:10){
   womenB = rbind(womenB, temp_women_B[,2])
   
 }
+
+##Harmonisation and uncertatinty only
+
+validation_data$cam_index = as.factor(validation_data$cam_index)
+
+validation_data_men = validation_data[which(validation_data$sex == 1),]
+validation_data_women = validation_data[which(validation_data$sex == 0),]
+
+# Do the mapping using data from validation sample, and apply to study
+
+mapping_formula_men = as.formula(PAEE ~ cam_index + bmi_adj + country + 0) # 0 forces no intercept
+mapping_model_men <- lm(formula=mapping_formula_men, data=validation_data_men)
+validation_data_men$index_mapped = predict(mapping_model_men, newdata = validation_data_men)
+og_men$index_mapped = predict(mapping_model_men, newdata = og_men)
+
+mapping_formula_women = as.formula(PAEE ~ cam_index + bmi_adj + country + 0) # 0 forces no intercept
+mapping_model_women <- lm(formula=mapping_formula_women, data=validation_data_women)
+validation_data_women$index_mapped = predict(mapping_model_women, newdata = validation_data_women)
+og_women$index_mapped = predict(mapping_model_women, newdata = og_women)
+
+#get mapped exposure to outcome relationship (naive model)
+
+print('gothere')
+
+mapped_model_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ index_mapped + bmi_adj + country + 0, data = og_men, robust=TRUE)
+estimate_mapped_men = mapped_model_men$coefficients["index_mapped"]
+std_error_mapped_men = summary(mapped_model_men)$coefficients["index_mapped","robust se"]
+
+mapped_model_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ index_mapped + bmi_adj + country + 0, data = og_women, robust=TRUE)
+estimate_mapped_women = mapped_model_women$coefficients["index_mapped"]
+std_error_mapped_women = summary(mapped_model_women)$coefficients["index_mapped","robust se"]
+
+#error in mapping (no calibration, "lambda" is 1) - use validation 
+
+mapping_error_formula_men = as.formula(PAEE ~ index_mapped + bmi_adj + country + 0)
+mapping_error_model_men <- lm(formula=mapping_error_formula_men, data=validation_data_men)
+estimate_mapping_men = mapping_error_model_men$coefficients["index_mapped"] # should be 1
+std_error_mapping_men = summary(mapping_error_model_men)$coefficients["index_mapped","Std. Error"]
+
+mapping_error_formula_women = as.formula(PAEE ~ index_mapped + bmi_adj + country + 0)
+mapping_error_model_women <- lm(formula=mapping_error_formula_women, data=validation_data_women)
+estimate_mapping_women = mapping_error_model_women$coefficients["index_mapped"] # should be 1
+std_error_mapping_women = summary(mapping_error_model_women)$coefficients["index_mapped","Std. Error"]
+
+
+#calibration & associated error - use validation B and apply calibration to study
+
+calib_formula_men = as.formula(PAEE ~ index_mapped + bmi_adj + country)
+calib_model_men <- lm(formula=calib_formula_men, data=validation_data_men)
+og_men$exposure_corrected = predict(calib_model_men, newdata = og_men)
+estimate_calib_men = calib_model_men$coefficients["index_mapped"]
+std_error_calib_men = summary(calib_model_men)$coefficients["index_mapped","Std. Error"]
+
+calib_formula_women = as.formula(PAEE ~ index_mapped + bmi_adj + country)
+calib_model_women <- lm(formula=calib_formula_women, data=validation_data_women)
+og_women$exposure_corrected = predict(calib_model_women, newdata = og_women)
+estimate_calib_women = calib_model_women$coefficients["index_mapped"]
+std_error_calib_women = summary(calib_model_women)$coefficients["index_mapped","Std. Error"]
+
+# Use mapped and calibrated values to generate a corrected model - estimate beta using the corrected exposure and outcome
+# store the estimate and its standard error
+
+corrected_model_men <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ exposure_corrected + bmi_adj + country, data = og_men, robust=TRUE)
+estimate_corrected_men = corrected_model_men$coefficients["exposure_corrected"]
+std_error_corrected_men = summary(corrected_model_men)$coefficients["exposure_corrected","robust se"]
+
+corrected_model_women <- coxph(Surv(age_recr_prentice,ageEnd,eventCens) ~ exposure_corrected + bmi_adj + country, data = og_women, robust=TRUE)
+estimate_corrected_women = corrected_model_women$coefficients["exposure_corrected"]
+std_error_corrected_women = summary(corrected_model_women)$coefficients["exposure_corrected","robust se"]
+
+# refine the standard error of the main model estimate using delta function
+
+variance_beta_men = std_error_mapped_men^2
+beta_lambda_div_sq_men = (unname(unlist(estimate_mapped_men/(estimate_calib_men)^2)))^2
+var_lambda_men = (std_error_calib_men)^2
+delta_variance_men = (variance_beta_men / (estimate_calib_men)^2) + (beta_lambda_div_sq_men * var_lambda_men)
+delta_std_error_corrected_men = sqrt(delta_variance_men)
+
+variance_beta_women = std_error_mapped_women^2
+beta_lambda_div_sq_women = (unname(unlist(estimate_mapped_women/(estimate_calib_women)^2)))^2
+var_lambda_women = (std_error_calib_women)^2
+delta_variance_women = (variance_beta_women / (estimate_calib_women)^2) + (beta_lambda_div_sq_women * var_lambda_women)
+delta_std_error_corrected_women = sqrt(delta_variance_women)
+
+# Store estimate and corrected std error
+
+estimates_men = estimate_corrected_men
+std_errors_men = delta_std_error_corrected_men
+
+estimates_women = estimate_corrected_women
+std_errors_women = delta_std_error_corrected_women
+
+thing_to_store_men = data.frame(naive_estimate_men = estimate_mapped_men, naive_se_men = std_error_mapped_men,
+                                corrected_estimate_men = estimates_men, corrected_se_men = delta_std_error_corrected_men,
+                                lambda_men = estimate_calib_men, lambda_se_men = std_error_calib_men)
+
+thing_to_store_women = data.frame(naive_estimate_women = estimate_mapped_women, naive_se_women = std_error_mapped_women,
+                                  corrected_estimate_women = estimates_women, corrected_se_women = delta_std_error_corrected_women,
+                                  lambda_women = estimate_calib_women, lambda_se_women = std_error_calib_women)
+
+## Forest plot
+
+## Plot  
+#set up plot
+
+svg(filename = 'InterAct_results.svg', width = 8, height = 4.5)
+par(mar=c(4.1,4.1,2.1,2.1))
+
+labels = c('Baseline, per category (Men)',
+           'Baseline, per category (Women)',
+           'Baseline, per unit (Men)',
+           'Baseline, per unit (Women)',
+           'Harmonised, uncorrected, per unit (Men)',
+           'Harmonised, uncorrected, per unit (Women)',
+           'Harmonised, corrected, per unit (Men)',
+           'Harmonised, corrected, per unit (Women)')
+
+estimates = c(-0.124,-0.0947,-0.0190,-0.0256,-0.0190,-0.0253,-0.0190,-0.0253)
+std_error = c(0.0219, 0.0217, 0.00337, 0.00588, 0.00345, 0.00623, 0.00403,0.00676)
+
+forest(x = estimates, sei = std_error,
+       xlab='Hazard Ratio',digits=3,
+       refline = 1.0, slab = labels, transf=exp, alim=c(0.8,1.0), xlim = c(0.6,1.2),
+       psize = c(1,1,1,1,1,1,1,1))
+
+
+usr <- par("usr")
+text(usr[2], usr[4], "Hazard Ratio [95% CI]", adj = c(1, 6),cex=1)
+text(usr[1], usr[4], "Model", adj = c( 0, 6 ),cex=1)
+dev.off()
